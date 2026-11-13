@@ -69,7 +69,7 @@ function Contacts() {
        {(c.birthday||c.anniversary)&&<p><CalendarDays size={12} className="inline"/> {c.birthday?"Birthday "+c.birthday:""} {c.anniversary?"Anniversary "+c.anniversary:""}</p>}
       </div>
       <div className="desk-person-actions">
-       <a href={whatsappLink(waMessage.service({title:"studio photography and photo printing",note:"I'm following up regarding your Rajmoti Studio work."}),"+91"+c.phone)}
+       <a href={whatsappLink(waMessage.customerFollowUp(c.name),"+91"+c.phone)}
          target="_blank" rel="noopener noreferrer" aria-label={"Message "+c.name}><MessageCircle size={17}/></a>
        <a href={telLink("+91"+c.phone)} aria-label={"Call "+c.name}><Phone size={16}/></a>
        <button onClick={()=>begin(c)}>Edit</button>

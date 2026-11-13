@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Menu, X, Heart, ArrowUpRight, MessageCircle } from "lucide-react";
-import { whatsappLink, waMessage } from "@/lib/site";
+import { whatsappLink, waMessage, telLink, SITE } from "@/lib/site";
 import { useStyles } from "@/features/catalogue/store";
 const links = [
   { to: "/portfolios", label: "Photography" },
@@ -27,6 +27,7 @@ export function SiteNav({ overlay = false }: { overlay?: boolean }) {
           ))}
         </nav>
         <div className="studio-nav-actions">
+          <a className="studio-nav-phone" href={telLink()} aria-label={"Call Rajmoti Studio at " + SITE.whatsapp}>Call us · {SITE.whatsapp}</a>
           <Link
             to="/contact"
             aria-label={`Your saved styles, ${styles.length}`}

@@ -145,7 +145,7 @@ export function Catalogue({ productId }: { productId?: string }) {
       };
     else next.push(line);
     setQuote(next);
-    toast.success("Added to your demo quotation list");
+    toast.success("Added to your gift shortlist — confirm final details with the studio");
     open(undefined);
   }
   const active = Object.entries(filters).filter(([, v]) => v);

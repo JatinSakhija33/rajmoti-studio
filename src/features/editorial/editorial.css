@@ -2189,3 +2189,9 @@ html {scroll-behavior:smooth;}
 @media(max-width:920px){.desk-navigation-inner{gap:16px;padding:12px 18px}.desk-site-link{display:none}.desk-tabs a{padding:11px 13px}.desk-contact-grid{grid-template-columns:1fr}.desk-calendar-layout{grid-template-columns:1fr}}
 @media(max-width:640px){.desk-navigation-inner{flex-wrap:wrap;justify-content:center}.desk-tabs{order:2;margin:0;width:100%;justify-content:space-between}.desk-tabs a{font-size:11px;padding:10px 12px}.desk-page{padding:28px 16px 70px}.desk-heading{align-items:flex-start;flex-direction:column}.desk-heading h1{font-size:38px}.desk-stats{gap:7px}.desk-stats>div{padding:16px 12px}.desk-stats strong{font-size:26px}.desk-stats span{font-size:9px}.desk-person{flex-wrap:wrap;padding:18px}.desk-person-actions{width:100%;justify-content:flex-start}.desk-calendar-card,.desk-day-panel{padding:14px}.desk-calendar-grid button{min-height:48px;padding:6px}.desk-form{grid-template-columns:1fr}.desk-span2{grid-column:span 1}.desk-modal{padding:22px}.owner-entry-card{padding:30px 24px}.wa-floating{right:13px;bottom:80px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.editorial *,.desk-app *{transition:none!important;animation:none!important}}
+
+/* Warm studio contact navigation: accessible number without clutter. */
+.studio-nav-phone{white-space:nowrap;font-size:11px;font-weight:600;color:#82684b;text-decoration:none;transition:color .2s ease}
+.studio-nav-phone:hover{color:#394e3b}
+.studio-nav-phone:focus-visible{outline:2px solid #987348;outline-offset:5px}
+@media(max-width:1180px){.studio-nav-phone{display:none}}

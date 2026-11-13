@@ -38,7 +38,11 @@ export function instagramHandle() {
 
 /** Context-aware WhatsApp openers so every enquiry arrives with its subject. */
 export const waMessage = {
-  general: () => `Hello ${SITE.name}, I would like to know more about your photography services.`,
+  general: () => `Hello Rajmoti Studio! I visited your website and would like to enquire about photography or prints. Please share the details.`,
+  customerFollowUp: (name: string, subject = "your photography or print order") =>
+    `Namaste ${name.trim() || "there"}, this is Rajmoti Studio, Jetpur. We are following up about ${subject}. Please let us know a convenient time to talk. Thank you!`,
+  customerReady: (name: string, service: string) =>
+    `Namaste ${name.trim() || "there"}, this is Rajmoti Studio, Jetpur. Your ${service} is ready. Please contact us to confirm collection or delivery. Thank you!`,
   category: (name: string) => `Hello ${SITE.name}, I'd like to know more about ${name}.`,
   package: (name: string) => `Hello ${SITE.name}, I'm interested in the ${name} package.`,
   photo: (title?: string | null) =>
