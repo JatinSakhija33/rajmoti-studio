@@ -1,6 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {cleanOrder,phoneNumber,sniffMedia,signUpload,validUpload,signTracking,validTracking,requireOwner} from "../functions/_lib/security.js";
+import {
+  cleanOrder,
+  phoneNumber,
+  sniffMedia,
+  signUpload,
+  validUpload,
+  signTracking,
+  validTracking,
+  requireOwner,
+  buildUpiUri,
+  UPI_CONFIG,
+  calculateVariantPricePaise,
+  STANDARD_DELIVERY_CHARGE_PAISE,
+} from "../functions/_lib/security.js";
 
 const secret="d5c64a28942d159134a2d7c783afb14184fbd784a19557f35a930132019b83af";
 
@@ -45,4 +58,66 @@ test("content signature checks reject disguised files",()=>{
 });
 test("owner access fails closed if no Access credentials exist",async()=>{
  await assert.rejects(()=>requireOwner(new Request("https://example.com/api/owner/orders"),{}));
+});
+
+test("UPI URI encodes exact payee, beneficiary, and integer paise amount", () => {
+  assert.equal(UPI_CONFIG.payeeVpa, "9429070317@apl");
+  assert.equal(UPI_CONFIG.payeeName, "PANKAJ LAXMICHAND SAKHIJA");
+
+  const uri = buildUpiUri({ amountPaise: 85000, publicRef: "RJ-TEST", note: "12x18 Frame" });
+  assert.match(uri, /^upi:\/\/pay\?/);
+  assert.match(uri, /pa=9429070317%40apl/);
+  assert.match(uri, /pn=PANKAJ\+LAXMICHAND\+SAKHIJA/);
+  assert.match(uri, /am=850\.00/);
+  assert.match(uri, /cu=INR/);
+  assert.match(uri, /tr=RJ-TEST/);
+
+  // Throws on negative or zero amounts
+  assert.throws(() => buildUpiUri({ amountPaise: 0 }));
+  assert.throws(() => buildUpiUri({ amountPaise: -100 }));
+});
+
+test("Home Delivery requires 100% online prepayment and delivery address", () => {
+  // Rejects Home Delivery without address
+  assert.throws(() =>
+    cleanOrder({
+      name: "Suresh Patel",
+      phone: "9876543210",
+      type: "Photo gifting",
+      fulfillment: "home_delivery",
+      address: {},
+    }),
+  );
+
+  // Valid Home Delivery order forces paymentChoice = pay_online (COD = Never)
+  const deliveryOrder = cleanOrder({
+    name: "Suresh Patel",
+    phone: "9876543210",
+    type: "Photo gifting",
+    fulfillment: "home_delivery",
+    paymentChoice: "pay_at_studio", // Attempted to choose pay on collection for delivery
+    address: { line1: "Station Road", pincode: "360370", city: "Jetpur" },
+    quote: [{ productId: "FRM-001", size: "12×18 in", quantity: 1 }],
+  });
+
+  assert.equal(deliveryOrder.fulfillment, "home_delivery");
+  assert.equal(deliveryOrder.paymentChoice, "pay_online"); // Forced full online payment
+  assert.equal(deliveryOrder.deliveryChargePaise, STANDARD_DELIVERY_CHARGE_PAISE);
+  assert.equal(deliveryOrder.totalAmountPaise, 85000 + 10000); // Frame ₹850 + Delivery ₹100 = ₹950
+});
+
+test("Studio Collection allows Pay Online or Pay at Studio", () => {
+  const shopOrder = cleanOrder({
+    name: "Pooja Varma",
+    phone: "9876543210",
+    type: "Photo gifting",
+    fulfillment: "studio_collection",
+    paymentChoice: "pay_at_studio",
+    quote: [{ productId: "MUG-001", size: "Standard", finish: "magic", quantity: 2 }],
+  });
+
+  assert.equal(shopOrder.fulfillment, "studio_collection");
+  assert.equal(shopOrder.paymentChoice, "pay_at_studio");
+  assert.equal(shopOrder.deliveryChargePaise, 0);
+  assert.equal(shopOrder.totalAmountPaise, 55000 * 2); // 2 Magic Mugs = ₹1100
 });

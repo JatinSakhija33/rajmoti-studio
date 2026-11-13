@@ -43,6 +43,29 @@ export async function onRequestPatch({request,env,params}) {
   if((status==="ready"||status==="delivered") && required.some(k=>review[k]!==true))
     return failure("Complete the before/after review checklist before marking ready or delivered");
 
+  // Strict Business Rule Enforcement from Final Payment Directive:
+  const fulfillment = old.fulfillment_type || "studio_collection";
+  const finalTotalPaise = Number(old.total_amount_paise) || (Number(total) * 100);
+  const currentVerifiedPaidPaise = Number(old.verified_paid_paise) || (Number(paid) * 100);
+
+  // Business Rule: Home Delivery = 100% Verified Prepayment. COD = Never. Unpaid delivery orders CANNOT be dispatched or delivered.
+  if (fulfillment === "home_delivery") {
+    if (status === "delivered" || status === "ready") {
+      if (currentVerifiedPaidPaise < finalTotalPaise || finalTotalPaise <= 0) {
+        return failure("Home Delivery orders require 100% verified prepayment before dispatch or delivery. Unpaid or partially paid orders cannot be dispatched.", 403);
+      }
+    }
+  }
+
+  // Business Rule: Studio Collection = Require outstanding balance to be settled before marking collected.
+  if (fulfillment === "studio_collection") {
+    if (status === "delivered") {
+      if (currentVerifiedPaidPaise < finalTotalPaise) {
+        return failure("Studio Collection orders require the outstanding balance to be settled (Cash or UPI at counter) before marking as collected.", 403);
+      }
+    }
+  }
+
   const deliveredAt=status==="delivered" ? (old.status==="delivered" ? old.delivered_at : new Date().toISOString()) : null;
   const archived=status==="delivered" ? old.archive_verified_at : null;
   const archivedBy=status==="delivered" ? old.archive_verified_by : null;

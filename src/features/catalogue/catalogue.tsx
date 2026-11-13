@@ -46,6 +46,8 @@ import { ThreePhotoMug } from "./live-preview/ThreePhotoMug";
 import { TranslightPreview } from "./live-preview/TranslightPreview";
 import { GodsCollection } from "./live-preview/GodsCollection";
 import { CoupleMagazineFlipbook } from "./live-preview/CoupleMagazineFlipbook";
+import { CheckoutDialog } from "./CheckoutDialog";
+import { calculateVariantPriceInr } from "@/lib/pricing";
 import { toast } from "sonner";
 
 const initial = {
@@ -604,7 +606,16 @@ export function Catalogue({ productId }: { productId?: string }) {
             </DialogDescription>
           </DialogHeader>
           {product ? (
-            <ProductDetail key={product.id} product={product} onAdd={add} />
+            <ProductDetail
+              key={product.id}
+              product={product}
+              onAdd={add}
+              onCheckout={(line) => {
+                add(line);
+                open(undefined);
+                setShowQuote(true);
+              }}
+            />
           ) : (
             <p>This product code is not in the directory. Close this panel to continue browsing.</p>
           )}
@@ -621,51 +632,13 @@ export function Catalogue({ productId }: { productId?: string }) {
           <Compare products={products.filter((p) => compare.includes(p.id))} />
         </DialogContent>
       </Dialog>
-      <Dialog open={showQuote} onOpenChange={setShowQuote}>
-        <DialogContent className="ed-modal">
-          <DialogHeader>
-            <DialogTitle>Your quotation shortlist</DialogTitle>
-            <DialogDescription>Saved on this browser. No order has been placed.</DialogDescription>
-          </DialogHeader>
-          {quote.length === 0 ? (
-            <div className="ed-empty">
-              <Package />
-              <p>Open a product, choose a variant and add it here.</p>
-            </div>
-          ) : (
-            <>
-              <div className="quote-lines">
-                {quote.map((line, i) => {
-                  const p = products.find((p) => p.id === line.productId);
-                  const v = p?.variants.find((v) => v.id === line.variantId);
-                  return (
-                    <article key={i}>
-                      <div>
-                        <strong>{p?.name || line.productId}</strong>
-                        <p>
-                          {v?.size} · Qty {line.quantity} · {line.personalisation}
-                        </p>
-                        <small>
-                          {line.packaging} · {line.orderType} · Price to confirm
-                        </small>
-                      </div>
-                      <button
-                        aria-label={`Remove ${p?.name}`}
-                        onClick={() => setQuote(quote.filter((_, j) => j !== i))}
-                      >
-                        <X size={18} />
-                      </button>
-                    </article>
-                  );
-                })}
-              </div>
-              <Link to="/contact" className="ed-button" onClick={() => setShowQuote(false)}>
-                Proceed to Studio Enquiry <ArrowRight size={16} />
-              </Link>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <CheckoutDialog
+        open={showQuote}
+        onOpenChange={setShowQuote}
+        quote={quote}
+        onClearQuote={() => setQuote([])}
+        onRemoveLine={(i) => setQuote(quote.filter((_, j) => j !== i))}
+      />
       {/* Dedicated Interactive Studio Dialog */}
       <Dialog open={!!activeStudio} onOpenChange={(v) => !v && setActiveStudio(null)}>
         <DialogContent className="ed-modal max-w-5xl max-h-[92vh] overflow-y-auto">
@@ -743,15 +716,38 @@ export function Catalogue({ productId }: { productId?: string }) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Floating Shortlist / Checkout Pill */}
+      {quote.length > 0 && (
+        <aside
+          aria-label="Order Shortlist Summary"
+          className="fixed bottom-5 right-5 z-40 bg-stone-900/95 backdrop-blur-md text-amber-100 rounded-full pl-5 pr-2 py-2 shadow-2xl border border-amber-900/40 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4"
+        >
+          <div className="flex items-center gap-2 text-xs">
+            <Package size={16} className="text-amber-400" />
+            <span className="font-semibold">{quote.length} {quote.length === 1 ? "item" : "items"} in shortlist</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowQuote(true)}
+            className="bg-amber-100 text-stone-950 font-bold text-xs px-4 py-2 rounded-full hover:bg-white transition-all shadow-xs flex items-center gap-1.5"
+          >
+            <span>Checkout</span>
+            <ArrowRight size={13} />
+          </button>
+        </aside>
+      )}
     </div>
   );
 }
 function ProductDetail({
   product: p,
   onAdd,
+  onCheckout,
 }: {
   product: Product;
   onAdd: (line: QuoteLine) => void;
+  onCheckout?: (line: QuoteLine) => void;
 }) {
   const [variantId, setVariant] = useState(p.variants[0]?.id || "");
   const [qty, setQty] = useState(1);
@@ -904,8 +900,32 @@ Could you please confirm the exact pricing and delivery estimate? Thank you!`,
             <span>Verified by studio owner. Pay at studio or via UPI upon order confirmation.</span>
           </div>
 
-          {/* Action Buttons: WhatsApp & Shortlist */}
+          {/* Action Buttons: Instant Checkout, WhatsApp & Shortlist */}
           <div className="flex flex-col gap-2 pt-2">
+            <button
+              type="button"
+              className="ed-button flex items-center justify-center gap-2 bg-stone-900 text-amber-100 hover:bg-stone-800 transition-colors shadow-xs"
+              disabled={!Number.isInteger(qty) || qty < 1 || qty > 9999 || p.availability === "Discontinued"}
+              onClick={() => {
+                const line: QuoteLine = {
+                  productId: p.id,
+                  variantId,
+                  quantity: qty,
+                  personalisation: customText ? `${personalisation}: "${customText}"` : personalisation,
+                  packaging,
+                  orderType,
+                };
+                if (onCheckout) {
+                  onCheckout(line);
+                } else {
+                  onAdd(line);
+                  toast.success(`Added ${p.name} to your quotation shortlist.`);
+                }
+              }}
+            >
+              <Package size={16} /> Instant Checkout · ₹{(calculateVariantPriceInr(p.id, v?.size, v?.finish) * qty).toFixed(2)}
+            </button>
+
             <a
               href={whatsappInquiryUrl}
               target="_blank"

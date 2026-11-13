@@ -17,6 +17,9 @@ import {
   ChevronRight,
   Plus,
   Eye,
+  Truck,
+  MapPin,
+  CreditCard,
 } from "lucide-react";
 import { DeskNav } from "@/components/desk-nav";
 import { whatsappLink, waMessage, telLink } from "@/lib/site";
@@ -71,6 +74,13 @@ type Job = {
   review_json: string;
   customization_json?: string;
   public_ref?: string;
+  fulfillment_type?: string;
+  delivery_address_json?: string;
+  delivery_charge_paise?: number;
+  total_amount_paise?: number;
+  verified_paid_paise?: number;
+  payment_method?: string;
+  payment_attempt_ref?: string;
 };
 
 type InventoryItem = {
@@ -384,6 +394,21 @@ function Desk() {
       return;
     }
 
+    // Strict business rule enforcement:
+    const isHomeDelivery = selected.fulfillment_type === "home_delivery";
+    const isStudioCollection = selected.fulfillment_type === "studio_collection";
+    const remainingPaise = Math.max(0, quoted_total - paid_amount);
+
+    if (isHomeDelivery && remainingPaise > 0 && (stage === "ready" || stage === "delivered")) {
+      setError("Home Delivery orders require 100% verified prepayment before marking Ready or Delivered. COD is never permitted.");
+      return;
+    }
+
+    if (isStudioCollection && remainingPaise > 0 && stage === "delivered") {
+      setError("Studio Collection orders require the outstanding balance to be settled (Cash or UPI at counter) before marking Collected / Delivered.");
+      return;
+    }
+
     setSaving(true);
     setError("");
     setNotice("");
@@ -413,6 +438,72 @@ function Desk() {
       setSelected(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function reconcileUpi(utrToVerify?: string) {
+    if (!selected) return;
+    const utr = utrToVerify || reference || selected.payment_reference;
+    if (!utr?.trim()) {
+      setError("Please enter the verified bank statement UTR / IMPS ID before reconciling.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/owner/orders/${encodeURIComponent(selected.id)}/payments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          action: "verify_upi",
+          utr: utr.trim(),
+          notes: "Reconciled with bank account statement by studio owner",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to reconcile payment");
+      setNotice("Bank payment verified and reconciled successfully. Ledger synchronized.");
+      await load();
+      setPaid(total);
+      setReference(utr.trim());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Reconciliation error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function recordCounterPayment(method: "cash" | "upi") {
+    if (!selected) return;
+    const balancePaise = Math.max(0, parseRupees(total || "0") - parseRupees(paid || "0")) * 100;
+    if (balancePaise <= 0) {
+      setError("This order is already fully paid.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/owner/orders/${encodeURIComponent(selected.id)}/payments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          action: "record_counter_payment",
+          method,
+          amountPaise: balancePaise,
+          notes: `Settled in ${method.toUpperCase()} at Rajmoti Studio counter in Jetpur`,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to record counter payment");
+      setNotice(`Counter ${method.toUpperCase()} payment recorded. Balance settled.`);
+      await load();
+      setPaid(total);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error recording counter payment");
     } finally {
       setSaving(false);
     }
@@ -923,6 +1014,20 @@ function Desk() {
                         <div>
                           <strong className="text-sm font-semibold text-stone-900">{j.customer_name}</strong>
                           <span className="text-xs text-stone-500 ml-2 font-mono">{j.phone}</span>
+                          {j.public_ref && (
+                            <span className="ml-2 font-mono text-[10px] bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded border border-stone-200">
+                              {j.public_ref}
+                            </span>
+                          )}
+                          {j.fulfillment_type === "home_delivery" ? (
+                            <span className="ml-2 text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-bold inline-flex items-center gap-0.5">
+                              🚚 Home Delivery
+                            </span>
+                          ) : (
+                            <span className="ml-2 text-[10px] bg-blue-100 text-blue-900 px-1.5 py-0.5 rounded font-bold inline-flex items-center gap-0.5">
+                              🏪 Studio Collection
+                            </span>
+                          )}
                         </div>
                         <span
                           className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
@@ -1004,6 +1109,49 @@ function Desk() {
                       📞
                     </a>
                   </div>
+                </div>
+
+                {/* Fulfilment & Delivery Details */}
+                <div className="rounded-xl border border-stone-200 bg-stone-50/70 p-3 text-xs space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-stone-900 flex items-center gap-1.5">
+                      {selected.fulfillment_type === "home_delivery" ? (
+                        <>
+                          <Truck size={15} className="text-amber-800" />
+                          <span>Home Delivery (Prepayment Required)</span>
+                        </>
+                      ) : (
+                        <>
+                          <MapPin size={15} className="text-blue-800" />
+                          <span>Studio Collection (Jetpur Counter)</span>
+                        </>
+                      )}
+                    </span>
+                    {selected.public_ref && (
+                      <span className="font-mono bg-white px-2 py-0.5 rounded border border-stone-200 text-[11px] font-bold text-stone-800">
+                        {selected.public_ref}
+                      </span>
+                    )}
+                  </div>
+
+                  {selected.fulfillment_type === "home_delivery" && selected.delivery_address_json && (
+                    <div className="bg-white p-2 rounded-lg border border-amber-200/80 font-mono text-[11px] text-stone-800 leading-relaxed">
+                      {(() => {
+                        try {
+                          const addr = JSON.parse(selected.delivery_address_json);
+                          return (
+                            <>
+                              <p className="font-semibold text-stone-900">{addr.line1}</p>
+                              {addr.line2 && <p>{addr.line2}</p>}
+                              <p>{addr.city}, {addr.state} - {addr.pincode}</p>
+                            </>
+                          );
+                        } catch {
+                          return <p>{selected.delivery_address_json}</p>;
+                        }
+                      })()}
+                    </div>
+                  )}
                 </div>
 
                 {/* Stage Picker */}
@@ -1146,14 +1294,18 @@ function Desk() {
                   )}
                 </div>
 
-                {/* Payment Ledger */}
+                {/* Payment Ledger & Authoritative Reconciliation */}
                 <div className="p-3.5 bg-stone-50 rounded-xl border border-stone-200 text-xs space-y-2.5">
                   <div className="flex justify-between items-center font-semibold text-stone-800">
-                    <span>Payment Verification</span>
+                    <span className="flex items-center gap-1.5">
+                      <CreditCard size={14} className="text-amber-800" />
+                      <span>Payment Reconciliation</span>
+                    </span>
                     <span className="font-mono text-stone-600">
                       Balance: {rupees(Math.max(0, parseRupees(total || "0") - parseRupees(paid || "0")))}
                     </span>
                   </div>
+
                   <div className="grid grid-cols-2 gap-2">
                     <label>
                       Quoted Total (₹)
@@ -1178,15 +1330,76 @@ function Desk() {
                       />
                     </label>
                   </div>
+
                   <label>
                     Bank/UPI Reference (UTR / IMPS ID)
                     <input
-                      className="w-full border border-stone-300 rounded-lg p-1.5 mt-1 bg-white"
+                      className="w-full border border-stone-300 rounded-lg p-1.5 mt-1 bg-white font-mono"
                       value={reference}
                       onChange={(e) => setReference(e.target.value)}
                       placeholder="Only after checking bank statement"
                     />
                   </label>
+
+                  {/* Customer Reported UTR */}
+                  {selected.payment_reference && (
+                    <div className="p-2.5 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-between gap-2">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-amber-900 block">
+                          Customer Reported UTR
+                        </span>
+                        <span className="font-mono font-bold text-stone-900 text-xs">
+                          {selected.payment_reference}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void reconcileUpi(selected.payment_reference)}
+                        disabled={saving}
+                        className="px-2.5 py-1 rounded bg-stone-900 text-amber-100 text-[11px] font-semibold hover:bg-stone-800 disabled:opacity-50"
+                      >
+                        Verify & Settle
+                      </button>
+                    </div>
+                  )}
+
+                  {/* 1-Click Studio Reconciliation Actions */}
+                  <div className="pt-2 border-t border-stone-200/80 space-y-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 block">
+                      Reconciliation Actions (Bank Statement Verified)
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={saving || Math.max(0, parseRupees(total || "0") - parseRupees(paid || "0")) <= 0}
+                        onClick={() => void reconcileUpi()}
+                        className="flex-1 py-1.5 px-2 rounded-lg bg-emerald-700 text-white font-semibold text-[11px] hover:bg-emerald-800 disabled:opacity-40 transition-colors shadow-2xs"
+                      >
+                        ✓ Reconcile UPI Transfer
+                      </button>
+
+                      {selected.fulfillment_type === "studio_collection" && (
+                        <>
+                          <button
+                            type="button"
+                            disabled={saving || Math.max(0, parseRupees(total || "0") - parseRupees(paid || "0")) <= 0}
+                            onClick={() => void recordCounterPayment("cash")}
+                            className="py-1.5 px-2.5 rounded-lg bg-amber-900 text-amber-100 font-semibold text-[11px] hover:bg-amber-800 disabled:opacity-40 transition-colors shadow-2xs"
+                          >
+                            💵 Record Counter Cash
+                          </button>
+                          <button
+                            type="button"
+                            disabled={saving || Math.max(0, parseRupees(total || "0") - parseRupees(paid || "0")) <= 0}
+                            onClick={() => void recordCounterPayment("upi")}
+                            className="py-1.5 px-2.5 rounded-lg bg-stone-800 text-stone-100 font-semibold text-[11px] hover:bg-stone-700 disabled:opacity-40 transition-colors shadow-2xs"
+                          >
+                            📱 Counter UPI
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Mandatory Review Checklist */}
@@ -1211,9 +1424,50 @@ function Desk() {
                   ))}
                 </div>
 
+                {/* Strict Dispatch & Collection Guard Alerts */}
+                {(() => {
+                  const isHomeDelivery = selected.fulfillment_type === "home_delivery";
+                  const isStudioCollection = selected.fulfillment_type === "studio_collection";
+                  const curBalance = Math.max(0, parseRupees(total || "0") - parseRupees(paid || "0"));
+
+                  if (isHomeDelivery && curBalance > 0 && (stage === "ready" || stage === "delivered")) {
+                    return (
+                      <div className="p-3 bg-red-50 border border-red-300 rounded-xl text-red-900 text-xs flex items-start gap-2">
+                        <AlertTriangle size={16} className="text-red-700 shrink-0 mt-0.5" />
+                        <div>
+                          <strong>⛔ Dispatch Blocked:</strong> Home Delivery orders strictly require 100% verified
+                          prepayment before marking Ready or Dispatched. Reconcile received payment above.
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (isStudioCollection && curBalance > 0 && stage === "delivered") {
+                    return (
+                      <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-950 text-xs flex items-start gap-2">
+                        <AlertTriangle size={16} className="text-amber-800 shrink-0 mt-0.5" />
+                        <div>
+                          <strong>⛔ Collection Locked:</strong> Studio Collection orders require outstanding balance
+                          (₹{curBalance.toFixed(2)}) to be settled at the counter before marking Delivered / Collected.
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return null;
+                })()}
+
                 {/* Save Button */}
                 <button
-                  disabled={saving}
+                  disabled={
+                    saving ||
+                    (selected.fulfillment_type === "home_delivery" &&
+                      Math.max(0, parseRupees(total || "0") - parseRupees(paid || "0")) > 0 &&
+                      (stage === "ready" || stage === "delivered")) ||
+                    (selected.fulfillment_type === "studio_collection" &&
+                      Math.max(0, parseRupees(total || "0") - parseRupees(paid || "0")) > 0 &&
+                      stage === "delivered")
+                  }
                   onClick={() => void save()}
                   className="w-full py-3 rounded-xl bg-[#29251F] text-amber-100 font-semibold text-sm hover:bg-stone-800 transition-colors shadow-sm disabled:opacity-50"
                 >

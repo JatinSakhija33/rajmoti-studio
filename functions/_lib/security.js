@@ -1,5 +1,94 @@
 const MIME = {"image/jpeg":".jpg","image/png":".png","image/webp":".webp"};
 export const STAGES = ["received","editing","review","printing","framing","ready","delivered","cancelled"];
+
+export const UPI_CONFIG = {
+  payeeVpa: "9429070317@apl",
+  payeeName: "PANKAJ LAXMICHAND SAKHIJA",
+  storeName: "Rajmoti Studio",
+};
+
+export const STANDARD_DELIVERY_CHARGE_PAISE = 10000; // ₹100 standard Home Delivery charge
+
+export function calculateVariantPricePaise(productId = "", variantSize = "", finish = "") {
+  const p = String(productId || "").toUpperCase();
+  const s = String(variantSize || "").toLowerCase();
+  const f = String(finish || "").toLowerCase();
+
+  // Mugs
+  if (p.includes("MUG") || s.includes("mug")) {
+    if (f.includes("magic") || p === "MUG-002" || p === "MUG-003") return 55000; // ₹550
+    if (f.includes("black")) return 45000; // ₹450
+    return 35000; // ₹350 Gloss White Ceramic
+  }
+
+  // Devotional God's Collection
+  if (p.includes("GOD")) {
+    if (p === "GOD-001" || f.includes("acrylic")) {
+      if (s.includes("16×24") || s.includes("16x24")) return 185000; // ₹1850
+      if (s.includes("12×18") || s.includes("12x18")) return 145000; // ₹1450
+      return 95000; // ₹950 (8×12)
+    }
+    if (p === "GOD-002" || f.includes("translight")) {
+      if (s.includes("16×24") || s.includes("16x24")) return 285000; // ₹2850
+      return 195000; // ₹1950 (12×18)
+    }
+    return 75000; // ₹750 (Shrine Frame)
+  }
+
+  // Personalised Couple Magazine
+  if (p.includes("MAG") || s.includes("magazine") || s.includes("pages")) {
+    if (s.includes("16") || s.includes("20")) return 195000; // ₹1950 (16-20 photos)
+    return 145000; // ₹1450 (12-16 photos)
+  }
+
+  // LED Translight
+  if (p.includes("LED") || s.includes("translight")) {
+    if (s.includes("16×24") || s.includes("16x24")) return 285000; // ₹2850
+    return 185000; // ₹1850 (12×18)
+  }
+
+  // Inner Sparkle (14×20)
+  if (p.includes("SPK") || s.includes("14×20") || s.includes("14x20") || f.includes("sparkle")) {
+    return 185000; // ₹1850
+  }
+
+  // Acrylic Frames
+  if (p.includes("ACR") || f.includes("acrylic")) {
+    if (s.includes("16×24") || s.includes("16x24")) return 245000; // ₹2450
+    if (s.includes("12×18") || s.includes("12x18")) return 165000; // ₹1650
+    return 85000; // ₹850 (8×12)
+  }
+
+  // Standard Frames (FRM)
+  if (s.includes("20×30") || s.includes("20x30")) return 245000; // ₹2450
+  if (s.includes("16×24") || s.includes("16x24")) return 145000; // ₹1450
+  if (s.includes("12×18") || s.includes("12x18")) return 85000;  // ₹850
+  if (s.includes("10×14") || s.includes("10x14")) return 65000;  // ₹650
+  if (s.includes("10×10") || s.includes("10x10")) return 55000;  // ₹550
+  if (s.includes("8×12") || s.includes("8x12")) return 45000;   // ₹450
+  if (s.includes("6×8") || s.includes("6x8")) return 35000;     // ₹350
+  if (s.includes("4×6") || s.includes("4x6")) return 25000;     // ₹250
+
+  return 45000; // Default baseline ₹450
+}
+
+export function buildUpiUri({ amountPaise, publicRef = "", note = "" }) {
+  if (!Number.isSafeInteger(amountPaise) || amountPaise <= 0) {
+    throw Error("Invalid payment amount for UPI");
+  }
+  const inr = (amountPaise / 100).toFixed(2);
+  const tn = clean(note || (publicRef ? `Rajmoti Order ${publicRef}` : "Rajmoti Studio"), 50);
+  const params = new URLSearchParams({
+    pa: UPI_CONFIG.payeeVpa,
+    pn: UPI_CONFIG.payeeName,
+    am: inr,
+    cu: "INR",
+    tn,
+  });
+  if (publicRef) params.set("tr", String(publicRef).slice(0, 35));
+  return `upi://pay?${params.toString()}`;
+}
+
 export function json(data,status=200) { return Response.json(data,{status,headers:{"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}}); }
 export function failure(message,status=400) { return json({error:message},status); }
 export function clean(s,max=120) {return typeof s==="string"?s.trim().slice(0,max):"";}
@@ -12,20 +101,66 @@ export function cleanOrder(raw={}) {
  if(!raw || typeof raw!=="object" || Array.isArray(raw)) throw Error("Invalid form");
  const name=clean(raw.name,120),phone=phoneNumber(raw.phone),kind=clean(raw.type,60);
  if(name.length<2 || !phone || !kind)throw Error("Enter a name, 10-digit phone and service");
+
+ // Two fulfilment methods: 'home_delivery' (Full online payment compulsory) vs 'studio_collection'
+ const fulfillment = clean(raw.fulfillment, 40) === "home_delivery" ? "home_delivery" : "studio_collection";
+ let paymentChoice = clean(raw.paymentChoice, 40);
+ if (fulfillment === "home_delivery") {
+   paymentChoice = "pay_online"; // COD = Never; 100% online prepayment required
+ } else {
+   paymentChoice = paymentChoice === "pay_online" ? "pay_online" : "pay_at_studio";
+ }
+
+ let address = null;
+ if (fulfillment === "home_delivery") {
+   const a = raw.address || {};
+   address = {
+     line1: clean(a.line1, 150),
+     line2: clean(a.line2, 150),
+     city: clean(a.city, 80) || "Jetpur",
+     pincode: clean(a.pincode, 10),
+     state: clean(a.state, 50) || "Gujarat",
+   };
+   if (!address.line1 || !address.pincode) {
+     throw Error("Full delivery address and pin code are required for Home Delivery");
+   }
+ }
+
  if(Array.isArray(raw.quote) && raw.quote.length>12)throw Error("Too many selected gifts");
  const quote=(Array.isArray(raw.quote)?raw.quote:[]).map(v=>({
   productId:clean(v?.productId,80),variantId:clean(v?.variantId,80),
   quantity:Math.min(50,Math.max(1,Number(v?.quantity)||1)),
   personalisation:clean(v?.personalisation,200),packaging:clean(v?.packaging,80),
-  orderType:clean(v?.orderType,80)
+  orderType:clean(v?.orderType,80),
+  size:clean(v?.size,50),
+  finish:clean(v?.finish,50)
  }));
+
+ // Integer paise calculations
+ let itemsPaise = 0;
+ if (quote.length > 0) {
+   for (const item of quote) {
+     const unitPaise = calculateVariantPricePaise(item.productId, item.size, item.finish);
+     itemsPaise += unitPaise * item.quantity;
+   }
+ } else {
+   itemsPaise = Math.max(0, Number(raw.quotedAmountPaise) || 0);
+ }
+
+ const deliveryChargePaise = fulfillment === "home_delivery" ? STANDARD_DELIVERY_CHARGE_PAISE : 0;
+ const totalAmountPaise = itemsPaise + deliveryChargePaise;
+
  const styles=(Array.isArray(raw.styles)?raw.styles:[]).slice(0,12).map(v=>({id:clean(v?.id,80),title:clean(v?.title,120)}));
  const date=clean(raw.date,10);
  if(date && !/^\d{4}-\d{2}-\d{2}$/.test(date))throw Error("Invalid preferred date");
  const key=clean(raw.clientRequestId,80);
  if(key && !/^[a-zA-Z0-9_-]{8,80}$/.test(key))throw Error("Invalid request ID");
- return {name,phone,kind,date,age:clean(raw.age,80),collection:clean(raw.package,100),
- quote,styles,notes:clean(raw.notes,1000),clientRequestId:key||crypto.randomUUID()};
+
+ return {
+  name,phone,kind,date,age:clean(raw.age,80),collection:clean(raw.package,100),
+  quote,styles,notes:clean(raw.notes,1000),clientRequestId:key||crypto.randomUUID(),
+  fulfillment,paymentChoice,address,itemsPaise,deliveryChargePaise,totalAmountPaise
+ };
 }
 export function assertOrigin(request) {
  const origin=request.headers.get("Origin");

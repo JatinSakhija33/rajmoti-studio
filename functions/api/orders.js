@@ -1,4 +1,14 @@
-import { json, failure, cleanOrder, verifyTurnstile, assertOrigin, signUpload, signTracking } from "../_lib/security.js";
+import {
+  json,
+  failure,
+  cleanOrder,
+  verifyTurnstile,
+  assertOrigin,
+  signUpload,
+  signTracking,
+  buildUpiUri,
+  UPI_CONFIG,
+} from "../_lib/security.js";
 
 export async function onRequestPost({ request, env }) {
   if (!env.ORDER_DB || !env.TURNSTILE_SECRET_KEY || !env.ORDER_UPLOAD_SECRET) {
@@ -20,11 +30,35 @@ export async function onRequestPost({ request, env }) {
       JSON.stringify(order.quote || []).toLowerCase().includes("magazine");
     const photoLimit = isMagazine ? 20 : 5;
     const publicRef = "RJ-" + Math.random().toString(36).substring(2, 6).toUpperCase();
+    const attemptRef = "PAY-" + Math.random().toString(36).substring(2, 8).toUpperCase();
     const customization = raw.customization ? JSON.stringify(raw.customization).slice(0, 8000) : "{}";
+
+    const fulfillment = order.fulfillment; // 'home_delivery' | 'studio_collection'
+    const addressJson = JSON.stringify(order.address || {});
+    const deliveryChargePaise = order.deliveryChargePaise;
+    const totalAmountPaise = order.totalAmountPaise;
+    const quotedTotalInr = Math.round(totalAmountPaise / 100);
+
+    const paymentMethod = order.paymentChoice === "pay_online" ? "upi_online" : "pay_at_studio";
+    const paymentStatus = order.paymentChoice === "pay_at_studio" ? "pay_at_studio" : "unpaid";
+
+    const upiUri =
+      totalAmountPaise > 0
+        ? buildUpiUri({
+            amountPaise: totalAmountPaise,
+            publicRef,
+            note: `Order ${publicRef} - Rajmoti Studio`,
+          })
+        : "";
 
     try {
       await env.ORDER_DB.prepare(
-        "INSERT INTO orders(id,request_key,source,customer_name,phone,service_type,preferred_date,baby_age,package_slug,styles_json,items_json,notes,public_ref,photo_limit,customization_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(request_key) DO NOTHING",
+        `INSERT INTO orders(
+          id,request_key,source,customer_name,phone,service_type,preferred_date,baby_age,package_slug,
+          styles_json,items_json,notes,public_ref,photo_limit,customization_json,
+          fulfillment_type,delivery_address_json,delivery_charge_paise,total_amount_paise,verified_paid_paise,
+          payment_method,payment_attempt_ref,payment_status,quoted_total
+        ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(request_key) DO NOTHING`,
       )
         .bind(
           id,
@@ -42,10 +76,42 @@ export async function onRequestPost({ request, env }) {
           publicRef,
           photoLimit,
           customization,
+          fulfillment,
+          addressJson,
+          deliveryChargePaise,
+          totalAmountPaise,
+          0, // verified_paid_paise begins at 0 until verified by owner
+          paymentMethod,
+          attemptRef,
+          paymentStatus,
+          quotedTotalInr,
         )
         .run();
+
+      // If paying online, initialize payment attempt in order_payments
+      if (totalAmountPaise > 0 && order.paymentChoice === "pay_online") {
+        try {
+          await env.ORDER_DB.prepare(
+            `INSERT INTO order_payments(id, order_id, attempt_ref, amount_paise, method, status, payee_upi, beneficiary_name)
+             VALUES(?,?,?,?,?,?,?,?)`,
+          )
+            .bind(
+              crypto.randomUUID(),
+              id,
+              attemptRef,
+              totalAmountPaise,
+              "upi",
+              "pending_verification",
+              UPI_CONFIG.payeeVpa,
+              UPI_CONFIG.payeeName,
+            )
+            .run();
+        } catch {
+          // Non-fatal if order_payments not yet migrated
+        }
+      }
     } catch {
-      // Fallback for earlier schema if migration not yet applied
+      // Fallback for earlier database schema
       await env.ORDER_DB.prepare(
         "INSERT INTO orders(id,request_key,source,customer_name,phone,service_type,preferred_date,baby_age,package_slug,styles_json,items_json,notes) VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(request_key) DO NOTHING",
       )
@@ -66,7 +132,9 @@ export async function onRequestPost({ request, env }) {
         .run();
     }
 
-    const found = await env.ORDER_DB.prepare("SELECT * FROM orders WHERE request_key=?").bind(order.clientRequestId).first();
+    const found = await env.ORDER_DB.prepare("SELECT * FROM orders WHERE request_key=?")
+      .bind(order.clientRequestId)
+      .first();
     if (!found) return failure("Order could not be saved", 500);
 
     const reference = found.public_ref || publicRef;
@@ -76,7 +144,16 @@ export async function onRequestPost({ request, env }) {
       {
         id: found.id,
         reference,
+        publicRef: reference,
+        attemptRef,
+        fulfillment,
+        paymentChoice: order.paymentChoice,
+        totalAmountPaise,
+        deliveryChargePaise,
         photoLimit: activePhotoLimit,
+        upiUri,
+        payeeVpa: UPI_CONFIG.payeeVpa,
+        beneficiaryName: UPI_CONFIG.payeeName,
         uploadToken: await signUpload(found.id, env.ORDER_UPLOAD_SECRET),
         trackingToken: await signTracking(found.id, env.ORDER_UPLOAD_SECRET),
       },
