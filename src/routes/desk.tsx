@@ -1,11 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { ArrowLeft, RefreshCw, ShieldCheck, IndianRupee, Download, Search } from "lucide-react";
 const stages = ["received","editing","review","printing","framing","ready","delivered","cancelled"] as const;
+const printSizes = ["4×6","6×8","8×12","10×14","12×18","14×20","16×24","18×24","20×30","35×45 mm passport","Custom"];
+const checks = {
+  original_preserved: "Original files protected; no overwriting",
+  identity_preserved: "Faces, expressions, pose, clothing and proportions preserved unless expressly requested",
+  print_spec_verified: "Print size, resolution, crop and colours reviewed",
+  customer_details_verified: "Names, dates, tithi and customer instructions checked",
+} as const;
+type ReviewKey = keyof typeof checks;
 type Job = {
   id: string; source: string; customer_name:string; phone:string; service_type:string; preferred_date:string;
   status: string; notes:string; created_at:string; quoted_total:number; paid_amount:number;
   payment_status:string; payment_reference:string; photo_count:number; items_json:string; delivered_at?:string; archive_verified_at?:string;
+  requested_size:string; priority:string; due_date:string; editing_instructions:string; memorial_json:string; review_json:string;
 };
 export const Route = createFileRoute("/desk")({
   head: () => ({ meta: [{title:"Owner Work Desk — Rajmoti Studio"}, {name:"robots",content:"noindex,nofollow"}] }),
@@ -30,6 +39,15 @@ function Desk() {
   const [reference,setReference]=useState("");
   const [notes,setNotes]=useState("");
   const [stage,setStage]=useState("received");
+  const [size,setSize]=useState("");
+  const [priority,setPriority]=useState("normal");
+  const [due,setDue]=useState("");
+  const [instructions,setInstructions]=useState("");
+  const [memorial,setMemorial]=useState({name:"",date:"",tithi:""});
+  const [review,setReview]=useState<Record<ReviewKey,boolean>>({original_preserved:false,identity_preserved:false,print_spec_verified:false,customer_details_verified:false});
+  const [showIntake,setShowIntake]=useState(false);
+  const [intake,setIntake]=useState({name:"",phone:"",type:"Restoration",requested_size:"8×12",priority:"normal",due_date:"",editing_instructions:"",memorial_name:"",memorial_date:"",memorial_tithi:""});
+
   const load=useCallback(async()=>{
     setLoading(true);setError("");
     try{
@@ -45,6 +63,13 @@ function Desk() {
     if(!selected){setPhotoIds([]);return;}
     setPrimaryBackup(false); setSecondaryBackup(false);
     setStage(selected.status);
+    setSize(selected.requested_size||"");
+    setPriority(selected.priority||"normal");
+    setDue(selected.due_date||"");
+    setInstructions(selected.editing_instructions||"");
+    try{setMemorial({...{name:"",date:"",tithi:""},...JSON.parse(selected.memorial_json||"{}")});}catch{setMemorial({name:"",date:"",tithi:""});}
+    try{setReview({...{original_preserved:false,identity_preserved:false,print_spec_verified:false,customer_details_verified:false},...JSON.parse(selected.review_json||"{}")});}
+    catch{setReview({original_preserved:false,identity_preserved:false,print_spec_verified:false,customer_details_verified:false});}
     setTotal((Number(selected.quoted_total||0)/100).toFixed(2));
     setPaid((Number(selected.paid_amount||0)/100).toFixed(2));
     setReference(selected.payment_reference||"");
@@ -69,7 +94,7 @@ function Desk() {
     try{
       const r=await fetch("/api/owner/orders/"+encodeURIComponent(selected.id),{
         method:"PATCH",credentials:"same-origin",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({status:stage,quoted_total,paid_amount,payment_reference:reference,notes}),
+        body:JSON.stringify({status:stage,quoted_total,paid_amount,payment_reference:reference,notes,requested_size:size,priority,due_date:due,editing_instructions:instructions,memorial,review}),
       });
       const result=await r.json();
       if(!r.ok)throw Error(result.error||"Could not save");
@@ -77,6 +102,23 @@ function Desk() {
       await load();
       setSelected(null);
     }catch(e){setError(e instanceof Error?e.message:"Failed to save");}
+    finally{setSaving(false);}
+  }
+  async function createWalkIn(e:FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSaving(true);setError("");setNotice("");
+    try {
+      const r=await fetch("/api/owner/orders",{
+        method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",
+        body:JSON.stringify({...intake,clientRequestId:crypto.randomUUID()}),
+      });
+      const data=await r.json();
+      if(!r.ok)throw Error(data.error||"Could not save walk-in job");
+      setNotice("Walk-in job created and added to the production queue.");
+      setShowIntake(false);
+      setIntake({name:"",phone:"",type:"Restoration",requested_size:"8×12",priority:"normal",due_date:"",editing_instructions:"",memorial_name:"",memorial_date:"",memorial_tithi:""});
+      await load();
+    }catch(e){setError(e instanceof Error?e.message:"Intake failed");}
     finally{setSaving(false);}
   }
   async function verifyArchive() {
@@ -132,6 +174,33 @@ function Desk() {
           <p className="text-xs uppercase tracking-wide text-[#72665b]">{label}</p>
           <p className="font-display text-2xl mt-2">{value}</p></div>)}
       </div>
+      <section className="bg-white border border-[#e9dfd4] mb-5">
+        <button className="w-full text-left px-5 py-4 flex justify-between items-center" onClick={()=>setShowIntake(!showIntake)}>
+          <strong>+ Quick walk-in intake</strong><span className="text-sm">{showIntake?"Close":"Open"}</span>
+        </button>
+        {showIntake && <form className="p-5 border-t grid sm:grid-cols-2 gap-4 text-sm" onSubmit={e=>void createWalkIn(e)}>
+          <label>Customer name <input className="w-full border p-2 mt-1" required minLength={2} value={intake.name} onChange={e=>setIntake({...intake,name:e.target.value})}/></label>
+          <label>Phone number <input className="w-full border p-2 mt-1" required type="tel" value={intake.phone} onChange={e=>setIntake({...intake,phone:e.target.value})}/></label>
+          <label>Job template <select className="w-full border p-2 mt-1" value={intake.type} onChange={e=>setIntake({...intake,type:e.target.value})}>
+            {["Restoration","Passport photo","Background replacement","Memorial portrait","Family collage","Baby portrait","Gifting","Wedding","Other"].map(x=><option key={x}>{x}</option>)}
+          </select></label>
+          <label>Print size <select className="w-full border p-2 mt-1" value={intake.requested_size} onChange={e=>setIntake({...intake,requested_size:e.target.value})}>
+            {printSizes.map(x=><option key={x}>{x}</option>)}
+          </select></label>
+          <label>Priority <select className="w-full border p-2 mt-1" value={intake.priority} onChange={e=>setIntake({...intake,priority:e.target.value})}>
+            {["low","normal","high","urgent"].map(x=><option key={x}>{x}</option>)}
+          </select></label>
+          <label>Due date <input className="w-full border p-2 mt-1" type="date" value={intake.due_date} onChange={e=>setIntake({...intake,due_date:e.target.value})}/></label>
+          <label className="sm:col-span-2">Editing / background instructions <textarea rows={2} className="w-full border p-2 mt-1" value={intake.editing_instructions} onChange={e=>setIntake({...intake,editing_instructions:e.target.value})} placeholder="Preserve face and expression; describe requested changes…"/></label>
+          {intake.type==="Memorial portrait" && <>
+            <label>Memorial name <input className="w-full border p-2 mt-1" value={intake.memorial_name} onChange={e=>setIntake({...intake,memorial_name:e.target.value})}/></label>
+            <label>Date <input className="w-full border p-2 mt-1" value={intake.memorial_date} onChange={e=>setIntake({...intake,memorial_date:e.target.value})}/></label>
+            <label className="sm:col-span-2">Tithi <input className="w-full border p-2 mt-1" value={intake.memorial_tithi} onChange={e=>setIntake({...intake,memorial_tithi:e.target.value})}/></label>
+          </>}
+          <p className="sm:col-span-2 text-xs text-[#71675c]">Unknown fields remain editable. Face, clothing, body and pose changes are never assumed. No original image is overwritten.</p>
+          <button className="bg-[#24211d] text-white px-4 py-3 disabled:opacity-50" disabled={saving}>{saving?"Saving…":"Create studio job"}</button>
+        </form>}
+      </section>
       <div className="flex justify-end mb-3"><a href="/api/owner/export" className="text-xs underline flex items-center gap-2"><Download size={14}/> Export encrypted-backup-ready order data (JSON)</a></div>
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <label className="flex items-center bg-white border px-3 flex-1 gap-2"><Search size={16}/>
@@ -148,7 +217,7 @@ function Desk() {
           <div className="divide-y">{shown.map(j=><button key={j.id} onClick={()=>setSelected(j)} className={"w-full text-left p-4 hover:bg-[#fbf8f3] "+(selected?.id===j.id?"bg-[#fbf3e7]":"")}>
             <div className="flex justify-between gap-3"><strong>{j.customer_name}</strong><span className="uppercase text-[10px] tracking-wide">{j.status}</span></div>
             <p className="text-sm mt-1">{j.service_type} · {j.phone}</p>
-            <p className="text-xs text-[#756c60] mt-1">{new Date(j.created_at+"Z").toLocaleDateString("en-IN")} · {j.photo_count} photos · Due {j.preferred_date||"not set"} · {rupees(j.quoted_total)}</p>
+            <p className="text-xs text-[#756c60] mt-1">{new Date(j.created_at+"Z").toLocaleDateString("en-IN")} · {j.photo_count} photos · Due {j.due_date||j.preferred_date||"not set"} · {j.requested_size||"size pending"} · {j.priority||"normal"} · {rupees(j.quoted_total)}</p>
           </button>)}</div>}
         </section>
         <aside className="bg-white border border-[#e9dfd4] p-5 self-start">
@@ -162,6 +231,21 @@ function Desk() {
                 {stages.map(x=><option value={x} key={x}>{x}</option>)}
               </select>
             </label>
+            <div className="grid grid-cols-2 gap-3 mb-3 text-sm">
+              <label>Print size <select className="w-full border p-2 mt-1" value={size} onChange={e=>setSize(e.target.value)}>
+                <option value="">Not specified</option>{printSizes.map(x=><option key={x}>{x}</option>)}
+              </select></label>
+              <label>Priority <select className="w-full border p-2 mt-1" value={priority} onChange={e=>setPriority(e.target.value)}>
+                {["low","normal","high","urgent"].map(x=><option key={x}>{x}</option>)}
+              </select></label>
+              <label className="col-span-2">Due date <input className="w-full border p-2 mt-1" type="date" value={due} onChange={e=>setDue(e.target.value)}/></label>
+              <label className="col-span-2">Editing instructions <textarea rows={3} className="w-full border p-2 mt-1" value={instructions} onChange={e=>setInstructions(e.target.value)}/></label>
+              {selected.service_type==="Memorial portrait" && <>
+                <label>Memorial name <input className="w-full border p-2 mt-1" value={memorial.name} onChange={e=>setMemorial({...memorial,name:e.target.value})}/></label>
+                <label>Date <input className="w-full border p-2 mt-1" value={memorial.date} onChange={e=>setMemorial({...memorial,date:e.target.value})}/></label>
+                <label className="col-span-2">Tithi <input className="w-full border p-2 mt-1" value={memorial.tithi} onChange={e=>setMemorial({...memorial,tithi:e.target.value})}/></label>
+              </>}
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <label className="block text-sm">Total ₹ <input className="w-full border p-2 mt-1" type="number" min="0" step="0.01" value={total} onChange={e=>setTotal(e.target.value)}/></label>
               <label className="block text-sm">Paid ₹ <input className="w-full border p-2 mt-1" type="number" min="0" step="0.01" value={paid} onChange={e=>setPaid(e.target.value)}/></label>
@@ -174,6 +258,15 @@ function Desk() {
             <p className="text-sm mb-2">Private customer files ({photoIds.length})</p>
             <div className="flex flex-wrap gap-2 mb-5">{photoIds.map((id,i)=><a key={id} href={"/api/owner/orders/"+selected.id+"/photos/"+id}
                 className="border px-3 py-2 text-xs flex items-center gap-2"><Download size={13}/> Photo {i+1}</a>)}</div>
+            <section className="border-t pt-4 mb-5">
+              <h3 className="font-display text-xl mb-2">Before / after approval</h3>
+              <p className="text-xs text-[#756b61] mb-3">All checks required before Ready or Delivered. Owner review, not automated identity verification.</p>
+              {(Object.entries(checks) as [ReviewKey,string][]).map(([k,label])=>
+                <label key={k} className="flex items-start gap-2 mb-3 text-xs">
+                  <input type="checkbox" className="mt-1" checked={review[k]} onChange={e=>setReview({...review,[k]:e.target.checked})}/>{label}
+                </label>
+              )}
+            </section>
             <button disabled={saving} onClick={()=>void save()} className="w-full bg-[#24211d] text-white px-4 py-3 text-sm">
               {saving?"Saving…":"Save job"} <IndianRupee size={14} className="inline"/>
             </button>
