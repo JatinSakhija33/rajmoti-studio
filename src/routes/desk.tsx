@@ -69,6 +69,8 @@ type Job = {
   editing_instructions: string;
   memorial_json: string;
   review_json: string;
+  customization_json?: string;
+  public_ref?: string;
 };
 
 type InventoryItem = {
@@ -1088,6 +1090,34 @@ function Desk() {
                       onChange={(e) => setMemorial({ ...memorial, tithi: e.target.value })}
                       placeholder="Tithi & prayers"
                     />
+                  </div>
+                )}
+
+                {/* Live Customization Specification (if placed via Gifting Suite) */}
+                {selected.customization_json && selected.customization_json !== "{}" && (
+                  <div className="border border-amber-900/15 rounded-xl p-3.5 bg-[#FAF7F1] space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-amber-950 flex items-center gap-1.5">
+                        <Sparkles size={13} className="text-amber-700" /> Live Customization Specs
+                      </span>
+                      {selected.public_ref && (
+                        <span className="font-mono bg-white px-2 py-0.5 rounded border border-stone-200 text-[11px] font-semibold">
+                          {selected.public_ref}
+                        </span>
+                      )}
+                    </div>
+                    <pre className="text-[11px] text-stone-700 bg-white/80 p-2.5 rounded border border-stone-200 overflow-x-auto font-mono whitespace-pre-wrap">
+                      {(() => {
+                        try {
+                          const parsed = JSON.parse(selected.customization_json);
+                          return Object.entries(parsed)
+                            .map(([k, v]) => `${k}: ${typeof v === "object" ? JSON.stringify(v) : v}`)
+                            .join("\n");
+                        } catch {
+                          return selected.customization_json;
+                        }
+                      })()}
+                    </pre>
                   </div>
                 )}
 

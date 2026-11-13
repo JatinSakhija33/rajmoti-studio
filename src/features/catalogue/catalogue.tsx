@@ -517,13 +517,16 @@ export function Catalogue({ productId }: { productId?: string }) {
                             {p.material} · {p.shape}
                           </p>
                           <h3>{p.name}</h3>
-                          <p className="product-size-list">
-                            {p.variants
-                              .slice(0, 3)
-                              .map((v) => v.size)
-                              .join(" / ")}
-                            {p.variants.length > 3 ? ` +${p.variants.length - 3} more` : ""}
-                          </p>
+                          <div className="product-size-list mt-1.5 flex flex-wrap gap-1">
+                            {p.variants.map((v) => (
+                              <span
+                                key={v.id}
+                                className="text-[10px] bg-stone-100/90 text-stone-700 px-1.5 py-0.5 rounded border border-stone-200"
+                              >
+                                {v.size}
+                              </span>
+                            ))}
+                          </div>
                           <div className="product-card-bottom">
                             <span>Price on request</span>
                             <ArrowUpRight size={18} />
