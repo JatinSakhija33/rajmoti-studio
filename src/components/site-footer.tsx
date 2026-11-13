@@ -46,6 +46,7 @@ export function SiteFooter() {
           <Link to="/contact">ગુજરાતીમાં મદદ ઉપલબ્ધ છે</Link>
         </div>
       </div>
+      <a className="wa-floating" href={whatsappLink(waMessage.general())} target="_blank" rel="noopener noreferrer" aria-label="Chat with Rajmoti Studio on WhatsApp"><MessageCircle size={18}/> Chat with us</a>
       <nav className="mobile-contact-dock" aria-label="Contact the studio">
         <a href={whatsappLink()}>
           <MessageCircle size={16} />
