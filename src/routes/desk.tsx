@@ -5,7 +5,7 @@ const stages = ["received","editing","review","printing","framing","ready","deli
 type Job = {
   id: string; source: string; customer_name:string; phone:string; service_type:string; preferred_date:string;
   status: string; notes:string; created_at:string; quoted_total:number; paid_amount:number;
-  payment_status:string; payment_reference:string; photo_count:number; items_json:string;
+  payment_status:string; payment_reference:string; photo_count:number; items_json:string; delivered_at?:string; archive_verified_at?:string;
 };
 export const Route = createFileRoute("/desk")({
   head: () => ({ meta: [{title:"Owner Work Desk — Rajmoti Studio"}, {name:"robots",content:"noindex,nofollow"}] }),
@@ -23,6 +23,8 @@ function Desk() {
   const [error,setError]=useState("");
   const [notice,setNotice]=useState("");
   const [photoIds,setPhotoIds]=useState<string[]>([]);
+  const [primaryBackup,setPrimaryBackup]=useState(false);
+  const [secondaryBackup,setSecondaryBackup]=useState(false);
   const [total,setTotal]=useState("");
   const [paid,setPaid]=useState("");
   const [reference,setReference]=useState("");
@@ -41,6 +43,7 @@ function Desk() {
   useEffect(()=>{void load();},[load]);
   useEffect(()=>{
     if(!selected){setPhotoIds([]);return;}
+    setPrimaryBackup(false); setSecondaryBackup(false);
     setStage(selected.status);
     setTotal((Number(selected.quoted_total||0)/100).toFixed(2));
     setPaid((Number(selected.paid_amount||0)/100).toFixed(2));
@@ -76,6 +79,38 @@ function Desk() {
     }catch(e){setError(e instanceof Error?e.message:"Failed to save");}
     finally{setSaving(false);}
   }
+  async function verifyArchive() {
+    if(!selected || selected.status!=="delivered" || !primaryBackup || !secondaryBackup)return;
+    setSaving(true);setError("");setNotice("");
+    try {
+      const r=await fetch("/api/owner/orders/"+encodeURIComponent(selected.id)+"/archive",{
+        method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({primaryBackupVerified:true,secondaryBackupVerified:true,confirmation:"TWO BACKUPS VERIFIED"}),
+      });
+      const result=await r.json();
+      if(!r.ok)throw Error(result.error||"Could not verify backups");
+      setNotice("Two backups recorded. Cloud copies stay until 30 days after delivery and deliberate deletion.");
+      setSelected(null);await load();
+    }catch(e){setError(e instanceof Error?e.message:"Archive verification failed");}
+    finally{setSaving(false);}
+  }
+  async function purgeCloudPhotos() {
+    if(!selected || !selected.archive_verified_at)return;
+    const typed=window.prompt("To delete cloud copies after the retention period, type DELETE CLOUD COPIES. Do this ONLY after checking both local backups.");
+    if(typed!=="DELETE CLOUD COPIES")return;
+    setSaving(true);setError("");setNotice("");
+    try {
+      const r=await fetch("/api/owner/orders/"+encodeURIComponent(selected.id)+"/purge",{
+        method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({confirmation:typed}),
+      });
+      const result=await r.json();
+      if(!r.ok)throw Error(result.error||"Unable to delete copies");
+      setNotice(result.deleted+" private cloud photographs deleted. Local verified archives are unaffected.");
+      setSelected(null);await load();
+    }catch(e){setError(e instanceof Error?e.message:"Cleanup failed");}
+    finally{setSaving(false);}
+  }
   return <div className="min-h-dvh bg-[#f8f5ef] text-[#27231d]">
     <header className="border-b border-[#d8d0c4] p-5 md:px-10 flex items-center justify-between gap-4">
       <div><p className="uppercase text-xs tracking-[0.22em] text-[#9a7845]">Rajmoti Studio · Private</p>
@@ -97,6 +132,7 @@ function Desk() {
           <p className="text-xs uppercase tracking-wide text-[#72665b]">{label}</p>
           <p className="font-display text-2xl mt-2">{value}</p></div>)}
       </div>
+      <div className="flex justify-end mb-3"><a href="/api/owner/export" className="text-xs underline flex items-center gap-2"><Download size={14}/> Export encrypted-backup-ready order data (JSON)</a></div>
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <label className="flex items-center bg-white border px-3 flex-1 gap-2"><Search size={16}/>
           <input className="w-full py-3 outline-none" placeholder="Find customer, phone or job" value={query} onChange={e=>setQuery(e.target.value)}/>
@@ -141,6 +177,20 @@ function Desk() {
             <button disabled={saving} onClick={()=>void save()} className="w-full bg-[#24211d] text-white px-4 py-3 text-sm">
               {saving?"Saving…":"Save job"} <IndianRupee size={14} className="inline"/>
             </button>
+            <section className="mt-7 border-t pt-5 text-sm">
+              <h3 className="font-display text-xl mb-2">Verified local archive</h3>
+              <p className="text-[#675e53] mb-3">Cloud copies must never be the only copy. Archive the originals on the studio computer and a second independent backup before confirming.</p>
+              {selected.archive_verified_at ? <p className="bg-[#edf4eb] p-3 text-xs">Backups confirmed on {selected.archive_verified_at}.</p> :
+                selected.status==="delivered" ? <>
+                  <label className="flex gap-2 items-start mb-3"><input type="checkbox" checked={primaryBackup} onChange={e=>setPrimaryBackup(e.target.checked)}/> Original files checked on studio computer.</label>
+                  <label className="flex gap-2 items-start mb-3"><input type="checkbox" checked={secondaryBackup} onChange={e=>setSecondaryBackup(e.target.checked)}/> Second independent backup opened and verified.</label>
+                  <button disabled={saving || !primaryBackup || !secondaryBackup} onClick={()=>void verifyArchive()} className="border px-4 py-2 disabled:opacity-40">Confirm verified backups</button>
+                </> : <p>Mark the job Delivered and save before confirming archives.</p>}
+              {selected.archive_verified_at && <div className="mt-4">
+                <p className="text-xs mb-2">Cloud deletion is allowed only after 30 days from delivery and two verified backups. No automatic deletion of your only copy.</p>
+                <button disabled={saving || !selected.photo_count} onClick={()=>void purgeCloudPhotos()} className="border border-[#a84d3c] text-[#8f3225] px-4 py-2 disabled:opacity-40">Purge eligible cloud photos</button>
+              </div>}
+            </section>
           </>}
         </aside>
       </div>
