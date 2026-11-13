@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowRight, CheckCircle2, Heart, Package, Upload, ShieldCheck } from "lucide-react";
+import { ArrowRight, CheckCircle2, Heart, Package, Upload, ShieldCheck, MessageCircle } from "lucide-react";
+import { whatsappLink } from "@/lib/site";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { useStyles, useQuote, useProducts } from "@/features/catalogue/store";
@@ -75,6 +76,20 @@ function Contact() {
   }, [isProduction, turnstileKey]);
 
   const today = new Date().toLocaleDateString("en-CA");
+  const whatsappMessage = [
+    "Hello Rajmoti Studio! I am enquiring through your website.",
+    "Service: " + type,
+    name.trim() ? "Name: " + name.trim() : "",
+    date ? "Preferred date: " + date : "",
+    search.package ? "Collection: " + search.package : "",
+    quote.length ? "Selected gifts: " + quote.map((line) => {
+      const p = products.find(p => p.id === line.productId);
+      const variant = p?.variants.find(v => v.id === line.variantId);
+      return (p?.name || "Photo gift") + " (" + (variant?.size || "size to confirm") + ", qty " + line.quantity + ")";
+    }).join("; ") : "",
+    notes.trim() ? "Instructions: " + notes.trim() : "",
+    "Please share availability, pricing and next steps. Thank you!"
+  ].filter(Boolean).join("\n");
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -186,7 +201,12 @@ function Contact() {
             <label className="text-sm flex gap-2 items-start"><input type="checkbox" required className="mt-1"/> I consent to Rajmoti Studio using these details and any uploaded photos only to respond to and fulfil my request.</label>
             {turnstileKey && <div ref={widgetRef}/>}
             {error && <p className="form-error" role="alert">{error}</p>}
-            {!turnstileKey && <p className="ed-notice">Online submissions will open when secure verification is configured. For now, please use the studio's WhatsApp contact.</p>}
+            {!turnstileKey && <div className="rounded-2xl bg-[#f3eadd] p-5 text-sm text-[#695744]">
+              <p className="mb-3">Prefer to speak with us directly? Your selection can be shared through WhatsApp while online order processing is being connected.</p>
+              <a className="ed-button" href={whatsappLink(whatsappMessage)} target="_blank" rel="noopener noreferrer">
+                <MessageCircle size={18}/> Continue on WhatsApp <ArrowRight size={15}/>
+              </a>
+            </div>}
             <button type="submit" className="ed-button" disabled={busy || !turnstileKey || !turnstileToken}>
               {busy ? "Saving request…" : "Send enquiry"} <ArrowRight size={16}/>
             </button>
