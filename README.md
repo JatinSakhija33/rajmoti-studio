@@ -5,7 +5,7 @@ Private source for the Rajmoti Studio photography brand and its zero-monthly-fee
 - **Public site:** React 19 + TanStack Router + Vite; editorial portfolios, gifts, session enquiries.
 - **Production intake:** Cloudflare Pages Functions + D1.
 - **Customer files:** private, temporary Cloudflare R2 originals; never overwrite originals.
-- **Owner work desk:** \`/desk\`, Cloudflare Access JWT validated on every owner API, with walk-in intake, job stages, print presets, instructions, memorial fields, review gates and manually verified payment ledger.
+- **Owner work desk:** `/desk`, Cloudflare Access JWT validated on every owner API, with walk-in intake, job stages, print presets, instructions, memorial fields, review gates and manually verified payment ledger.
 - **Customer tracking:** 30-day private signed order-status links with no private images or customer identity displayed.
 - **Local studio archive:** verify two independent backups, then manually purge eligible cloud copies **only after 30 days from delivery**.
 - **Existing demo website admin:** locked in production when built without Supabase; demo data is still used for portfolio/catalogue illustrations.
