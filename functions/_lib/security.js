@@ -103,4 +103,22 @@ export function sniffMedia(buf,mime) {
  if(mime==="image/webp" && ascii.startsWith("RIFF") && ascii.slice(8,12)==="WEBP")return MIME[mime];
  return null;
 }
+
+export async function signTracking(orderId,secret) {
+ if(!secret || secret.length<32)throw Error("Order tracking secret not configured");
+ const expires=Math.floor(Date.now()/1000)+30*24*3600;
+ const raw="tracking."+orderId+"."+expires;
+ const signature=await crypto.subtle.sign("HMAC",await hmacKey(secret),encoder.encode(raw));
+ return raw+"."+b64url(new Uint8Array(signature));
+}
+export async function validTracking(token,orderId,secret) {
+ if(!secret || !token)return false;
+ const p=String(token).split(".");
+ if(p.length!==4 || p[0]!=="tracking" || p[1]!==orderId ||
+    !/^\d{10}$/.test(p[2]) || Number(p[2])<Date.now()/1000)return false;
+ try {
+  return await crypto.subtle.verify("HMAC",await hmacKey(secret),decode64(p[3]),encoder.encode(p.slice(0,3).join(".")));
+ }catch{return false;}
+}
+
 export function hasBindings(env) {return !!env.ORDER_DB;}

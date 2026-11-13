@@ -13,7 +13,7 @@ export const Route = createFileRoute("/contact")({
   head: () => ({ meta: [{ title: "Plan your session or photo gift — Rajmoti Studio" }] }),
   component: Contact,
 });
-type UploadGrant = { id: string; reference: string; uploadToken: string };
+type UploadGrant = { id: string; reference: string; uploadToken: string; trackingToken: string };
 type TurnstileWidget = { render: (el: HTMLElement, options: Record<string, unknown>) => string; reset: (id?: string) => void; remove: (id: string) => void };
 function Contact() {
   const search = Route.useSearch();
@@ -137,6 +137,7 @@ function Contact() {
         <p className="ed-kicker">Request received securely</p>
         <h1>Thank you. <em>We'll be in touch.</em></h1>
         <p>Reference <strong>{grant.reference}</strong>. Your request is not a confirmed booking or payment; we will discuss details with you.</p>
+        <Link to="/track/$id" params={{id:grant.id}} search={{token:grant.trackingToken}} className="ed-text-button">Track your order privately <ArrowRight size={14}/></Link>
         <div className="mt-8 border border-stone-200 bg-white p-6">
           <h2 className="text-2xl font-display mb-2">Add photos for your order</h2>
           <p className="text-sm mb-4">Optional. Up to 5 originals, 10 MB each. For the best print quality, upload the original photograph rather than a WhatsApp-compressed copy.</p>

@@ -1,4 +1,4 @@
-import {json,failure,cleanOrder,verifyTurnstile,assertOrigin,signUpload} from "../_lib/security.js";
+import {json,failure,cleanOrder,verifyTurnstile,assertOrigin,signUpload,signTracking} from "../_lib/security.js";
 export async function onRequestPost({request,env}) {
  if(!env.ORDER_DB || !env.TURNSTILE_SECRET_KEY || !env.ORDER_UPLOAD_SECRET)return failure("Ordering is not configured",503);
  try {
@@ -13,6 +13,6 @@ export async function onRequestPost({request,env}) {
   ).bind(id,order.clientRequestId,"website",order.name,order.phone,order.kind,order.date,order.age,order.collection,JSON.stringify(order.styles),JSON.stringify(order.quote),order.notes).run();
   const found=await env.ORDER_DB.prepare("SELECT id,public_ref FROM orders WHERE request_key=?").bind(order.clientRequestId).first();
   if(!found)return failure("Order could not be saved",500);
-  return json({id:found.id,reference:found.public_ref||found.id.slice(0,8).toUpperCase(),uploadToken:await signUpload(found.id,env.ORDER_UPLOAD_SECRET)},201);
+  return json({id:found.id,reference:found.public_ref||found.id.slice(0,8).toUpperCase(),uploadToken:await signUpload(found.id,env.ORDER_UPLOAD_SECRET),trackingToken:await signTracking(found.id,env.ORDER_UPLOAD_SECRET)},201);
  } catch(e){return failure(e.message||"Could not accept request",e instanceof SyntaxError?400:400);}
 }
