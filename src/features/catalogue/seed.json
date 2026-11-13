@@ -233,6 +233,24 @@
           "finish": "Classic Teak & Charcoal",
           "price": null,
           "status": "Studio standard"
+        },
+        {
+          "id": "FRM-001-REQ-3",
+          "size": "14×20 in",
+          "metric": "35×50 cm",
+          "thickness": "20 mm moulding",
+          "finish": "Classic Teak & Charcoal",
+          "price": null,
+          "status": "Studio standard"
+        },
+        {
+          "id": "FRM-001-REQ-4",
+          "size": "18×24 in",
+          "metric": "45×60 cm",
+          "thickness": "20 mm moulding",
+          "finish": "Classic Teak & Charcoal",
+          "price": null,
+          "status": "Studio standard"
         }
       ],
       "image": "/editorial/gift-still-life.png",

@@ -22,6 +22,7 @@ import {
   SunMedium,
   Flame,
   BookOpen,
+  Smartphone,
 } from "lucide-react";
 import {
   Dialog,
@@ -46,6 +47,7 @@ import { ThreePhotoMug } from "./live-preview/ThreePhotoMug";
 import { TranslightPreview } from "./live-preview/TranslightPreview";
 import { GodsCollection } from "./live-preview/GodsCollection";
 import { CoupleMagazineFlipbook } from "./live-preview/CoupleMagazineFlipbook";
+import { PhoneCoverCustomizer } from "./live-preview/PhoneCoverCustomizer";
 import { CheckoutDialog } from "./CheckoutDialog";
 import { calculateVariantPriceInr } from "@/lib/pricing";
 import { toast } from "sonner";
@@ -84,7 +86,7 @@ export function Catalogue({ productId }: { productId?: string }) {
   const [comparing, setComparing] = useState(false);
   const [showQuote, setShowQuote] = useState(false);
   const [activeStudio, setActiveStudio] = useState<
-    "frames" | "mugs" | "translight" | "devotional" | "magazines" | null
+    "frames" | "mugs" | "translight" | "devotional" | "magazines" | "covers" | null
   >(null);
   const activeProduct = products.find((p) => p.id === productId);
   const lastProduct = useRef<Product | undefined>(undefined);
@@ -379,37 +381,74 @@ export function Catalogue({ productId }: { productId?: string }) {
               {/* Card 5: Couple Story Magazine */}
               <div
                 onClick={() => setActiveStudio("magazines")}
-                className="group cursor-pointer rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between lg:col-span-2"
+                className="group cursor-pointer rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
               >
-                <div className="grid grid-cols-1 sm:grid-cols-2 h-full">
-                  <div className="relative aspect-[4/3] sm:aspect-auto bg-[#1E1916] overflow-hidden flex items-center justify-center p-3">
+                <div className="relative aspect-[4/3] bg-[#1E1916] overflow-hidden flex items-center justify-center p-3">
+                  <img
+                    src="/products/magazine-cover.jpg"
+                    alt="Couple Story Magazine"
+                    className="h-full max-h-[190px] aspect-[2/3] object-cover rounded shadow-2xl group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
+                    Editorial Keepsake
+                  </div>
+                </div>
+                <div className="p-5 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-display text-xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
+                      Couple Story Magazine
+                    </h3>
+                    <p className="text-xs text-stone-600 mt-1.5 leading-relaxed">
+                      8–20 photo editorial flipbook with chapter spreads, custom dates, vows, and an interactive QR code linked to your song.
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
+                    <span className="text-stone-500 font-mono text-[11px]">8×11 to 12×12 Hardcover</span>
+                    <span className="font-semibold text-amber-800 flex items-center gap-1">
+                      Open studio <ArrowRight size={13} />
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 6: Custom Photo Covers */}
+              <div
+                onClick={() => setActiveStudio("covers")}
+                className="group cursor-pointer rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
+              >
+                <div className="relative aspect-[4/3] bg-stone-900 overflow-hidden flex items-center justify-center p-3">
+                  <div className="relative w-28 h-44 rounded-2xl border-2 border-stone-700 overflow-hidden shadow-2xl">
                     <img
-                      src="/products/magazine-cover.jpg"
-                      alt="Couple Story Magazine"
-                      className="h-full max-h-[220px] aspect-[2/3] object-cover rounded shadow-2xl group-hover:scale-105 transition-transform duration-500"
+                      src="/products/frame-sample-wedding.jpg"
+                      alt="Custom Photo Phone Cases"
+                      className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
-                      Editorial Keepsake
+                    <div className="absolute top-2 left-2 size-6 rounded-lg bg-stone-950/90 border border-stone-700 p-0.5 flex flex-wrap gap-0.5">
+                      <div className="size-2 rounded-full bg-stone-800" />
+                      <div className="size-2 rounded-full bg-stone-800" />
                     </div>
                   </div>
-                  <div className="p-6 flex flex-col justify-between">
-                    <div>
-                      <span className="text-[10px] font-bold text-amber-800 uppercase tracking-widest block mb-1">
-                        8–20 Curated Photographs · Song QR
-                      </span>
-                      <h3 className="font-display text-2xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
-                        Couple Story Magazine
-                      </h3>
-                      <p className="text-xs text-stone-600 mt-2 leading-relaxed">
-                        8–20 photo editorial flipbook with chapter spreads, custom dates, vows, and an interactive QR code linked to your couple song.
-                      </p>
-                    </div>
-                    <div className="mt-5 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
-                      <span className="text-stone-500 font-mono text-[11px]">Hardcover & Matte Spreads</span>
-                      <span className="font-semibold text-amber-800 flex items-center gap-1">
-                        Open studio <ArrowRight size={13} />
-                      </span>
-                    </div>
+                  <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
+                    200+ Phone Models
+                  </div>
+                  <div className="absolute bottom-3 right-3 bg-amber-950/80 text-amber-200 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <Smartphone size={11} /> 3D Matte & 9H Glass
+                  </div>
+                </div>
+                <div className="p-5 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-display text-xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
+                      Custom Photo Phone Covers
+                    </h3>
+                    <p className="text-xs text-stone-600 mt-1.5 leading-relaxed">
+                      Precision camera cutout alignment for Apple, Samsung, OnePlus, Vivo, Oppo & Xiaomi. Personalize photo & monogram name.
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
+                    <span className="text-stone-500 font-mono text-[11px]">From ₹349</span>
+                    <span className="font-semibold text-amber-800 flex items-center gap-1">
+                      Open studio <ArrowRight size={13} />
+                    </span>
                   </div>
                 </div>
               </div>
@@ -734,6 +773,7 @@ export function Catalogue({ productId }: { productId?: string }) {
               {activeStudio === "translight" && "Backlit LED Translight Studio"}
               {activeStudio === "devotional" && "God's Devotional Collection"}
               {activeStudio === "magazines" && "Personalised Couple Story Magazine Studio"}
+              {activeStudio === "covers" && "Custom Photo Phone Covers (200+ Models)"}
             </DialogTitle>
             <DialogDescription>
               Handcrafted in Jetpur. Personalize your keepsake, explore finishes, and confirm production with our master framers.
@@ -799,6 +839,12 @@ export function Catalogue({ productId }: { productId?: string }) {
               <CoupleMagazineFlipbook />
             </div>
           )}
+
+          {activeStudio === "covers" && (
+            <div className="space-y-4">
+              <PhoneCoverCustomizer />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -842,6 +888,7 @@ function ProductDetail({
   const [customText, setCustomText] = useState("");
 
   const v = p.variants.find((v) => v.id === variantId) || p.variants[0];
+  const isCover = p.category === "tech" || p.name.toLowerCase().includes("phone cover") || p.id === "TEC-001";
   const isMug = p.category === "drinkware" || p.name.toLowerCase().includes("mug");
   const isTranslight = p.category === "led" || p.name.toLowerCase().includes("translight") || p.name.toLowerCase().includes("light");
   const isGod = p.category === "gods-collection" || p.name.toLowerCase().includes("god") || p.name.toLowerCase().includes("shrine");
@@ -884,7 +931,9 @@ Could you please confirm the exact pricing and delivery estimate? Thank you!`,
               <span className="text-[11px] text-stone-500">{v?.size || "Custom size"}</span>
             </div>
 
-            {isMug ? (
+            {isCover ? (
+              <PhoneCoverCustomizer />
+            ) : isMug ? (
               <ThreePhotoMug mugType={mugType} />
             ) : isTranslight ? (
               <TranslightPreview size={v?.size || "12×18 in"} />

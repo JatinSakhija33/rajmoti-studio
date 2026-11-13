@@ -11,11 +11,36 @@ import {
   Maximize2,
   Sparkles,
   Move,
-  Smartphone,
+  CheckCircle2,
+  Maximize,
+  Minimize,
+  Sliders,
 } from "lucide-react";
 
 export type FrameLayout = "single" | "triptych" | "grid4" | "family5";
-export type FrameFinish = "teak" | "charcoal" | "gold" | "acrylic" | "sparkle";
+export type FrameFinish = "teak" | "charcoal" | "gold" | "acrylic" | "sparkle" | "canvas";
+export type FitMode = "cover" | "contain";
+
+export interface FrameSizeOption {
+  id: string;
+  label: string;
+  metric: string;
+  widthInches: number;
+  heightInches: number;
+  ratio: string; // e.g. "2 / 3"
+  popular?: boolean;
+}
+
+export const FRAME_SIZES: FrameSizeOption[] = [
+  { id: "8x12", label: "8×12 in", metric: "20×30 cm", widthInches: 8, heightInches: 12, ratio: "2 / 3" },
+  { id: "10x10", label: "10×10 in", metric: "25×25 cm", widthInches: 10, heightInches: 10, ratio: "1 / 1" },
+  { id: "10x14", label: "10×14 in", metric: "25×35 cm", widthInches: 10, heightInches: 14, ratio: "5 / 7" },
+  { id: "12x18", label: "12×18 in", metric: "30×45 cm", widthInches: 12, heightInches: 18, ratio: "2 / 3", popular: true },
+  { id: "14x20", label: "14×20 in", metric: "35×50 cm", widthInches: 14, heightInches: 20, ratio: "7 / 10" },
+  { id: "16x24", label: "16×24 in", metric: "40×60 cm", widthInches: 16, heightInches: 24, ratio: "2 / 3" },
+  { id: "18x24", label: "18×24 in", metric: "45×60 cm", widthInches: 18, heightInches: 24, ratio: "3 / 4" },
+  { id: "20x30", label: "20×30 in", metric: "50×75 cm", widthInches: 20, heightInches: 30, ratio: "2 / 3", popular: true },
+];
 
 interface Slot {
   id: number;
@@ -27,41 +52,44 @@ interface Slot {
   zoom: number;
   panX: number;
   panY: number;
+  fitMode: FitMode;
+  imgWidth?: number;
+  imgHeight?: number;
 }
 
 const LAYOUTS: Record<
   FrameLayout,
-  { name: string; slots: Omit<Slot, "photoUrl" | "zoom" | "panX" | "panY">[] }
+  { name: string; slots: Omit<Slot, "photoUrl" | "zoom" | "panX" | "panY" | "fitMode" | "imgWidth" | "imgHeight">[] }
 > = {
   single: {
     name: "Classic Single Frame",
-    slots: [{ id: 0, x: 5, y: 5, width: 90, height: 90 }],
+    slots: [{ id: 0, x: 4, y: 4, width: 92, height: 92 }],
   },
   triptych: {
     name: "3-Photo Anniversary Story",
     slots: [
-      { id: 0, x: 5, y: 8, width: 28, height: 84 },
-      { id: 1, x: 36, y: 8, width: 28, height: 84 },
-      { id: 2, x: 67, y: 8, width: 28, height: 84 },
+      { id: 0, x: 4, y: 7, width: 29, height: 86 },
+      { id: 1, x: 35.5, y: 7, width: 29, height: 86 },
+      { id: 2, x: 67, y: 7, width: 29, height: 86 },
     ],
   },
   grid4: {
     name: "4-Photo Family Moments",
     slots: [
-      { id: 0, x: 6, y: 6, width: 42, height: 42 },
-      { id: 1, x: 52, y: 6, width: 42, height: 42 },
-      { id: 2, x: 6, y: 52, width: 42, height: 42 },
-      { id: 3, x: 52, y: 52, width: 42, height: 42 },
+      { id: 0, x: 5, y: 5, width: 43, height: 43 },
+      { id: 1, x: 52, y: 5, width: 43, height: 43 },
+      { id: 2, x: 5, y: 52, width: 43, height: 43 },
+      { id: 3, x: 52, y: 52, width: 43, height: 43 },
     ],
   },
   family5: {
     name: "5-Photo Heritage Collage",
     slots: [
-      { id: 0, x: 6, y: 6, width: 52, height: 88 },
-      { id: 1, x: 61, y: 6, width: 33, height: 20 },
-      { id: 2, x: 61, y: 28, width: 33, height: 20 },
-      { id: 3, x: 61, y: 50, width: 33, height: 20 },
-      { id: 4, x: 61, y: 72, width: 33, height: 22 },
+      { id: 0, x: 5, y: 5, width: 53, height: 90 },
+      { id: 1, x: 61, y: 5, width: 34, height: 20 },
+      { id: 2, x: 61, y: 28, width: 34, height: 20 },
+      { id: 3, x: 61, y: 51, width: 34, height: 20 },
+      { id: 4, x: 61, y: 74, width: 34, height: 21 },
     ],
   },
 };
@@ -75,20 +103,23 @@ const DEFAULT_FRAME_SAMPLES = [
 ];
 
 interface FrameCollageCanvasProps {
-  size: string;
+  size?: string;
   finish?: FrameFinish;
   customText?: string;
   subText?: string;
   onPhotosChanged?: (urls: string[]) => void;
+  onSizeChange?: (sizeLabel: string) => void;
 }
 
 export function FrameCollageCanvas({
-  size,
+  size = "12×18 in",
   finish = "teak",
   customText = "",
   subText = "",
   onPhotosChanged,
+  onSizeChange,
 }: FrameCollageCanvasProps) {
+  const [selectedSize, setSelectedSize] = useState<string>(size);
   const [layoutType, setLayoutType] = useState<FrameLayout>("single");
   const [currentFinish, setCurrentFinish] = useState<FrameFinish>(finish);
   const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait");
@@ -103,23 +134,22 @@ export function FrameCollageCanvas({
   const isDraggingPhoto = useRef(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
 
+  // Find size config
+  const currentSizeConfig =
+    FRAME_SIZES.find((s) => s.label.toLowerCase() === selectedSize.toLowerCase()) ||
+    FRAME_SIZES.find((s) => s.label.includes(selectedSize.split(" ")[0])) ||
+    FRAME_SIZES[3]; // default 12x18
+
   // Calculate genuine physical aspect ratio
-  const getAspectRatioValue = (sizeStr: string, orient: "portrait" | "landscape"): string => {
-    const s = sizeStr.toLowerCase().replace(/\s+/g, "");
-    if (s.includes("10×10") || s.includes("10x10") || s.includes("square")) {
-      return "1 / 1";
-    }
-    if (s.includes("10×14") || s.includes("10x14")) {
-      return orient === "portrait" ? "5 / 7" : "7 / 5";
-    }
-    if (s.includes("14×20") || s.includes("14x20")) {
-      return orient === "portrait" ? "7 / 10" : "10 / 7";
-    }
-    // Standard photo sizes (8×12, 12×18, 16×24, 20×30) are 2:3
-    return orient === "portrait" ? "2 / 3" : "3 / 2";
+  const getAspectRatioValue = (): string => {
+    if (currentSizeConfig.id === "10x10") return "1 / 1";
+    if (currentSizeConfig.id === "10x14") return orientation === "portrait" ? "5 / 7" : "7 / 5";
+    if (currentSizeConfig.id === "14x20") return orientation === "portrait" ? "7 / 10" : "10 / 7";
+    if (currentSizeConfig.id === "18x24") return orientation === "portrait" ? "3 / 4" : "4 / 3";
+    return orientation === "portrait" ? "2 / 3" : "3 / 2";
   };
 
-  // Initialize slots with beautiful default photography
+  // Initialize slots
   useEffect(() => {
     const config = LAYOUTS[layoutType];
     setSlots(
@@ -129,24 +159,50 @@ export function FrameCollageCanvas({
         zoom: 1,
         panX: 0,
         panY: 0,
+        fitMode: "cover",
+        imgWidth: 1920,
+        imgHeight: 1280,
       })),
     );
     setActiveSlotId(0);
   }, [layoutType]);
+
+  const handleSelectSize = (sz: FrameSizeOption) => {
+    setSelectedSize(sz.label);
+    if (sz.id === "10x10") {
+      setOrientation("portrait");
+    }
+    onSizeChange?.(sz.label);
+  };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
 
-    setSlots((prev) => {
-      const next = prev.map((s) =>
-        s.id === activeSlotId ? { ...s, photoUrl: url, zoom: 1, panX: 0, panY: 0 } : s,
-      );
-      const urls = next.map((s) => s.photoUrl).filter(Boolean) as string[];
-      onPhotosChanged?.(urls);
-      return next;
-    });
+    const img = new Image();
+    img.src = url;
+    img.onload = () => {
+      setSlots((prev) => {
+        const next = prev.map((s) =>
+          s.id === activeSlotId
+            ? {
+                ...s,
+                photoUrl: url,
+                zoom: 1,
+                panX: 0,
+                panY: 0,
+                fitMode: "cover",
+                imgWidth: img.naturalWidth,
+                imgHeight: img.naturalHeight,
+              }
+            : s,
+        );
+        const urls = next.map((s) => s.photoUrl).filter(Boolean) as string[];
+        onPhotosChanged?.(urls);
+        return next;
+      });
+    };
 
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -155,6 +211,16 @@ export function FrameCollageCanvas({
     setSlots((prev) =>
       prev.map((s) =>
         s.id === activeSlotId ? { ...s, zoom: Math.min(3, Math.max(0.5, s.zoom + delta)) } : s,
+      ),
+    );
+  };
+
+  const toggleFitMode = () => {
+    setSlots((prev) =>
+      prev.map((s) =>
+        s.id === activeSlotId
+          ? { ...s, fitMode: s.fitMode === "cover" ? "contain" : "cover", panX: 0, panY: 0, zoom: 1 }
+          : s,
       ),
     );
   };
@@ -169,6 +235,9 @@ export function FrameCollageCanvas({
               zoom: 1,
               panX: 0,
               panY: 0,
+              fitMode: "cover",
+              imgWidth: 1920,
+              imgHeight: 1280,
             }
           : s,
       ),
@@ -198,12 +267,12 @@ export function FrameCollageCanvas({
     isDraggingPhoto.current = false;
   };
 
-  // Subtle 3D perspective tilt on mouse movement
+  // 3D perspective tilt
   const handleMouseMoveStage = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setTilt({ x: -(y * 6), y: x * 6 });
+    setTilt({ x: -(y * 5), y: x * 5 });
   };
 
   const handleMouseLeaveStage = () => {
@@ -224,15 +293,90 @@ export function FrameCollageCanvas({
     if (currentFinish === "sparkle") {
       return "border-[16px] border-[#2A2621] ring-2 ring-[#E0BA70] shadow-[inset_0_0_12px_rgba(224,186,112,0.4),0_20px_45px_rgba(0,0,0,0.25)] rounded-xs";
     }
+    if (currentFinish === "canvas") {
+      return "border-[10px] border-[#ECE7DE] shadow-[inset_0_0_15px_rgba(0,0,0,0.3),0_22px_45px_rgba(0,0,0,0.25)] rounded-xs";
+    }
     // Acrylic block / float
     return "border-[4px] border-white/80 shadow-[0_22px_55px_rgba(0,0,0,0.18)] rounded-xl backdrop-blur-xs";
   };
 
-  const supportsOrientation = !size.toLowerCase().includes("10×10") && !size.toLowerCase().includes("square");
+  const supportsOrientation = currentSizeConfig.id !== "10x10";
+  const activeSlot = slots.find((s) => s.id === activeSlotId) || slots[0];
+
+  // Resolution Quality Calculator
+  const getResolutionStatus = () => {
+    if (!activeSlot || !activeSlot.imgWidth || !activeSlot.imgHeight) return null;
+    const minDim = Math.min(activeSlot.imgWidth, activeSlot.imgHeight);
+    const targetInches = Math.min(currentSizeConfig.widthInches, currentSizeConfig.heightInches);
+    const estDpi = Math.round(minDim / targetInches);
+
+    if (estDpi >= 250) {
+      return {
+        level: "excellent",
+        text: `Razor Sharp (${activeSlot.imgWidth}×${activeSlot.imgHeight}px · ~${estDpi} DPI)`,
+        badge: "bg-emerald-50 text-emerald-800 border-emerald-200",
+      };
+    }
+    if (estDpi >= 140) {
+      return {
+        level: "good",
+        text: `Sharp Studio Print (${activeSlot.imgWidth}×${activeSlot.imgHeight}px · ~${estDpi} DPI)`,
+        badge: "bg-blue-50 text-blue-800 border-blue-200",
+      };
+    }
+    return {
+      level: "warn",
+      text: `Low Resolution Advisory: ${activeSlot.imgWidth}×${activeSlot.imgHeight}px (~${estDpi} DPI) for ${selectedSize}`,
+      badge: "bg-amber-50 text-amber-900 border-amber-300",
+    };
+  };
+
+  const resStatus = getResolutionStatus();
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Control Bar: Layouts, Finishes & Orientation */}
+      {/* SECTION 1: SIZE SELECTOR (MANDATED FOR ALL SIZES) */}
+      <div className="bg-[#FAF7F1] border border-stone-300 rounded-xl p-3 shadow-2xs">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1.5">
+            <Maximize2 size={14} className="text-amber-800" />
+            <span className="text-xs font-bold text-stone-900">Select Frame Size & Aspect Ratio:</span>
+          </div>
+          <span className="text-[11px] font-mono text-stone-500">
+            Selected: <strong className="text-amber-900">{currentSizeConfig.label}</strong> ({currentSizeConfig.metric})
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-1.5">
+          {FRAME_SIZES.map((sz) => {
+            const isSelected = selectedSize.toLowerCase().includes(sz.id.replace("x", "×")) || selectedSize.toLowerCase().includes(sz.label.toLowerCase());
+            return (
+              <button
+                key={sz.id}
+                type="button"
+                onClick={() => handleSelectSize(sz)}
+                className={`py-1.5 px-2 rounded-lg border text-xs text-center transition-all flex flex-col items-center justify-center ${
+                  isSelected
+                    ? "bg-[#29251F] text-amber-100 border-[#29251F] shadow-xs font-bold"
+                    : "bg-white text-stone-700 border-stone-200 hover:border-amber-700 hover:bg-stone-50"
+                }`}
+              >
+                <span className="text-xs">{sz.label}</span>
+                <span className={`text-[9px] ${isSelected ? "text-amber-300" : "text-stone-400"}`}>
+                  {sz.metric}
+                </span>
+                {sz.popular && (
+                  <span className="text-[8px] uppercase tracking-tighter text-amber-400 font-bold">
+                    Popular
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* SECTION 2: Control Bar: Layouts, Finishes & Orientation */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-200 pb-2.5">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-xs font-bold text-stone-700 mr-1">Layout:</span>
@@ -316,7 +460,8 @@ export function FrameCollageCanvas({
             ["charcoal", "Matte Charcoal Wood"],
             ["gold", "Royal Gold Leaf"],
             ["acrylic", "Clear Acrylic Block"],
-            ["sparkle", "Inner Sparkle Inlay"],
+            ["sparkle", "Inner Sparkle Inlay (14×20)"],
+            ["canvas", "Gallery Canvas Wrap"],
           ] as [FrameFinish, string][]
         ).map(([fKey, fName]) => (
           <button
@@ -332,37 +477,57 @@ export function FrameCollageCanvas({
             {fName}
           </button>
         ))}
+
+        <button
+          type="button"
+          onClick={() => setShowBleed(!showBleed)}
+          className={`ml-auto px-2 py-1 rounded text-[11px] border flex items-center gap-1 ${
+            showBleed ? "bg-amber-100 text-amber-900 border-amber-300 font-semibold" : "bg-white text-stone-500 border-stone-200"
+          }`}
+        >
+          <Sliders size={11} /> {showBleed ? "Hide Print Bleed Margin" : "Show Print Safe Margin"}
+        </button>
       </div>
 
-      {/* Frame Stage: Close-Up or Living Room Wall Preview */}
+      {/* Stage: Close-up vs Room */}
       {viewMode === "closeup" ? (
         <div
           onMouseMove={handleMouseMoveStage}
           onMouseLeave={handleMouseLeaveStage}
-          className="relative mx-auto w-full max-w-[500px] h-[450px] bg-[#FAF7F1] p-6 rounded-2xl border border-stone-300 flex items-center justify-center overflow-hidden shadow-xs"
+          className="relative mx-auto w-full max-w-[520px] h-[460px] bg-[#FAF7F1] p-6 rounded-2xl border border-stone-300 flex items-center justify-center overflow-hidden shadow-xs"
         >
-          {/* Physical Frame Structure: Sized by height with aspect ratio preserving portrait dimensions */}
+          {/* Physical Frame Structure: Sized by height with aspect ratio preserving dimensions */}
           <div
             style={{
-              aspectRatio: getAspectRatioValue(size, orientation),
+              aspectRatio: getAspectRatioValue(),
               transform: `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
               transition: "transform 0.15s ease-out",
             }}
-            className={`relative h-full max-h-[400px] max-w-full bg-[#FCFAF6] ${getFrameBorderStyle()} overflow-hidden shadow-2xl`}
+            className={`relative h-full max-h-[410px] max-w-full bg-[#FCFAF6] ${getFrameBorderStyle()} overflow-hidden shadow-2xl`}
           >
             {/* Subtle Glass/Acrylic Reflection Overlay */}
             <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/8 to-white/20 pointer-events-none z-20" />
 
+            {/* Acrylic Standoff Studs for Acrylic finish */}
+            {currentFinish === "acrylic" && (
+              <>
+                <div className="absolute top-2 left-2 size-3 rounded-full bg-gradient-to-br from-stone-200 to-stone-400 border border-stone-500 shadow-sm z-30" />
+                <div className="absolute top-2 right-2 size-3 rounded-full bg-gradient-to-br from-stone-200 to-stone-400 border border-stone-500 shadow-sm z-30" />
+                <div className="absolute bottom-2 left-2 size-3 rounded-full bg-gradient-to-br from-stone-200 to-stone-400 border border-stone-500 shadow-sm z-30" />
+                <div className="absolute bottom-2 right-2 size-3 rounded-full bg-gradient-to-br from-stone-200 to-stone-400 border border-stone-500 shadow-sm z-30" />
+              </>
+            )}
+
             {/* Inner Sparkle Effect Overlay */}
             {currentFinish === "sparkle" && (
-              <div className="absolute inset-1.5 border-2 border-amber-300/60 pointer-events-none z-25 shadow-[inset_0_0_8px_rgba(224,186,112,0.4)]" />
+              <div className="absolute inset-2 border-2 border-amber-300/70 pointer-events-none z-25 shadow-[inset_0_0_10px_rgba(224,186,112,0.5)]" />
             )}
 
             {/* Safe Print Bleed Overlay */}
             {showBleed && (
-              <div className="absolute inset-3 border border-dashed border-amber-400/70 pointer-events-none z-30 flex items-start justify-end p-1">
-                <span className="text-[8px] font-bold tracking-wider uppercase bg-[#29251F]/80 text-white px-1 py-0.5 rounded">
-                  Safe Margin
+              <div className="absolute inset-3 border border-dashed border-amber-500/80 pointer-events-none z-30 flex items-start justify-end p-1">
+                <span className="text-[8px] font-bold tracking-wider uppercase bg-[#29251F]/85 text-white px-1 py-0.5 rounded">
+                  Safe Print Margin (12mm)
                 </span>
               </div>
             )}
@@ -396,7 +561,9 @@ export function FrameCollageCanvas({
                       style={{
                         transform: `scale(${slot.zoom}) translate(${slot.panX}px, ${slot.panY}px)`,
                       }}
-                      className="size-full object-cover pointer-events-none transition-transform duration-75"
+                      className={`size-full pointer-events-none transition-transform duration-75 ${
+                        slot.fitMode === "contain" ? "object-contain bg-stone-900/10" : "object-cover"
+                      }`}
                     />
                   )}
                 </div>
@@ -405,7 +572,7 @@ export function FrameCollageCanvas({
 
             {/* Custom Plaque / Text Overlay */}
             {customText && (
-              <div className="absolute bottom-2 inset-x-6 bg-[#29251F]/85 text-amber-100 text-center py-1 px-3 rounded shadow-md z-30 backdrop-blur-xs">
+              <div className="absolute bottom-2.5 inset-x-6 bg-[#29251F]/90 text-amber-100 text-center py-1.5 px-3 rounded shadow-md z-30 backdrop-blur-xs">
                 <p className="font-display text-xs font-semibold tracking-wide">{customText}</p>
                 {subText && <p className="text-[9px] text-[#C4A05D]">{subText}</p>}
               </div>
@@ -414,16 +581,16 @@ export function FrameCollageCanvas({
         </div>
       ) : (
         /* Living Room Wall Context Mode */
-        <div className="relative mx-auto w-full max-w-[500px] h-[450px] bg-gradient-to-b from-[#EFEAE2] to-[#D5CDC2] rounded-2xl border border-stone-300 p-8 flex flex-col items-center justify-between overflow-hidden shadow-inner">
+        <div className="relative mx-auto w-full max-w-[520px] h-[460px] bg-gradient-to-b from-[#EFEAE2] to-[#D5CDC2] rounded-2xl border border-stone-300 p-8 flex flex-col items-center justify-between overflow-hidden shadow-inner">
           <div className="w-full flex justify-between items-center text-[10px] text-stone-500">
-            <span>Living Room Scale Context</span>
+            <span>Living Room Scale Context ({selectedSize})</span>
             <span>Natural Ambient Light</span>
           </div>
 
           {/* Wall Mounted Frame */}
           <div
-            style={{ aspectRatio: getAspectRatioValue(size, orientation) }}
-            className={`relative h-[250px] max-w-full bg-[#FCFAF6] ${getFrameBorderStyle()} overflow-hidden shadow-[0_25px_50px_rgba(0,0,0,0.35)]`}
+            style={{ aspectRatio: getAspectRatioValue() }}
+            className={`relative h-[260px] max-w-full bg-[#FCFAF6] ${getFrameBorderStyle()} overflow-hidden shadow-[0_25px_50px_rgba(0,0,0,0.35)]`}
           >
             {slots.map((slot) => (
               <div
@@ -440,55 +607,104 @@ export function FrameCollageCanvas({
                   <img
                     src={slot.photoUrl}
                     alt=""
-                    className="size-full object-cover pointer-events-none"
+                    className={`size-full pointer-events-none ${
+                      slot.fitMode === "contain" ? "object-contain" : "object-cover"
+                    }`}
                   />
                 )}
               </div>
             ))}
           </div>
 
-          {/* Couch / Console Table Silhouette */}
           <div className="w-4/5 h-8 bg-stone-700/20 rounded-t-xl" />
         </div>
       )}
 
-      {/* Tactile Adjustments Bar: Slot Controls & Photo Upload */}
+      {/* SECTION 3: PROPER PHOTO FITTING & RESOLUTION ADVISORY */}
+      {resStatus && (
+        <div className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 ${resStatus.badge}`}>
+          <div className="flex items-center gap-2">
+            {resStatus.level === "excellent" ? (
+              <CheckCircle2 size={15} className="text-emerald-700 shrink-0" />
+            ) : resStatus.level === "good" ? (
+              <Check size={15} className="text-blue-700 shrink-0" />
+            ) : (
+              <AlertCircle size={15} className="text-amber-700 shrink-0" />
+            )}
+            <span>{resStatus.text}</span>
+          </div>
+          <span className="text-[10px] uppercase font-mono tracking-wider opacity-80">
+            Smart Aspect Auto-Fit
+          </span>
+        </div>
+      )}
+
+      {/* SECTION 4: TACTILE ADJUSTMENTS: CROP/FIT, ZOOM, PAN & UPLOAD */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-stone-50 rounded-xl border border-stone-200 text-xs">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-stone-700">Slot {activeSlotId + 1}:</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-semibold text-stone-800">Slot {activeSlotId + 1} Tools:</span>
+
+          {/* Fill vs Contain toggle */}
           <button
             type="button"
-            onClick={() => updateZoom(0.15)}
-            className="p-1.5 rounded-lg border border-stone-300 bg-white hover:bg-stone-100"
-            title="Zoom In"
+            onClick={toggleFitMode}
+            className="py-1 px-2.5 rounded-lg border border-stone-300 bg-white hover:bg-stone-100 text-stone-700 flex items-center gap-1 font-medium"
+            title="Toggle between Filling Frame and Showing Full Photo"
           >
-            <ZoomIn size={14} />
+            {activeSlot?.fitMode === "cover" ? (
+              <>
+                <Minimize size={13} />
+                <span>Fit Entire Photo</span>
+              </>
+            ) : (
+              <>
+                <Maximize size={13} />
+                <span>Fill Frame (Crop)</span>
+              </>
+            )}
           </button>
-          <button
-            type="button"
-            onClick={() => updateZoom(-0.15)}
-            className="p-1.5 rounded-lg border border-stone-300 bg-white hover:bg-stone-100"
-            title="Zoom Out"
-          >
-            <ZoomOut size={14} />
-          </button>
+
+          {/* Zoom controls */}
+          <div className="flex items-center border border-stone-300 rounded-lg overflow-hidden bg-white">
+            <button
+              type="button"
+              onClick={() => updateZoom(0.15)}
+              className="p-1.5 hover:bg-stone-100 text-stone-700"
+              title="Zoom In"
+            >
+              <ZoomIn size={13} />
+            </button>
+            <span className="px-1.5 text-[10px] font-mono text-stone-500">
+              {Math.round((activeSlot?.zoom || 1) * 100)}%
+            </span>
+            <button
+              type="button"
+              onClick={() => updateZoom(-0.15)}
+              className="p-1.5 hover:bg-stone-100 text-stone-700"
+              title="Zoom Out"
+            >
+              <ZoomOut size={13} />
+            </button>
+          </div>
+
           <button
             type="button"
             onClick={resetActiveSlot}
-            className="p-1.5 rounded-lg border border-stone-300 bg-white hover:bg-stone-100"
-            title="Reset to Studio Sample"
+            className="p-1.5 rounded-lg border border-stone-300 bg-white hover:bg-stone-100 text-stone-600"
+            title="Reset Slot"
           >
-            <RotateCcw size={14} />
+            <RotateCcw size={13} />
           </button>
-          <span className="text-[11px] text-stone-400 ml-1 hidden sm:inline">
-            Drag to pan position
+
+          <span className="text-[11px] text-stone-400 hidden md:inline">
+            Drag photo to pan position
           </span>
         </div>
 
         {/* Upload Action */}
         <label className="ed-button outline cursor-pointer text-xs flex items-center gap-1.5 py-1.5 px-3">
           <Upload size={13} />
-          <span>Personalize Slot {activeSlotId + 1}</span>
+          <span>Upload for Slot {activeSlotId + 1}</span>
           <input
             ref={fileInputRef}
             type="file"

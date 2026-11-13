@@ -20,6 +20,7 @@ import {
   Truck,
   MapPin,
   CreditCard,
+  Image as ImageIcon,
 } from "lucide-react";
 import { DeskNav } from "@/components/desk-nav";
 import { whatsappLink, waMessage, telLink } from "@/lib/site";
@@ -153,6 +154,7 @@ function Desk() {
   });
   const [showIntake, setShowIntake] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
+  const [showMockupManager, setShowMockupManager] = useState(false);
   const [inventory, setInventory] = useState<InventoryItem[]>(() => {
     try {
       const saved = localStorage.getItem("rajmoti:inventory");
@@ -619,6 +621,13 @@ function Desk() {
             <Layers size={15} />
             <span>{showInventory ? "Hide Supplies" : "Supplies & Frames"}</span>
           </button>
+          <button
+            onClick={() => setShowMockupManager(!showMockupManager)}
+            className="desk-light-btn text-xs font-semibold"
+          >
+            <ImageIcon size={15} />
+            <span>{showMockupManager ? "Hide Media Manager" : "Product & Devotional Media"}</span>
+          </button>
           <button onClick={() => void load()} className="desk-light-btn text-xs" aria-label="Refresh jobs">
             <RefreshCw size={15} />
             <span>Refresh</span>
@@ -767,6 +776,93 @@ function Desk() {
                   </div>
                 );
               })}
+            </div>
+          </section>
+        )}
+
+        {/* Owner-Managed Product Media & Devotional Artwork Center */}
+        {showMockupManager && (
+          <section className="bg-white border border-[#EAE4DC] rounded-2xl p-6 mb-6 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-5 border-b border-stone-200">
+              <div>
+                <h3 className="font-display text-xl font-bold text-stone-900 flex items-center gap-2">
+                  <ImageIcon size={20} className="text-amber-800" />
+                  Owner Product Media & Devotional Artwork Manager
+                </h3>
+                <p className="text-xs text-stone-500 mt-0.5">
+                  Manage real photographed mockups, size-specific previews, and authentic licensed devotional artworks across Rajmoti Studio
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMockupManager(false)}
+                className="text-xs px-3 py-1.5 rounded-lg border border-stone-300 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold"
+              >
+                Close Media Panel
+              </button>
+            </div>
+
+            {/* Sub-section 1: Core Showcase & Mockup Previews */}
+            <div className="mb-6">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900 mb-3 flex items-center gap-1.5">
+                <Sparkles size={13} /> 1. Studio Showcase Previews & Mockups
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { id: "frame-studio", title: "Frame & Collage Studio", path: "/products/frame-sample-wedding.jpg", desc: "Default wedding portrait for frames" },
+                  { id: "mug-studio", title: "3D Photo Mug Studio", path: "/products/mug-sample-couple.jpg", desc: "3D cylinder rotatable decal texture" },
+                  { id: "translight-studio", title: "Backlit LED Translight", path: "/products/translight-sample.jpg", desc: "Cinematic night fairy lights portrait" },
+                  { id: "magazine-studio", title: "Couple Story Magazine Cover", path: "/products/magazine-cover.jpg", desc: "Editorial photobook cover photo" },
+                  { id: "anniversary-slot", title: "Anniversary Collage Slot", path: "/products/frame-sample-anniversary.jpg", desc: "Milestone couple portrait for slot 2" },
+                  { id: "family-slot", title: "Family Heritage Slot", path: "/products/frame-sample-family.jpg", desc: "Multi-generation portrait for slot 3" },
+                ].map((item) => (
+                  <div key={item.id} className="p-3 rounded-xl border border-stone-200 bg-stone-50 flex gap-3 items-center">
+                    <img src={item.path} alt="" className="size-16 rounded-lg object-cover border border-stone-300 shadow-2xs shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-bold text-stone-900 block truncate">{item.title}</span>
+                      <span className="text-[10px] text-stone-500 block truncate">{item.desc}</span>
+                      <span className="text-[9px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 inline-block mt-1">
+                        Active Master Asset
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Sub-section 2: Gujarat & Saurashtra Devotional Artwork Slots */}
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900 mb-3 flex items-center gap-1.5">
+                <ShieldCheck size={13} /> 2. Gujarat & Saurashtra Devotional Artwork Master Slots
+              </h4>
+              <p className="text-xs text-stone-600 mb-3 leading-relaxed">
+                Reverently configured for Saurashtra mandir demand. Each slot is owner-certified and reflects across Acrylic, Teak Frame, and LED Translight products.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                {[
+                  { name: "Shri Dwarkadhish", dham: "દ્વારકા જગત મંદિર", path: "/deities/shrinathji.jpg" },
+                  { name: "Somnath Mahadev", dham: "પ્રભાસ પાટણ સૌરાષ્ટ્ર", path: "/deities/shiva-parvati.jpg" },
+                  { name: "Aai Shri Khodiyar Maa", dham: "માટેલ / ગળધરા ધામ", path: "/deities/khodiyar-mataji.jpg" },
+                  { name: "Pujya Jalaram Bapa", dham: "વીરપુર ધામ (જેતપુર સમીપ)", path: "/deities/shrinathji.jpg" },
+                  { name: "Bhagwan Swaminarayan", dham: "ગઢડા / જેતપુર અક્ષર ભુવન", path: "/deities/shrinathji.jpg" },
+                  { name: "Kashtabhanjan Hanuman", dham: "સાળંગપુર ધામ", path: "/deities/ram-darbar.jpg" },
+                  { name: "Shree Siddhivinayak Ganesha", dham: "સિદ્ધિ ક્ષેત્ર", path: "/deities/ganesha.jpg" },
+                  { name: "Shree Radha Krishna", dham: "વૃંદાવન / દ્વારકા", path: "/deities/radha-krishna.jpg" },
+                  { name: "Jagat Janani Maa Umiya", dham: "ઊંઝા લક્ષચંડી ધામ", path: "/deities/umiya-mataji.jpg" },
+                  { name: "Shiva Parvati Parivar", dham: "કૈલાશ માનસરોવર", path: "/deities/shiva-parvati.jpg" },
+                ].map((d, i) => (
+                  <div key={i} className="p-2.5 rounded-xl border border-stone-200 bg-white shadow-2xs flex flex-col justify-between">
+                    <div className="aspect-[3/4] w-full rounded-lg overflow-hidden bg-stone-100 border border-stone-200 mb-2">
+                      <img src={d.path} alt={d.name} className="size-full object-cover" />
+                    </div>
+                    <div>
+                      <span className="text-[11px] font-bold text-stone-900 block truncate">{d.name}</span>
+                      <span className="text-[9px] text-amber-900 block truncate">{d.dham}</span>
+                      <span className="text-[8px] font-mono text-stone-400 block mt-0.5">Acrylic · Teak · LED</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
         )}
