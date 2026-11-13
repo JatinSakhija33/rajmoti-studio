@@ -20,7 +20,7 @@
   <!-- Background Base -->
   <rect width="1200" height="1500" fill="url(#bg)"/>
 
-  <!-- Atmosphere & Studio Lighting -->
+  <!-- Atmosphere &amp; Studio Lighting -->
   <circle cx="600" cy="525" r="540" fill="#FFF8EE" opacity="0.08" filter="url(#softGlow)"/>
   <circle cx="1020" cy="225" r="360" fill="#FFE6B8" opacity="0.12" filter="url(#softGlow)"/>
 
@@ -38,10 +38,10 @@
       </g>
     
 
-  <!-- Studio Typography & Branding -->
+  <!-- Studio Typography &amp; Branding -->
   <g transform="translate(0, 1280)" text-anchor="middle">
     <text x="600" y="0" fill="#E2C17C" font-family="'Montserrat', sans-serif" font-size="20" font-weight="600" letter-spacing="6" text-transform="uppercase">Rajmoti Studio Portfolio</text>
-    <text x="600" y="52" fill="#FFFFFF" font-family="'Playfair Display', serif" font-size="44" font-weight="bold">Pre-Wedding & Couple Stories</text>
+    <text x="600" y="52" fill="#FFFFFF" font-family="'Playfair Display', serif" font-size="44" font-weight="bold">Pre-Wedding &amp; Couple Stories</text>
     <text x="600" y="95" fill="#E6DAC8" font-family="'Montserrat', sans-serif" font-size="22" letter-spacing="2" opacity="0.95">Romantic Editorial Portraits</text>
     <text x="600" y="145" fill="#C5B6A0" font-family="'Montserrat', sans-serif" font-size="16" letter-spacing="5">RAJMOTI STUDIO · JETPUR (EST. 1982)</text>
   </g>
