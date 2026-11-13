@@ -69,10 +69,10 @@ export async function validUpload(token,orderId,secret) {
 let certCache={at:0,keys:[]};
 export async function requireOwner(request,env) {
  const issuer=clean(env.CF_ACCESS_ISSUER,200).replace(/\/$/,"");
- const audience=clean(env.CF_ACCESS_AUD,200);
+ const audiences=String(env.CF_ACCESS_AUD||"").split(",").map(x=>x.trim()).filter(Boolean);
  const allowed=String(env.OWNER_EMAILS||"").toLowerCase().split(",").map(x=>x.trim()).filter(Boolean);
  const token=request.headers.get("Cf-Access-Jwt-Assertion");
- if(!issuer || !audience || !allowed.length || !token)throw Error("Owner access not configured or not authenticated");
+ if(!issuer || !audiences.length || !allowed.length || !token)throw Error("Owner access not configured or not authenticated");
  if(!/^https:\/\/[a-z0-9-]+\.cloudflareaccess\.com$/.test(issuer))throw Error("Invalid Access issuer");
  const parts=token.split(".");
  if(parts.length!==3)throw Error("Invalid owner token");
@@ -81,7 +81,7 @@ export async function requireOwner(request,env) {
  catch{throw Error("Invalid owner token");}
  const now=Math.floor(Date.now()/1000);
  if(header.alg!=="RS256" || typeof header.kid!=="string" || payload.iss!==issuer ||
-   !(Array.isArray(payload.aud)?payload.aud.includes(audience):payload.aud===audience) ||
+   !(Array.isArray(payload.aud)?payload.aud.some(a=>audiences.includes(a)):audiences.includes(payload.aud)) ||
    typeof payload.exp!=="number" || payload.exp<=now || (payload.nbf && payload.nbf>now) ||
    !allowed.includes(String(payload.email||"").toLowerCase()))throw Error("Owner access denied");
  if(Date.now()-certCache.at>3600000 || !certCache.keys.some(k=>k.kid===header.kid)){
