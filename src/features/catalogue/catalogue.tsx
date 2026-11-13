@@ -48,6 +48,7 @@ import { TranslightPreview } from "./live-preview/TranslightPreview";
 import { GodsCollection } from "./live-preview/GodsCollection";
 import { CoupleMagazineFlipbook } from "./live-preview/CoupleMagazineFlipbook";
 import { PhoneCoverCustomizer } from "./live-preview/PhoneCoverCustomizer";
+import { KeychainCustomizer } from "./live-preview/KeychainCustomizer";
 import { CheckoutDialog } from "./CheckoutDialog";
 import { calculateVariantPriceInr } from "@/lib/pricing";
 import { toast } from "sonner";
@@ -86,7 +87,7 @@ export function Catalogue({ productId }: { productId?: string }) {
   const [comparing, setComparing] = useState(false);
   const [showQuote, setShowQuote] = useState(false);
   const [activeStudio, setActiveStudio] = useState<
-    "frames" | "mugs" | "translight" | "devotional" | "magazines" | "covers" | null
+    "frames" | "mugs" | "translight" | "devotional" | "magazines" | "covers" | "keychains" | null
   >(null);
   const activeProduct = products.find((p) => p.id === productId);
   const lastProduct = useRef<Product | undefined>(undefined);
@@ -227,6 +228,15 @@ export function Catalogue({ productId }: { productId?: string }) {
                 <p className="text-sm text-stone-600 mt-1 max-w-2xl leading-relaxed">
                   Every product is crafted by our master framers in Jetpur. Select a family below to explore realistic lighting, 360° 3D rotations, tactile page flips, and sample personalizations.
                 </p>
+              </div>
+              <div>
+                <Link
+                  to="/same-day"
+                  className="inline-flex items-center gap-2 bg-[#2D241E] text-amber-100 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-stone-900 transition-all shadow-sm border border-amber-900/40"
+                >
+                  <Sparkles size={14} className="text-amber-400" />
+                  Same-Day Gifts in Jetpur (2–4 hrs) →
+                </Link>
               </div>
             </div>
 
@@ -452,6 +462,42 @@ export function Catalogue({ productId }: { productId?: string }) {
                   </div>
                 </div>
               </div>
+
+              {/* Card 7: Double-Sided Photo Keychains */}
+              <div
+                onClick={() => setActiveStudio("keychains")}
+                className="group cursor-pointer rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
+              >
+                <div className="relative aspect-[4/3] bg-stone-100 overflow-hidden flex items-center justify-center">
+                  <img
+                    src="/products/frame-sample-anniversary.jpg"
+                    alt="Custom Photo Keychain Studio"
+                    className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
+                    Double-Sided Keepsake
+                  </div>
+                  <div className="absolute bottom-3 right-3 bg-amber-950/80 text-amber-200 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <Sparkles size={11} /> Acrylic & Teak Wood
+                  </div>
+                </div>
+                <div className="p-5 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-display text-xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
+                      Double-Sided Photo Keychains
+                    </h3>
+                    <p className="text-xs text-stone-600 mt-1.5 leading-relaxed">
+                      Photo on front, custom anniversary date or second photo on reverse. Shapes in Square, Rectangle, Heart & Round.
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
+                    <span className="text-stone-500 font-mono text-[11px]">From ₹149</span>
+                    <span className="font-semibold text-amber-800 flex items-center gap-1">
+                      Open studio <ArrowRight size={13} />
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -501,6 +547,83 @@ export function Catalogue({ productId }: { productId?: string }) {
               ))}
             </aside>
             <div className="catalogue-results">
+              {/* Curated Collection Quick Pills */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-2 no-scrollbar text-xs">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilters(initial);
+                    setQ("");
+                  }}
+                  className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-all ${
+                    !filters.occasion && !filters.category && !q
+                      ? "bg-stone-900 text-white font-bold"
+                      : "bg-stone-100 hover:bg-stone-200 text-stone-700"
+                  }`}
+                >
+                  All Keepsakes
+                </button>
+                <Link
+                  to="/same-day"
+                  className="px-3 py-1.5 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold whitespace-nowrap border border-amber-300 flex items-center gap-1 transition-all"
+                >
+                  <Sparkles size={12} className="text-amber-700" />
+                  Same-Day in Jetpur (2–4 hrs)
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    update("occasion", "anniversary");
+                  }}
+                  className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-all ${
+                    filters.occasion === "anniversary"
+                      ? "bg-amber-900 text-white font-bold"
+                      : "bg-stone-100 hover:bg-stone-200 text-stone-700"
+                  }`}
+                >
+                  Anniversary & Couples
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    update("category", "gods-collection");
+                  }}
+                  className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-all ${
+                    filters.category === "gods-collection"
+                      ? "bg-amber-900 text-white font-bold"
+                      : "bg-stone-100 hover:bg-stone-200 text-stone-700"
+                  }`}
+                >
+                  Mandir & Devotional
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    update("occasion", "birthday");
+                  }}
+                  className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-all ${
+                    filters.occasion === "birthday"
+                      ? "bg-amber-900 text-white font-bold"
+                      : "bg-stone-100 hover:bg-stone-200 text-stone-700"
+                  }`}
+                >
+                  Birthday & Baby
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQ("mug");
+                  }}
+                  className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-all ${
+                    q === "mug"
+                      ? "bg-amber-900 text-white font-bold"
+                      : "bg-stone-100 hover:bg-stone-200 text-stone-700"
+                  }`}
+                >
+                  Gifts under ₹499
+                </button>
+              </div>
+
               <div className="catalogue-toolbar">
                 <label className="ed-search">
                   <Search size={18} />
@@ -774,6 +897,7 @@ export function Catalogue({ productId }: { productId?: string }) {
               {activeStudio === "devotional" && "God's Devotional Collection"}
               {activeStudio === "magazines" && "Personalised Couple Story Magazine Studio"}
               {activeStudio === "covers" && "Custom Photo Phone Covers (200+ Models)"}
+              {activeStudio === "keychains" && "Double-Sided Custom Photo Keychains"}
             </DialogTitle>
             <DialogDescription>
               Handcrafted in Jetpur. Personalize your keepsake, explore finishes, and confirm production with our master framers.
@@ -843,6 +967,12 @@ export function Catalogue({ productId }: { productId?: string }) {
           {activeStudio === "covers" && (
             <div className="space-y-4">
               <PhoneCoverCustomizer />
+            </div>
+          )}
+
+          {activeStudio === "keychains" && (
+            <div className="space-y-4">
+              <KeychainCustomizer />
             </div>
           )}
         </DialogContent>

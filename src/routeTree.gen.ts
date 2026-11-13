@@ -21,6 +21,7 @@ import { Route as GiftsRouteImport } from './routes/gifts'
 import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as PortfoliosRouteImport } from './routes/portfolios'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SameDayRouteImport } from './routes/same-day'
 import { Route as StoriesRouteImport } from './routes/stories'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminBookingRouteImport } from './routes/admin.booking'
@@ -106,6 +107,11 @@ const PortfoliosRoute = PortfoliosRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SameDayRoute = SameDayRouteImport.update({
+  id: '/same-day',
+  path: '/same-day',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StoriesRoute = StoriesRouteImport.update({
@@ -253,6 +259,7 @@ export interface FileRoutesByFullPath {
   '/packages': typeof PackagesRoute
   '/portfolios': typeof PortfoliosRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/same-day': typeof SameDayRoute
   '/stories': typeof StoriesRoute
   '/admin/booking': typeof AdminBookingRoute
   '/admin/bookings': typeof AdminBookingsRoute
@@ -291,6 +298,7 @@ export interface FileRoutesByTo {
   '/gifts': typeof GiftsRoute
   '/packages': typeof PackagesRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/same-day': typeof SameDayRoute
   '/stories': typeof StoriesRoute
   '/admin/booking': typeof AdminBookingRoute
   '/admin/bookings': typeof AdminBookingsRoute
@@ -332,6 +340,7 @@ export interface FileRoutesById {
   '/packages': typeof PackagesRoute
   '/portfolios': typeof PortfoliosRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
+  '/same-day': typeof SameDayRoute
   '/stories': typeof StoriesRoute
   '/admin/booking': typeof AdminBookingRoute
   '/admin/bookings': typeof AdminBookingsRoute
@@ -374,6 +383,7 @@ export interface FileRouteTypes {
     | '/packages'
     | '/portfolios'
     | '/reset-password'
+    | '/same-day'
     | '/stories'
     | '/admin/booking'
     | '/admin/bookings'
@@ -412,6 +422,7 @@ export interface FileRouteTypes {
     | '/gifts'
     | '/packages'
     | '/reset-password'
+    | '/same-day'
     | '/stories'
     | '/admin/booking'
     | '/admin/bookings'
@@ -452,6 +463,7 @@ export interface FileRouteTypes {
     | '/packages'
     | '/portfolios'
     | '/reset-password'
+    | '/same-day'
     | '/stories'
     | '/admin/booking'
     | '/admin/bookings'
@@ -493,6 +505,7 @@ export interface RootRouteChildren {
   PackagesRoute: typeof PackagesRoute
   PortfoliosRoute: typeof PortfoliosRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SameDayRoute: typeof SameDayRoute
   StoriesRoute: typeof StoriesRoute
   DeskCalendarRoute: typeof DeskCalendarRoute
   DeskContactsRoute: typeof DeskContactsRoute
@@ -585,6 +598,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/same-day': {
+      id: '/same-day'
+      path: '/same-day'
+      fullPath: '/same-day'
+      preLoaderRoute: typeof SameDayRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stories': {
@@ -843,6 +863,7 @@ const rootRouteChildren: RootRouteChildren = {
   PackagesRoute: PackagesRoute,
   PortfoliosRoute: PortfoliosRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
+  SameDayRoute: SameDayRoute,
   StoriesRoute: StoriesRoute,
   DeskCalendarRoute: DeskCalendarRoute,
   DeskContactsRoute: DeskContactsRoute,

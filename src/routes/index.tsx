@@ -53,7 +53,7 @@ const PHOTOGRAPHY_CATEGORIES = [
     name: "Before we meet",
     label: "Maternity & Motherhood",
     text: "Graceful, unhurried portraits celebrating the quiet beauty before your baby arrives.",
-    image: "/portfolio/maternity-grace.svg",
+    image: "/portfolio/maternity-grace.jpg",
     serviceId: "maternity",
   },
   {
@@ -77,7 +77,7 @@ const PHOTOGRAPHY_CATEGORIES = [
     name: "Laughter in every candle",
     label: "Birthday & Cake Smash",
     text: "Fun themed setups, pastel balloon arches, and messy milestone laughter.",
-    image: "/portfolio/birthday-celebration.svg",
+    image: "/portfolio/birthday-celebration.jpg",
     serviceId: "birthday",
   },
   {

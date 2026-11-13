@@ -85,21 +85,45 @@ export function ThreePhotoMug({
     ctx.fillStyle = baseColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // Calculate cover crop for 512x384 decal zone
+    const dw = 512;
+    const dh = 384;
+    const dx = 256;
+    const dy = 64;
+
+    const drawCoverPhoto = (alpha = 1.0) => {
+      if (!activeImg) return;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      const nw = activeImg.naturalWidth || 1;
+      const nh = activeImg.naturalHeight || 1;
+      const imgRatio = nw / nh;
+      const destRatio = dw / dh;
+      let sx = 0, sy = 0, sw = nw, sh = nh;
+      if (imgRatio > destRatio) {
+        sw = nh * destRatio;
+        sx = (nw - sw) / 2;
+      } else {
+        sh = nw / destRatio;
+        sy = (nh - sh) / 2;
+      }
+      ctx.drawImage(activeImg, sx, sy, sw, sh, dx, dy, dw, dh);
+      ctx.restore();
+    };
+
     // If Magic mug and Cold, photo is hidden by thermal layer
     if (currentType === "magic" && !isHot) {
       if (activeImg) {
         // Very faint thermal ghosting
-        ctx.globalAlpha = 0.08;
-        ctx.drawImage(activeImg, 256, 64, 512, 384);
-        ctx.globalAlpha = 1.0;
+        drawCoverPhoto(0.08);
       }
     } else if (activeImg) {
-      // Draw customer photo on front section of mug (aspect 4:3)
-      ctx.drawImage(activeImg, 256, 64, 512, 384);
+      // Draw customer photo on front section of mug (aspect 4:3 with center cover crop)
+      drawCoverPhoto(1.0);
 
       // Subtle vignette border
-      ctx.strokeStyle = "rgba(0,0,0,0.06)";
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(0,0,0,0.08)";
+      ctx.lineWidth = 2;
       ctx.strokeRect(256, 64, 512, 384);
     } else {
       // Placeholder illustration
