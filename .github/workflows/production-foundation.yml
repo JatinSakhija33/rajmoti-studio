@@ -1,0 +1,29 @@
+name: Production foundation checks
+on:
+  push:
+    branches: [feature/zero-cost-production-foundation]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Build static storefront
+        run: npm run build
+      - name: Verify no sensitive .env tracked
+        run: |
+          if git ls-files | grep -Eq '(^|/)\.env($|\.(local|production|development)$)'; then
+            echo 'Sensitive environment file was committed' >&2
+            exit 1
+          fi
