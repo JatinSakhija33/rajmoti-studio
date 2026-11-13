@@ -31,6 +31,10 @@ dist-ssr
 *.sln
 *.sw?
 
+# Package manager lockfiles
+pnpm-lock.yaml
+pnpm-workspace.yaml
+
 # NEVER commit environment secrets or original customer data.
 .env
 .env.*

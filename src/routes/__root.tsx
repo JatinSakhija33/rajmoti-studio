@@ -5,6 +5,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -15,6 +16,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/use-auth";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { WhatsAppFloat } from "@/components/whatsapp-float";
+import { MobileCtaBar, MobileCtaSpacer } from "@/components/mobile-cta-bar";
 
 function NotFoundComponent() {
   return (
@@ -107,6 +110,8 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isOwnerArea = pathname.startsWith("/desk") || pathname.startsWith("/admin");
 
   useEffect(() => {
     if(liveBackend&&!backendConfigured)return;
@@ -122,7 +127,15 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <HeadContent /><Outlet />
+        <HeadContent />
+        <Outlet />
+        {!isOwnerArea && (
+          <>
+            <WhatsAppFloat />
+            <MobileCtaBar />
+            <MobileCtaSpacer />
+          </>
+        )}
         <Toaster position="top-center" />
       </AuthProvider>
     </QueryClientProvider>

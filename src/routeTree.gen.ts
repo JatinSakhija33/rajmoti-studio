@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BookRouteImport } from './routes/book'
 import { Route as CinematicReelsRouteImport } from './routes/cinematic-reels'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as DeskRouteImport } from './routes/desk'
 import { Route as GiftsRouteImport } from './routes/gifts'
 import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as PortfoliosRouteImport } from './routes/portfolios'
@@ -38,9 +39,12 @@ import { Route as AdminReelsRouteImport } from './routes/admin.reels'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminStorageRouteImport } from './routes/admin.storage'
 import { Route as AdminWorkflowRouteImport } from './routes/admin.workflow'
+import { Route as DeskCalendarRouteImport } from './routes/desk_.calendar'
+import { Route as DeskContactsRouteImport } from './routes/desk_.contacts'
 import { Route as PhotoShortIdRouteImport } from './routes/photo.$shortId'
 import { Route as PortfoliosIndexRouteImport } from './routes/portfolios.index'
 import { Route as ReelShortIdRouteImport } from './routes/reel.$shortId'
+import { Route as TrackIdRouteImport } from './routes/track.$id'
 import { Route as PortfoliosCategoryIndexRouteImport } from './routes/portfolios.$category.index'
 import { Route as PortfoliosCategorySubcategoryRouteImport } from './routes/portfolios.$category.$subcategory'
 
@@ -77,6 +81,11 @@ const CinematicReelsRoute = CinematicReelsRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeskRoute = DeskRouteImport.update({
+  id: '/desk',
+  path: '/desk',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GiftsRoute = GiftsRouteImport.update({
@@ -189,6 +198,16 @@ const AdminWorkflowRoute = AdminWorkflowRouteImport.update({
   path: '/workflow',
   getParentRoute: () => AdminRoute,
 } as any)
+const DeskCalendarRoute = DeskCalendarRouteImport.update({
+  id: '/desk_/calendar',
+  path: '/desk/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeskContactsRoute = DeskContactsRouteImport.update({
+  id: '/desk_/contacts',
+  path: '/desk/contacts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PhotoShortIdRoute = PhotoShortIdRouteImport.update({
   id: '/photo/$shortId',
   path: '/photo/$shortId',
@@ -202,6 +221,11 @@ const PortfoliosIndexRoute = PortfoliosIndexRouteImport.update({
 const ReelShortIdRoute = ReelShortIdRouteImport.update({
   id: '/reel/$shortId',
   path: '/reel/$shortId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrackIdRoute = TrackIdRouteImport.update({
+  id: '/track/$id',
+  path: '/track/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PortfoliosCategoryIndexRoute = PortfoliosCategoryIndexRouteImport.update({
@@ -224,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/book': typeof BookRoute
   '/cinematic-reels': typeof CinematicReelsRoute
   '/contact': typeof ContactRoute
+  '/desk': typeof DeskRoute
   '/gifts': typeof GiftsRoute
   '/packages': typeof PackagesRoute
   '/portfolios': typeof PortfoliosRouteWithChildren
@@ -245,8 +270,11 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/storage': typeof AdminStorageRoute
   '/admin/workflow': typeof AdminWorkflowRoute
+  '/desk/calendar': typeof DeskCalendarRoute
+  '/desk/contacts': typeof DeskContactsRoute
   '/photo/$shortId': typeof PhotoShortIdRoute
   '/reel/$shortId': typeof ReelShortIdRoute
+  '/track/$id': typeof TrackIdRoute
   '/admin/': typeof AdminIndexRoute
   '/portfolios/': typeof PortfoliosIndexRoute
   '/portfolios/$category/$subcategory': typeof PortfoliosCategorySubcategoryRoute
@@ -259,6 +287,7 @@ export interface FileRoutesByTo {
   '/book': typeof BookRoute
   '/cinematic-reels': typeof CinematicReelsRoute
   '/contact': typeof ContactRoute
+  '/desk': typeof DeskRoute
   '/gifts': typeof GiftsRoute
   '/packages': typeof PackagesRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -279,8 +308,11 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/storage': typeof AdminStorageRoute
   '/admin/workflow': typeof AdminWorkflowRoute
+  '/desk/calendar': typeof DeskCalendarRoute
+  '/desk/contacts': typeof DeskContactsRoute
   '/photo/$shortId': typeof PhotoShortIdRoute
   '/reel/$shortId': typeof ReelShortIdRoute
+  '/track/$id': typeof TrackIdRoute
   '/admin': typeof AdminIndexRoute
   '/portfolios': typeof PortfoliosIndexRoute
   '/portfolios/$category/$subcategory': typeof PortfoliosCategorySubcategoryRoute
@@ -295,6 +327,7 @@ export interface FileRoutesById {
   '/book': typeof BookRoute
   '/cinematic-reels': typeof CinematicReelsRoute
   '/contact': typeof ContactRoute
+  '/desk': typeof DeskRoute
   '/gifts': typeof GiftsRoute
   '/packages': typeof PackagesRoute
   '/portfolios': typeof PortfoliosRouteWithChildren
@@ -316,8 +349,11 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/storage': typeof AdminStorageRoute
   '/admin/workflow': typeof AdminWorkflowRoute
+  '/desk_/calendar': typeof DeskCalendarRoute
+  '/desk_/contacts': typeof DeskContactsRoute
   '/photo/$shortId': typeof PhotoShortIdRoute
   '/reel/$shortId': typeof ReelShortIdRoute
+  '/track/$id': typeof TrackIdRoute
   '/admin/': typeof AdminIndexRoute
   '/portfolios/': typeof PortfoliosIndexRoute
   '/portfolios/$category/$subcategory': typeof PortfoliosCategorySubcategoryRoute
@@ -333,6 +369,7 @@ export interface FileRouteTypes {
     | '/book'
     | '/cinematic-reels'
     | '/contact'
+    | '/desk'
     | '/gifts'
     | '/packages'
     | '/portfolios'
@@ -354,8 +391,11 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/storage'
     | '/admin/workflow'
+    | '/desk/calendar'
+    | '/desk/contacts'
     | '/photo/$shortId'
     | '/reel/$shortId'
+    | '/track/$id'
     | '/admin/'
     | '/portfolios/'
     | '/portfolios/$category/$subcategory'
@@ -368,6 +408,7 @@ export interface FileRouteTypes {
     | '/book'
     | '/cinematic-reels'
     | '/contact'
+    | '/desk'
     | '/gifts'
     | '/packages'
     | '/reset-password'
@@ -388,8 +429,11 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/storage'
     | '/admin/workflow'
+    | '/desk/calendar'
+    | '/desk/contacts'
     | '/photo/$shortId'
     | '/reel/$shortId'
+    | '/track/$id'
     | '/admin'
     | '/portfolios'
     | '/portfolios/$category/$subcategory'
@@ -403,6 +447,7 @@ export interface FileRouteTypes {
     | '/book'
     | '/cinematic-reels'
     | '/contact'
+    | '/desk'
     | '/gifts'
     | '/packages'
     | '/portfolios'
@@ -424,8 +469,11 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/storage'
     | '/admin/workflow'
+    | '/desk_/calendar'
+    | '/desk_/contacts'
     | '/photo/$shortId'
     | '/reel/$shortId'
+    | '/track/$id'
     | '/admin/'
     | '/portfolios/'
     | '/portfolios/$category/$subcategory'
@@ -440,13 +488,17 @@ export interface RootRouteChildren {
   BookRoute: typeof BookRoute
   CinematicReelsRoute: typeof CinematicReelsRoute
   ContactRoute: typeof ContactRoute
+  DeskRoute: typeof DeskRoute
   GiftsRoute: typeof GiftsRoute
   PackagesRoute: typeof PackagesRoute
   PortfoliosRoute: typeof PortfoliosRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   StoriesRoute: typeof StoriesRoute
+  DeskCalendarRoute: typeof DeskCalendarRoute
+  DeskContactsRoute: typeof DeskContactsRoute
   PhotoShortIdRoute: typeof PhotoShortIdRoute
   ReelShortIdRoute: typeof ReelShortIdRoute
+  TrackIdRoute: typeof TrackIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -498,6 +550,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/desk': {
+      id: '/desk'
+      path: '/desk'
+      fullPath: '/desk'
+      preLoaderRoute: typeof DeskRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gifts': {
@@ -654,6 +713,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminWorkflowRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/desk_/calendar': {
+      id: '/desk_/calendar'
+      path: '/desk/calendar'
+      fullPath: '/desk/calendar'
+      preLoaderRoute: typeof DeskCalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/desk_/contacts': {
+      id: '/desk_/contacts'
+      path: '/desk/contacts'
+      fullPath: '/desk/contacts'
+      preLoaderRoute: typeof DeskContactsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/photo/$shortId': {
       id: '/photo/$shortId'
       path: '/photo/$shortId'
@@ -673,6 +746,13 @@ declare module '@tanstack/react-router' {
       path: '/reel/$shortId'
       fullPath: '/reel/$shortId'
       preLoaderRoute: typeof ReelShortIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/track/$id': {
+      id: '/track/$id'
+      path: '/track/$id'
+      fullPath: '/track/$id'
+      preLoaderRoute: typeof TrackIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/portfolios/$category/': {
@@ -758,13 +838,17 @@ const rootRouteChildren: RootRouteChildren = {
   BookRoute: BookRoute,
   CinematicReelsRoute: CinematicReelsRoute,
   ContactRoute: ContactRoute,
+  DeskRoute: DeskRoute,
   GiftsRoute: GiftsRoute,
   PackagesRoute: PackagesRoute,
   PortfoliosRoute: PortfoliosRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   StoriesRoute: StoriesRoute,
+  DeskCalendarRoute: DeskCalendarRoute,
+  DeskContactsRoute: DeskContactsRoute,
   PhotoShortIdRoute: PhotoShortIdRoute,
   ReelShortIdRoute: ReelShortIdRoute,
+  TrackIdRoute: TrackIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

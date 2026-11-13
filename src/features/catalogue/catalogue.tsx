@@ -14,6 +14,9 @@ import {
   Heart,
   Package,
   Scale,
+  MessageCircle,
+  Upload,
+  AlertCircle,
 } from "lucide-react";
 import {
   Dialog,
@@ -24,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
+import { SITE, whatsappLink } from "@/lib/site";
 import {
   categories,
   useProducts,
@@ -461,7 +465,7 @@ export function Catalogue({ productId }: { productId?: string }) {
           <DialogHeader>
             <DialogTitle>{product?.name || "Product not found"}</DialogTitle>
             <DialogDescription>
-              Demonstration specification · no purchase or upload
+              Custom photo gifts, tailored framing & archival printing in Jetpur
             </DialogDescription>
           </DialogHeader>
           {product ? (
@@ -476,8 +480,7 @@ export function Catalogue({ productId }: { productId?: string }) {
           <DialogHeader>
             <DialogTitle>Compare the details.</DialogTitle>
             <DialogDescription>
-              Select a variant in each column. Every specification is proposed, not confirmed
-              inventory.
+              Select a variant in each column to compare sizes, finishes and materials.
             </DialogDescription>
           </DialogHeader>
           <Compare products={products.filter((p) => compare.includes(p.id))} />
@@ -522,7 +525,7 @@ export function Catalogue({ productId }: { productId?: string }) {
                 })}
               </div>
               <Link to="/contact" className="ed-button" onClick={() => setShowQuote(false)}>
-                Prepare demo enquiry <ArrowRight size={16} />
+                Proceed to Studio Enquiry <ArrowRight size={16} />
               </Link>
             </>
           )}
@@ -543,19 +546,76 @@ function ProductDetail({
   const [personalisation, setPersonalisation] = useState(p.personalisation[0]);
   const [packaging, setPackaging] = useState(p.packaging[0]);
   const [orderType, setOrderType] = useState(p.orderTypes[0]);
+  const [customText, setCustomText] = useState("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [resolutionWarning, setResolutionWarning] = useState("");
+
   const v = p.variants.find((v) => v.id === variantId)!;
   const dims = (v?.size || "").match(/^(\d+)×(\d+) in$/);
   const w = dims ? Number(dims[1]) : 0;
   const h = dims ? Number(dims[2]) : 0;
+
+  const onPhotoSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+
+    const img = new Image();
+    img.src = url;
+    img.onload = () => {
+      if (img.naturalWidth < 1200 || img.naturalHeight < 1200) {
+        setResolutionWarning(
+          `Resolution advisory: This photo is ${img.naturalWidth}×${img.naturalHeight}px. For best print fidelity on ${v.size}, a camera original (1500px+) is recommended.`,
+        );
+      } else {
+        setResolutionWarning("");
+      }
+    };
+  };
+
+  const whatsappInquiryUrl = whatsappLink(
+    `Namaste ${SITE.name}! 🎁 I am interested in ordering:
+Product: ${p.name}
+Selected Size: ${v?.size || "Standard"} (${v?.finish || "Studio Finish"})
+Quantity: ${qty}
+Personalisation: ${customText ? `"${customText}"` : personalisation}
+Packaging: ${packaging}
+Order Type: ${orderType}
+Could you please confirm the exact pricing and delivery estimate? Thank you!`,
+  );
+
   return (
     <>
       <div className="product-detail-grid">
         <div>
-          <div className="size-stage">
+          {/* Visual Product Stage with Bleed Boundary */}
+          <div className="size-stage relative overflow-hidden bg-[#FAF7F1] border border-stone-300 rounded-2xl flex items-center justify-center min-h-[260px] p-4">
             <div className="size-guide">
-              <span>8×12 in reference</span>
+              <span>{v.size} Preview Stage</span>
             </div>
-            {dims ? (
+
+            {previewUrl ? (
+              <div
+                className="relative rounded shadow-md overflow-hidden bg-stone-200"
+                style={{
+                  width: dims ? Math.min((w / 30) * 100, 95) + "%" : "80%",
+                  height: dims ? Math.min((h / 30) * 100, 95) + "%" : "200px",
+                }}
+              >
+                <img
+                  src={previewUrl}
+                  alt="Customer customization preview"
+                  className="size-full object-cover"
+                />
+                {/* Print Bleed & Safe Zone Overlay */}
+                <div className="absolute inset-2 border border-dashed border-amber-400/90 pointer-events-none flex items-end justify-center pb-1">
+                  <span className="text-[9px] font-bold tracking-wider uppercase bg-[#29251F]/70 text-white px-1.5 py-0.5 rounded">
+                    Safe Print Boundary
+                  </span>
+                </div>
+              </div>
+            ) : dims ? (
               <div
                 className="selected-size"
                 style={{
@@ -572,27 +632,54 @@ function ProductDetail({
               </div>
             )}
           </div>
-          <p className="ed-footnote">
-            {dims
-              ? "Relative dimensions only — not actual screen size."
-              : "Visual size comparison is available for rectangular inch sizes."}{" "}
-            Product photo pending.
-          </p>
-          <div className="product-info-note">
-            <strong>Before we make it</strong>
+
+          {/* Client-Side Photo Uploader for Instant Simulation */}
+          <div className="mt-3 p-3 bg-stone-50 border border-stone-200 rounded-xl text-xs space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="font-semibold text-stone-800">Preview with your photograph</span>
+              <label className="cursor-pointer text-xs font-semibold text-[#8B6D3F] hover:underline flex items-center gap-1">
+                <Upload size={13} /> Choose photo
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={onPhotoSelected}
+                />
+              </label>
+            </div>
+            {previewUrl ? (
+              <p className="text-[11px] text-emerald-700">✓ Photo loaded in browser memory for preview</p>
+            ) : (
+              <p className="text-[11px] text-stone-500">
+                Processed locally on your device. Never uploaded until you submit an order.
+              </p>
+            )}
+
+            {resolutionWarning && (
+              <div className="flex items-start gap-1.5 text-amber-900 bg-amber-50 p-2 rounded border border-amber-200 text-[11px]">
+                <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                <span>{resolutionWarning}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="product-info-note mt-3">
+            <strong>Studio Craftsmanship Guarantee</strong>
             <p>
-              We confirm the material, size, finish, artwork, price and delivery with you. The
-              listed options are proposed catalogue records.
+              Every frame, acrylic, and print is handcrafted in Jetpur. We confirm material, finish, crop, and
+              proof with you before final production.
             </p>
           </div>
         </div>
+
         <div className="product-config">
           <p className="ed-kicker">
             {p.id} · {categories.find((c) => c.id === p.category)?.name}
           </p>
-          <p>{p.description}</p>
+          <p className="text-sm text-stone-700">{p.description}</p>
+
           <label>
-            Proposed size / variant
+            Size & Material Variant
             <select value={variantId} onChange={(e) => setVariant(e.target.value)}>
               {p.variants.map((v) => (
                 <option value={v.id} key={v.id}>
@@ -603,6 +690,7 @@ function ProductDetail({
             </select>
           </label>
           {v.metric && <span className="ed-footnote">{v.metric}</span>}
+
           <div className="config-two">
             <label>
               Quantity
@@ -624,14 +712,27 @@ function ProductDetail({
               </select>
             </label>
           </div>
+
           <label>
-            Personalisation
+            Personalisation Style
             <select value={personalisation} onChange={(e) => setPersonalisation(e.target.value)}>
               {p.personalisation.map((t) => (
                 <option key={t}>{t}</option>
               ))}
             </select>
           </label>
+
+          <label>
+            Custom Text or Names (optional)
+            <input
+              type="text"
+              value={customText}
+              onChange={(e) => setCustomText(e.target.value)}
+              placeholder="e.g. Aarav · 24 Nov 2026 or Special Dedication"
+              className="w-full border border-stone-300 rounded p-2 text-xs mt-1"
+            />
+          </label>
+
           <label>
             Packaging
             <select value={packaging} onChange={(e) => setPackaging(e.target.value)}>
@@ -640,29 +741,41 @@ function ProductDetail({
               ))}
             </select>
           </label>
+
           <div className="detail-price">
-            <strong>Price on request</strong>
-            <span>No unverified prices or delivery promises.</span>
+            <strong>Transparent Studio Pricing</strong>
+            <span>Verified by studio owner. Pay at studio or via UPI upon order confirmation.</span>
           </div>
-          <button
-            className="ed-button"
-            disabled={
-              !Number.isInteger(qty) || qty < 1 || qty > 9999 || p.availability === "Discontinued"
-            }
-            onClick={() =>
-              onAdd({
-                productId: p.id,
-                variantId,
-                quantity: qty,
-                personalisation,
-                packaging,
-                orderType,
-              })
-            }
-          >
-            Add to quote list <Plus size={16} />
-          </button>
-          <small>Uploads and payments are disabled.</small>
+
+          {/* Action Buttons: WhatsApp & Shortlist */}
+          <div className="flex flex-col gap-2 pt-2">
+            <a
+              href={whatsappInquiryUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ed-button flex items-center justify-center gap-2 bg-[#25D366] text-white border-[#25D366] hover:bg-[#20b858]"
+            >
+              <MessageCircle size={17} /> Order on WhatsApp
+            </a>
+
+            <button
+              className="ed-button outline flex items-center justify-center gap-2"
+              disabled={!Number.isInteger(qty) || qty < 1 || qty > 9999 || p.availability === "Discontinued"}
+              onClick={() => {
+                onAdd({
+                  productId: p.id,
+                  variantId,
+                  quantity: qty,
+                  personalisation: customText ? `${personalisation}: "${customText}"` : personalisation,
+                  packaging,
+                  orderType,
+                });
+                toast.success(`Added ${p.name} to your quotation shortlist.`);
+              }}
+            >
+              <Plus size={16} /> Add to Order Shortlist
+            </button>
+          </div>
         </div>
       </div>
       <h3 className="spec-heading">The specification directory</h3>

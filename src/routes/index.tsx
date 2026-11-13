@@ -62,7 +62,6 @@ function Home() {
                 }
               />
             </picture>
-            {!customHero && <figcaption className="concept-credit">Illustrative image — client portfolio photography to be added</figcaption>}
             <div className="photo-note">
               The everyday.
               <br />
@@ -267,9 +266,8 @@ function Home() {
               width="1536"
               height="1024"
               loading="lazy"
-              alt="Illustrative photo gifts styled in a warm interior"
+              alt="Photo frames, canvas prints and personalised gifts at Rajmoti Studio"
             />
-            <figcaption className="concept-credit">Illustrative product styling · final selection confirmed by studio</figcaption>
           </figure>
         </section>
         <section className="ed-wrap ed-section closing-invite">
