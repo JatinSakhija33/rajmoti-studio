@@ -22,7 +22,10 @@ test("upload grant is scoped to the correct order",async()=>{
  const token=await signUpload(id,secret);
  assert.equal(await validUpload(token,id,secret),true);
  assert.equal(await validUpload(token,different,secret),false);
- assert.equal(await validUpload(token.slice(0,-1)+"A",id,secret),false);
+ const parts=token.split(".");
+ const signature=parts[2];
+ const changed=(signature[0]==="A"?"B":"A")+signature.slice(1);
+ assert.equal(await validUpload(parts[0]+"."+parts[1]+"."+changed,id,secret),false);
  assert.equal(await validUpload("garbage",id,secret),false);
 });
 test("tracking grant is separate from upload and scope-limited",async()=>{
