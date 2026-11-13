@@ -17,10 +17,10 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci
-      - name: Typecheck
-        run: npx tsc --noEmit
-      - name: Build static storefront
+      - name: Build static storefront and generate typed routes
         run: npm run build
+      - name: Typecheck generated route tree
+        run: npx tsc --noEmit
       - name: Verify no sensitive .env tracked
         run: |
           if git ls-files | grep -Eq '(^|/)\.env($|\.(local|production|development)$)'; then
