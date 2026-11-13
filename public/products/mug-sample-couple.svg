@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="512" viewBox="0 0 1024 512">
+  <defs>
+    <linearGradient id="mugBg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FAF6F0"/>
+      <stop offset="50%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#FAF6F0"/>
+    </linearGradient>
+    <linearGradient id="goldMug" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B88A3B"/>
+      <stop offset="50%" stop-color="#E2C17C"/>
+      <stop offset="100%" stop-color="#966C27"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="512" fill="url(#mugBg)"/>
+  
+  <!-- Central Frame -->
+  <rect x="256" y="64" width="512" height="384" rx="16" fill="#2E1C16"/>
+  <rect x="264" y="72" width="496" height="368" rx="12" fill="none" stroke="url(#goldMug)" stroke-width="3"/>
+
+  <!-- Couple Graphic -->
+  <circle cx="480" cy="220" r="50" fill="#F4E8D6"/>
+  <circle cx="545" cy="235" r="45" fill="#EAD5BA"/>
+  <path d="M 435 270 Q 480 260 520 270 L 530 400 L 420 400 Z" fill="#991B1B"/>
+  <path d="M 515 280 Q 555 270 595 285 L 610 400 L 510 400 Z" fill="#7F1D1D"/>
+  
+  <!-- Mug Typography -->
+  <text x="512" y="340" text-anchor="middle" fill="#FFFFFF" font-family="'Playfair Display', serif" font-size="28" font-weight="bold">Together Forever</text>
+  <text x="512" y="375" text-anchor="middle" fill="#E2C17C" font-family="'Montserrat', sans-serif" font-size="14" letter-spacing="3">AARAV &amp; RIYA · 2026</text>
+  <text x="512" y="475" text-anchor="middle" fill="#8B6D3F" font-family="'Montserrat', sans-serif" font-size="12" letter-spacing="4">RAJMOTI STUDIO · JETPUR</text>
+</svg>

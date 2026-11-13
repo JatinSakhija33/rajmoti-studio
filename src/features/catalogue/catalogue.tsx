@@ -211,123 +211,210 @@ export function Catalogue({ productId }: { productId?: string }) {
           </figure>
         </section>
 
-        {/* Rajmoti Live Craftsmanship Studios Hero */}
-        <section className="ed-wrap my-8">
-          <div className="bg-[#FAF7F1] border border-stone-300 rounded-2xl p-6 sm:p-8 shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+        {/* Visual Product Discovery Showcase */}
+        <section className="ed-wrap my-10">
+          <div className="bg-[#FAF7F1] border border-stone-300 rounded-3xl p-6 sm:p-10 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
               <div>
-                <p className="ed-kicker flex items-center gap-1.5 text-amber-800">
-                  <Sparkles size={14} className="text-amber-700" /> Rajmoti Live Craftsmanship Studios
+                <p className="ed-kicker flex items-center gap-1.5 text-amber-900 font-semibold">
+                  <Sparkles size={15} className="text-amber-700" /> Handcrafted in Jetpur · Interactive Showcase
                 </p>
-                <h2 className="text-2xl sm:text-3xl font-display text-stone-900 mt-1">
-                  Customise & preview before your order.
+                <h2 className="text-3xl sm:text-4xl font-display text-stone-900 mt-1.5">
+                  See how your keepsake will look.
                 </h2>
-                <p className="text-sm text-stone-600 mt-1 max-w-2xl">
-                  Try our interactive preview tools: drag photos into multi-layout frames, rotate 3D ceramic & thermochromic magic mugs, simulate illuminated LED translights, explore devotional shrines, or flip through a personalized couple magazine.
+                <p className="text-sm text-stone-600 mt-1 max-w-2xl leading-relaxed">
+                  Every product is crafted by our master framers in Jetpur. Select a family below to explore realistic lighting, 360° 3D rotations, tactile page flips, and sample personalizations.
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-              {/* Studio 1: Frames & Collages */}
-              <button
-                type="button"
+            {/* Visual Product Showcase Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Card 1: Frames & Collages */}
+              <div
                 onClick={() => setActiveStudio("frames")}
-                className="text-left bg-white p-4 rounded-xl border border-stone-200 hover:border-amber-700 hover:shadow-md transition-all group flex flex-col justify-between"
+                className="group cursor-pointer rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
               >
-                <div>
-                  <div className="size-10 rounded-lg bg-amber-50 text-amber-800 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                    <Layers size={20} />
+                <div className="relative aspect-[4/3] bg-stone-100 overflow-hidden">
+                  <img
+                    src="/products/frame-sample-wedding.svg"
+                    alt="Handcrafted Teak & Acrylic Frames"
+                    className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
+                    Handcrafted Wood & Acrylic
                   </div>
-                  <h3 className="font-semibold text-stone-900 text-sm">Frame & Collage Studio</h3>
-                  <p className="text-xs text-stone-500 mt-1 leading-relaxed">
-                    Single, Triptych, 4-Grid & Family-5 layouts. Teak, Charcoal & Gold finishes.
-                  </p>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                    <span className="text-xs font-semibold text-white flex items-center gap-1.5">
+                      Open Frame Studio <ArrowRight size={13} />
+                    </span>
+                  </div>
                 </div>
-                <span className="text-xs font-semibold text-amber-800 mt-4 flex items-center gap-1">
-                  Open studio <ArrowRight size={13} />
-                </span>
-              </button>
+                <div className="p-5 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-display text-xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
+                      Crafted frames that outlast time.
+                    </h3>
+                    <p className="text-xs text-stone-600 mt-1.5 leading-relaxed">
+                      Single, triptych, and multi-photo heritage collages in Saurashtra teak wood, charcoal matte, gold leaf, and floating acrylic.
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
+                    <span className="text-stone-500 font-mono text-[11px]">8×12 to 20×30 in</span>
+                    <span className="font-semibold text-amber-800 flex items-center gap-1">
+                      Personalize & Preview <ArrowRight size={13} />
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-              {/* Studio 2: 3D Photo Mugs */}
-              <button
-                type="button"
+              {/* Card 2: 3D Photo Mugs */}
+              <div
                 onClick={() => setActiveStudio("mugs")}
-                className="text-left bg-white p-4 rounded-xl border border-stone-200 hover:border-amber-700 hover:shadow-md transition-all group flex flex-col justify-between"
+                className="group cursor-pointer rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
               >
-                <div>
-                  <div className="size-10 rounded-lg bg-amber-50 text-amber-800 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                    <Coffee size={20} />
+                <div className="relative aspect-[4/3] bg-[#2E1C16] overflow-hidden flex items-center justify-center p-4">
+                  <img
+                    src="/products/mug-sample-couple.svg"
+                    alt="3D Ceramic & Thermochromic Magic Mugs"
+                    className="w-4/5 h-auto object-contain rounded-lg shadow-lg group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
+                    Ceramic & Magic Reveal
                   </div>
-                  <h3 className="font-semibold text-stone-900 text-sm">3D Photo Mug Studio</h3>
-                  <p className="text-xs text-stone-500 mt-1 leading-relaxed">
-                    Rotatable 3D ceramic mugs with Cold / Hot thermochromic magic reveal switch.
-                  </p>
+                  <div className="absolute bottom-3 right-3 bg-amber-950/80 text-amber-200 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <Coffee size={11} /> 360° Rotatable
+                  </div>
                 </div>
-                <span className="text-xs font-semibold text-amber-800 mt-4 flex items-center gap-1">
-                  Open studio <ArrowRight size={13} />
-                </span>
-              </button>
+                <div className="p-5 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-display text-xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
+                      Your memories, with every morning.
+                    </h3>
+                    <p className="text-xs text-stone-600 mt-1.5 leading-relaxed">
+                      Gloss white ceramic or thermochromic magic mugs that reveal your photograph when pouring hot chai or coffee.
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
+                    <span className="text-stone-500 font-mono text-[11px]">Cold / Hot Thermal Switch</span>
+                    <span className="font-semibold text-amber-800 flex items-center gap-1">
+                      Rotate & Make Yours <ArrowRight size={13} />
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-              {/* Studio 3: Backlit Translight */}
-              <button
-                type="button"
+              {/* Card 3: Backlit LED Translight */}
+              <div
                 onClick={() => setActiveStudio("translight")}
-                className="text-left bg-white p-4 rounded-xl border border-stone-200 hover:border-amber-700 hover:shadow-md transition-all group flex flex-col justify-between"
+                className="group cursor-pointer rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
               >
-                <div>
-                  <div className="size-10 rounded-lg bg-amber-50 text-amber-800 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                    <SunMedium size={20} />
+                <div className="relative aspect-[4/3] bg-[#14120E] overflow-hidden flex items-center justify-center p-3">
+                  <div className="relative h-full aspect-[2/3] rounded-xs border-4 border-amber-950 shadow-[0_0_30px_rgba(255,200,100,0.35)] overflow-hidden">
+                    <img
+                      src="/products/translight-sample.svg"
+                      alt="Backlit LED Translight"
+                      className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
                   </div>
-                  <h3 className="font-semibold text-stone-900 text-sm">Backlit Translight</h3>
-                  <p className="text-xs text-stone-500 mt-1 leading-relaxed">
-                    Interactive Light Off / Light On toggle. Evenly diffused internal LED illumination.
-                  </p>
+                  <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
+                    Edge-Lit Optical Film
+                  </div>
+                  <div className="absolute bottom-3 right-3 bg-amber-600/90 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <SunMedium size={11} /> 3000K & 4000K
+                  </div>
                 </div>
-                <span className="text-xs font-semibold text-amber-800 mt-4 flex items-center gap-1">
-                  Open studio <ArrowRight size={13} />
-                </span>
-              </button>
+                <div className="p-5 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-display text-xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
+                      Art that glows from within.
+                    </h3>
+                    <p className="text-xs text-stone-600 mt-1.5 leading-relaxed">
+                      Evenly diffused internal LED panel brings portraits to life in soft golden hour warmth or pure gallery white.
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
+                    <span className="text-stone-500 font-mono text-[11px]">12×18 & 16×24 in</span>
+                    <span className="font-semibold text-amber-800 flex items-center gap-1">
+                      Experience Lighting <ArrowRight size={13} />
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-              {/* Studio 4: God's Collection */}
-              <button
-                type="button"
+              {/* Card 4: Devotional Collection */}
+              <div
                 onClick={() => setActiveStudio("devotional")}
-                className="text-left bg-white p-4 rounded-xl border border-stone-200 hover:border-amber-700 hover:shadow-md transition-all group flex flex-col justify-between"
+                className="group cursor-pointer rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
               >
-                <div>
-                  <div className="size-10 rounded-lg bg-amber-50 text-amber-800 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                    <Flame size={20} />
+                <div className="relative aspect-[4/3] bg-[#16283D] overflow-hidden flex items-center justify-center p-3">
+                  <img
+                    src="/deities/shrinathji.svg"
+                    alt="Sacred Devotional Art"
+                    className="h-full aspect-[2/3] object-cover rounded shadow-lg group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
+                    Pavitra Darshan
                   </div>
-                  <h3 className="font-semibold text-stone-900 text-sm">God's Devotional Collection</h3>
-                  <p className="text-xs text-stone-500 mt-1 leading-relaxed">
-                    8 authentic Gujarati deities in Bitu Acrylic, Teak Frame & LED Translight.
-                  </p>
+                  <div className="absolute bottom-3 right-3 bg-amber-950/80 text-amber-200 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <Flame size={11} /> 8 Sacred Deities
+                  </div>
                 </div>
-                <span className="text-xs font-semibold text-amber-800 mt-4 flex items-center gap-1">
-                  Open studio <ArrowRight size={13} />
-                </span>
-              </button>
+                <div className="p-5 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-display text-xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
+                      Sacred blessings for your sanctum.
+                    </h3>
+                    <p className="text-xs text-stone-600 mt-1.5 leading-relaxed">
+                      Revered Gujarati deities including Shrinathji, Ganesha, Radha Krishna & Maa Umiya in Acrylic, Teak & Translight.
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
+                    <span className="text-stone-500 font-mono text-[11px]">Mandir & Living Room</span>
+                    <span className="font-semibold text-amber-800 flex items-center gap-1">
+                      View Collection <ArrowRight size={13} />
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-              {/* Studio 5: Couple Story Magazine */}
-              <button
-                type="button"
+              {/* Card 5: Couple Story Magazine */}
+              <div
                 onClick={() => setActiveStudio("magazines")}
-                className="text-left bg-white p-4 rounded-xl border border-stone-200 hover:border-amber-700 hover:shadow-md transition-all group flex flex-col justify-between"
+                className="group cursor-pointer rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between lg:col-span-2"
               >
-                <div>
-                  <div className="size-10 rounded-lg bg-amber-50 text-amber-800 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                    <BookOpen size={20} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 h-full">
+                  <div className="relative aspect-[4/3] sm:aspect-auto bg-[#1E1916] overflow-hidden flex items-center justify-center p-4">
+                    <img
+                      src="/products/magazine-cover.svg"
+                      alt="Couple Story Editorial Magazine"
+                      className="h-full max-h-[220px] aspect-[2/3] object-cover rounded shadow-2xl group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
+                      Editorial Keepsake
+                    </div>
                   </div>
-                  <h3 className="font-semibold text-stone-900 text-sm">Couple Story Magazine</h3>
-                  <p className="text-xs text-stone-500 mt-1 leading-relaxed">
-                    8–20 photo editorial flipbook with romantic quotes & scannable song QR code.
-                  </p>
+                  <div className="p-6 flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold text-amber-800 uppercase tracking-widest block mb-1">
+                        8–20 Curated Photographs · Song QR
+                      </span>
+                      <h3 className="font-display text-2xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
+                        A love story, printed in timeless pages.
+                      </h3>
+                      <p className="text-xs text-stone-600 mt-2 leading-relaxed">
+                        Flip through a genuine romantic editorial magazine with chapter spreads, custom dates, vows, and an interactive QR code linked to your couple song.
+                      </p>
+                    </div>
+                    <div className="mt-5 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
+                      <span className="text-stone-500 font-mono text-[11px]">Hardcover & Matte Spreads</span>
+                      <span className="font-semibold text-amber-800 flex items-center gap-1">
+                        Turn the Pages <ArrowRight size={13} />
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <span className="text-xs font-semibold text-amber-800 mt-4 flex items-center gap-1">
-                  Open studio <ArrowRight size={13} />
-                </span>
-              </button>
+              </div>
             </div>
           </div>
         </section>
@@ -651,7 +738,7 @@ export function Catalogue({ productId }: { productId?: string }) {
               {activeStudio === "magazines" && "Personalised Couple Story Magazine Studio"}
             </DialogTitle>
             <DialogDescription>
-              Interactive real-time preview powered by Rajmoti Live Preview Engine.
+              Handcrafted in Jetpur. Personalize your keepsake, explore finishes, and confirm production with our master framers.
             </DialogDescription>
           </DialogHeader>
 

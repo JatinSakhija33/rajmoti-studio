@@ -6,3 +6,5 @@ Disallow: /reset-password
 Disallow: /desk
 Disallow: /track
 Disallow: /api
+
+Sitemap: https://rajmotistudio.in/sitemap.xml

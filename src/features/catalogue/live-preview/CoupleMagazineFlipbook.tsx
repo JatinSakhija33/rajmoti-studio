@@ -24,6 +24,17 @@ export interface MagazineConfig {
   photos: string[];
 }
 
+const DEFAULT_MAGAZINE_PHOTOS = [
+  "/products/magazine-cover.svg",
+  "/products/frame-sample-wedding.svg",
+  "/products/frame-sample-anniversary.svg",
+  "/products/translight-sample.svg",
+  "/products/frame-sample-wedding.svg",
+  "/products/frame-sample-anniversary.svg",
+  "/products/frame-sample-wedding.svg",
+  "/products/frame-sample-anniversary.svg",
+];
+
 export function CoupleMagazineFlipbook({
   onConfigChanged,
 }: {
@@ -37,7 +48,7 @@ export function CoupleMagazineFlipbook({
   const [customQuote, setCustomQuote] = useState(
     "Every love story is beautiful, but ours is my favourite.",
   );
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<string[]>(DEFAULT_MAGAZINE_PHOTOS);
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(6);
   const [viewMode, setViewMode] = useState<"flipbook" | "flat">("flipbook");

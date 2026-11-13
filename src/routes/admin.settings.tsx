@@ -25,6 +25,7 @@ const TABS = [
   { id: "website", label: "Website" },
   { id: "messages", label: "Messages" },
   { id: "studio", label: "Studio day" },
+  { id: "seo", label: "Local SEO & AEO" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
@@ -66,6 +67,7 @@ function AdminSettings() {
         {tab === "website" && <WebsiteSection />}
         {tab === "messages" && <MessagesSection />}
         {tab === "studio" && <SlotManager />}
+        {tab === "seo" && <LocalSeoSection />}
       </div>
     </div>
   );
@@ -415,4 +417,136 @@ export function extractSrc(raw: string): string | null {
   if (trimmed.startsWith("http")) return trimmed;
   const match = trimmed.match(/src=["']([^"']+)["']/i);
   return match ? match[1] : null;
+}
+
+function LocalSeoSection() {
+  const saver = useSaver();
+  const [title, setTitle] = useState(
+    "Rajmoti Studio — Photography, Framing & Personalised Photo Gifts in Jetpur",
+  );
+  const [desc, setDesc] = useState(
+    "Rajmoti Studio (Est. 1982, Jetpur): Baby photoshoots, maternity, family, wedding photography, handcrafted teak collage frames, diamond acrylic blocks, 3D photo mugs, and backlit LED translights in Jetpur, Gujarat.",
+  );
+  const [phone, setPhone] = useState("+91 94290 70317");
+  const [address, setAddress] = useState("Near Rajmoti Cinema, Station Road, Jetpur, Gujarat 360370");
+  const [hours, setHours] = useState("Mon–Sat: 9:00 AM – 8:00 PM · Sun: 10:00 AM – 6:00 PM");
+
+  return (
+    <div className="space-y-6">
+      {/* Google Search Simulator Preview */}
+      <SectionCard
+        title="Google Search Result Simulator"
+        hint="Live preview of how Rajmoti Studio appears on Google Search for Jetpur local queries."
+      >
+        <div className="bg-white p-5 rounded-2xl border border-stone-200 font-sans max-w-2xl shadow-xs">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="size-6 rounded-full bg-amber-100 flex items-center justify-center text-[10px] font-bold text-amber-900">
+              RS
+            </div>
+            <div>
+              <span className="text-xs font-medium text-stone-800 block leading-tight">Rajmoti Studio</span>
+              <span className="text-[11px] text-stone-500 font-mono block leading-tight">https://rajmotistudio.in</span>
+            </div>
+          </div>
+          <h3 className="text-lg text-[#1a0dab] hover:underline cursor-pointer font-medium leading-snug">
+            {title}
+          </h3>
+          <p className="text-xs text-stone-600 mt-1 leading-relaxed">
+            {desc}
+          </p>
+          <div className="mt-3 pt-2 border-t border-stone-100 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#1a0dab]">
+            <span className="hover:underline cursor-pointer">Photo gifts in Jetpur</span>
+            <span className="hover:underline cursor-pointer">Baby photoshoot</span>
+            <span className="hover:underline cursor-pointer">Handcrafted Teak Frames</span>
+            <span className="hover:underline cursor-pointer">Contact & Studio Hours</span>
+          </div>
+        </div>
+      </SectionCard>
+
+      {/* Meta & Heading Details */}
+      <SectionCard
+        title="On-Page Metadata (Target: Jetpur Local Market)"
+        hint="Optimized for local search discovery across Saurashtra."
+      >
+        <div className="space-y-4 max-w-xl">
+          <label className="block text-xs font-semibold text-stone-800">
+            Homepage SEO Title Tag
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full border border-stone-300 rounded-lg p-2.5 mt-1 text-xs"
+            />
+            <span className="text-[10px] text-stone-400 mt-0.5 block">Recommended length: 50–65 characters ({title.length} characters)</span>
+          </label>
+
+          <label className="block text-xs font-semibold text-stone-800">
+            Meta Description (Search Snippet)
+            <textarea
+              rows={3}
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
+              className="w-full border border-stone-300 rounded-lg p-2.5 mt-1 text-xs"
+            />
+            <span className="text-[10px] text-stone-400 mt-0.5 block">Recommended length: 120–160 characters ({desc.length} characters)</span>
+          </label>
+        </div>
+      </SectionCard>
+
+      {/* Local Business Facts */}
+      <SectionCard
+        title="Google Business Profile & NAP Consistency"
+        hint="Name, Address, Phone must exactly match Google Maps and business citations."
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl text-xs">
+          <label className="block">
+            <span className="font-semibold text-stone-800">Verified Business Address</span>
+            <input
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="w-full border border-stone-300 rounded-lg p-2 mt-1"
+            />
+          </label>
+
+          <label className="block">
+            <span className="font-semibold text-stone-800">Studio Phone / WhatsApp</span>
+            <input
+              type="text"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full border border-stone-300 rounded-lg p-2 mt-1 font-mono"
+            />
+          </label>
+
+          <label className="col-span-2 block">
+            <span className="font-semibold text-stone-800">Studio Opening Hours</span>
+            <input
+              type="text"
+              value={hours}
+              onChange={(e) => setHours(e.target.value)}
+              className="w-full border border-stone-300 rounded-lg p-2 mt-1"
+            />
+          </label>
+        </div>
+
+        <div className="mt-5">
+          <button
+            type="button"
+            onClick={() =>
+              saver.run(
+                "local_seo_settings",
+                { title, desc, phone, address, hours },
+                "Local SEO configuration updated successfully",
+              )
+            }
+            disabled={saver.state === "saving"}
+            className="ed-button text-xs py-2 px-4 bg-stone-900 text-amber-100 hover:bg-stone-800 font-semibold"
+          >
+            {saver.state === "saving" ? "Saving Changes…" : "Save SEO & Business Info"}
+          </button>
+        </div>
+      </SectionCard>
+    </div>
+  );
 }

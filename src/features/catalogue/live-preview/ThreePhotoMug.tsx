@@ -17,11 +17,14 @@ export function ThreePhotoMug({
   onPhotoUploaded,
 }: ThreePhotoMugProps) {
   const mountRef = useRef<HTMLDivElement>(null);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(defaultPhotoUrl || null);
+  const [photoUrl, setPhotoUrl] = useState<string>(
+    defaultPhotoUrl || "/products/mug-sample-couple.svg",
+  );
   const [isHot, setIsHot] = useState<boolean>(true); // For magic mug: Cold vs Hot
   const [currentType, setCurrentType] = useState<MugType>(mugType);
   const [isRotating, setIsRotating] = useState(true);
   const [resolutionWarning, setResolutionWarning] = useState("");
+  const activeImageRef = useRef<HTMLImageElement | null>(null);
 
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -46,6 +49,7 @@ export function ThreePhotoMug({
     const img = new Image();
     img.src = url;
     img.onload = () => {
+      activeImageRef.current = img;
       if (img.naturalWidth < 1000 || img.naturalHeight < 1000) {
         setResolutionWarning(
           `Resolution advisory: Photo is ${img.naturalWidth}×${img.naturalHeight}px. Crisp 300 DPI mug printing looks best with high-res photos.`,
@@ -57,8 +61,18 @@ export function ThreePhotoMug({
     };
   };
 
+  useEffect(() => {
+    const img = new Image();
+    img.src = photoUrl;
+    img.onload = () => {
+      activeImageRef.current = img;
+      updateTexture(img);
+    };
+  }, [photoUrl, currentType, isHot]);
+
   // Helper to draw mug decal canvas texture
   const updateTexture = (imgElement?: HTMLImageElement) => {
+    const activeImg = imgElement || activeImageRef.current;
     const canvas = document.createElement("canvas");
     canvas.width = 1024;
     canvas.height = 512;
@@ -73,15 +87,15 @@ export function ThreePhotoMug({
 
     // If Magic mug and Cold, photo is hidden by thermal layer
     if (currentType === "magic" && !isHot) {
-      if (imgElement) {
+      if (activeImg) {
         // Very faint thermal ghosting
-        ctx.globalAlpha = 0.07;
-        ctx.drawImage(imgElement, 256, 64, 512, 384);
+        ctx.globalAlpha = 0.08;
+        ctx.drawImage(activeImg, 256, 64, 512, 384);
         ctx.globalAlpha = 1.0;
       }
-    } else if (imgElement) {
+    } else if (activeImg) {
       // Draw customer photo on front section of mug (aspect 4:3)
-      ctx.drawImage(imgElement, 256, 64, 512, 384);
+      ctx.drawImage(activeImg, 256, 64, 512, 384);
 
       // Subtle vignette border
       ctx.strokeStyle = "rgba(0,0,0,0.06)";

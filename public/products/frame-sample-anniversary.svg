@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1500" viewBox="0 0 1200 1500">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#301A24"/><stop offset="50%" stop-color="#4C2B3A"/><stop offset="100%" stop-color="#1E0E16"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#E2C17C"/>
+      <stop offset="50%" stop-color="#FDF3CD"/>
+      <stop offset="100%" stop-color="#B88A3B"/>
+    </linearGradient>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="30" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="12" stdDeviation="20" flood-color="#000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="1200" height="1500" fill="url(#bg)"/>
+
+  <!-- Atmosphere & Studio Lighting -->
+  <circle cx="600" cy="525" r="540" fill="#FFF8EE" opacity="0.08" filter="url(#softGlow)"/>
+  <circle cx="1020" cy="225" r="360" fill="#FFE6B8" opacity="0.12" filter="url(#softGlow)"/>
+
+  <!-- Decorative Inner Border -->
+  <rect x="36" y="36" width="1128" height="1428" rx="12" fill="none" stroke="url(#gold)" stroke-width="2" opacity="0.4"/>
+  <rect x="48" y="48" width="1104" height="1404" rx="8" fill="none" stroke="url(#gold)" stroke-width="1" opacity="0.2"/>
+
+  <!-- Main Illustration / Graphic Elements -->
+  
+    <g filter="url(#shadow)" transform="translate(350, 330)">
+      <!-- Intertwined Hearts / Ring symbol -->
+      <path d="M 250 180 C 210 120, 140 160, 180 230 L 250 300 L 320 230 C 360 160, 290 120, 250 180 Z" fill="none" stroke="url(#gold)" stroke-width="4"/>
+      <circle cx="205" cy="340" r="44" fill="#F5EADB"/>
+      <circle cx="295" cy="350" r="42" fill="#EFE0CE"/>
+      <path d="M 160 380 Q 205 370 250 380 L 255 520 L 150 520 Z" fill="#6A3B52"/>
+      <path d="M 250 390 Q 295 380 340 390 L 345 520 L 245 520 Z" fill="#884C69"/>
+    </g>
+  
+
+  <!-- Studio Typography & Branding -->
+  <g transform="translate(0, 1280)" text-anchor="middle">
+    <text x="600" y="0" fill="#E2C17C" font-family="'Montserrat', sans-serif" font-size="20" font-weight="600" letter-spacing="6" text-transform="uppercase">Silver Jubilee Celebration</text>
+    <text x="600" y="52" fill="#FFFFFF" font-family="'Playfair Display', serif" font-size="44" font-weight="bold">Pankaj & Geeta</text>
+    <text x="600" y="95" fill="#E6DAC8" font-family="'Montserrat', sans-serif" font-size="22" letter-spacing="2" opacity="0.95">25 Glorious Years of Togetherness</text>
+    <text x="600" y="145" fill="#C5B6A0" font-family="'Montserrat', sans-serif" font-size="16" letter-spacing="5">RAJMOTI STUDIO · JETPUR (EST. 1982)</text>
+  </g>
+</svg>

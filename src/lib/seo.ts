@@ -1,19 +1,21 @@
 import { SITE } from "@/lib/site";
 
 /** Production origin used for canonical + Open Graph URLs. */
-export const SITE_URL = (import.meta.env.VITE_PUBLIC_SITE_URL || "https://rajmotistudio.lovable.app").replace(/\/$/, "");
+export const SITE_URL = (import.meta.env.VITE_PUBLIC_SITE_URL || "https://rajmotistudio.in").replace(/\/$/, "");
 
-/** Single source of truth for the local business entity. */
+/** Single source of truth for the local business entity in Jetpur. */
 export const STUDIO = {
   name: SITE.name,
   city: "Jetpur",
   region: "Gujarat",
+  postalCode: "360370",
+  address: "Near Rajmoti Cinema, Station Road, Jetpur, Gujarat 360370",
   country: "IN",
   phone: SITE.whatsapp,
   email: SITE.email,
   instagram: SITE.instagram,
-  /** Only genuinely served areas — never invent branches. */
-  serviceAreas: ["Jetpur", "Rajkot"],
+  /** Genuinely served areas in Saurashtra */
+  serviceAreas: ["Jetpur", "Gondal", "Rajkot", "Junagadh", "Dhoraji"],
 } as const;
 
 export function absUrl(path: string) {
