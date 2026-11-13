@@ -1,4 +1,4 @@
-import {json,failure,requireOwner,cleanOrder} from "../../_lib/security.js";
+import {json,failure,requireOwner,cleanOrder,assertOrigin} from "../../_lib/security.js";
 export async function onRequestGet({request,env}) {
  try {
   await requireOwner(request,env);
@@ -12,6 +12,7 @@ export async function onRequestGet({request,env}) {
 export async function onRequestPost({request,env}) {
  try {
   const actor=await requireOwner(request,env);
+  assertOrigin(request);
   if(!env.ORDER_DB)return failure("Database not connected",503);
   const data=cleanOrder(await request.json());
   const id=crypto.randomUUID();

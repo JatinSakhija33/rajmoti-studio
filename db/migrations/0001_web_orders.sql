@@ -20,7 +20,9 @@ CREATE TABLE IF NOT EXISTS orders (
  payment_reference TEXT,
  payment_verified_by TEXT,
  payment_verified_at TEXT,
+ delivered_at TEXT,
  archive_verified_at TEXT,
+ archive_verified_by TEXT,
  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

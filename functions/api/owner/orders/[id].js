@@ -1,4 +1,4 @@
-import {json,failure,requireOwner,clean,STAGES} from "../../../_lib/security.js";
+import {json,failure,requireOwner,clean,STAGES,assertOrigin} from "../../../_lib/security.js";
 export async function onRequestGet({request,env,params}) {
  try {
   await requireOwner(request,env);
@@ -11,6 +11,7 @@ export async function onRequestGet({request,env,params}) {
 export async function onRequestPatch({request,env,params}) {
  try {
   const actor=await requireOwner(request,env);
+  assertOrigin(request);
   const old=await env.ORDER_DB.prepare("SELECT * FROM orders WHERE id=?").bind(params.id).first();
   if(!old)return failure("Job not found",404);
   const data=await request.json();
@@ -23,9 +24,12 @@ export async function onRequestPatch({request,env,params}) {
   if(paid>0 && !reference)return failure("Record the verified bank transaction reference");
   const payment=paid===0?"unpaid":paid>=total?"paid":"partial";
   const notes=data.notes===undefined?old.notes:clean(data.notes,2000);
+  const deliveredAt=status==="delivered" ? (old.status==="delivered" ? old.delivered_at : new Date().toISOString()) : null;
+  const archived=status==="delivered" ? old.archive_verified_at : null;
+  const archivedBy=status==="delivered" ? old.archive_verified_by : null;
   await env.ORDER_DB.prepare(
-   "UPDATE orders SET status=?,quoted_total=?,paid_amount=?,payment_status=?,payment_reference=?,payment_verified_by=?,payment_verified_at=?,notes=?,updated_at=CURRENT_TIMESTAMP WHERE id=?"
-  ).bind(status,total,paid,payment,reference,paid>0?actor:null,paid>0?new Date().toISOString():null,notes,params.id).run();
+   "UPDATE orders SET status=?,quoted_total=?,paid_amount=?,payment_status=?,payment_reference=?,payment_verified_by=?,payment_verified_at=?,notes=?,delivered_at=?,archive_verified_at=?,archive_verified_by=?,updated_at=CURRENT_TIMESTAMP WHERE id=?"
+  ).bind(status,total,paid,payment,reference,paid>0?actor:null,paid>0?new Date().toISOString():null,notes,deliveredAt,archived,archivedBy,params.id).run();
   await env.ORDER_DB.prepare("INSERT INTO order_events(order_id,actor,event,detail) VALUES(?,?,?,?)").bind(params.id,actor,"owner_update",JSON.stringify({status,payment,total,paid})).run();
   return json({ok:true});
  }catch(e){return failure(e.message||"Could not update job",400);}
