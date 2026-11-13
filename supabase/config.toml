@@ -1,0 +1,4 @@
+project_id = "ojecyfstqtlhvfqfowzx"
+# Public gift intake is safe only with TURNSTILE_SECRET_KEY and allowed-origin configured.
+[functions.submit-gift-order]
+verify_jwt = false

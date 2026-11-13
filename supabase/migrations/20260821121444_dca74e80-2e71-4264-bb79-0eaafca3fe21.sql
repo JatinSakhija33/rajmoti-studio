@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.reels_enforce_short_id() FROM PUBLIC, anon, authenticated;

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /auth
+Disallow: /reset-password
+
+Sitemap: https://rajmotistudio.lovable.app/sitemap.xml

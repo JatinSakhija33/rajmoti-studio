@@ -1,0 +1,173 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@import "@fontsource/playfair-display/400.css";
+@import "@fontsource/playfair-display/400-italic.css";
+@import "@fontsource/playfair-display/700.css";
+@import "@fontsource/montserrat/300.css";
+@import "@fontsource/montserrat/400.css";
+@import "@fontsource/montserrat/600.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+
+  /* Brand */
+  --color-cream: var(--cream);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-onyx: var(--onyx);
+  --color-ink: var(--ink);
+
+  --font-display: "Playfair Display", "Cormorant Garamond", Georgia, serif;
+  --font-body: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  --radius: 0.25rem;
+
+  /* Brand tokens */
+  --cream: oklch(0.985 0.005 80);
+  --gold: oklch(0.72 0.09 75);
+  --gold-soft: oklch(0.86 0.05 80);
+  --onyx: oklch(0.20 0.005 80);
+  --ink: oklch(0.32 0.005 80);
+
+  /* Mapped to brand */
+  --background: var(--cream);
+  --foreground: var(--onyx);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--onyx);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--onyx);
+  --primary: var(--onyx);
+  --primary-foreground: var(--cream);
+  --secondary: oklch(0.95 0.005 80);
+  --secondary-foreground: var(--onyx);
+  --muted: oklch(0.95 0.005 80);
+  --muted-foreground: oklch(0.45 0.005 80);
+  --accent: var(--gold);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.55 0.22 28);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.90 0.005 80);
+  --input: oklch(0.90 0.005 80);
+  --ring: var(--gold);
+}
+
+.dark {
+  --background: var(--onyx);
+  --foreground: var(--cream);
+  --card: oklch(0.25 0.005 80);
+  --card-foreground: var(--cream);
+  --popover: oklch(0.25 0.005 80);
+  --popover-foreground: var(--cream);
+  --primary: var(--cream);
+  --primary-foreground: var(--onyx);
+  --secondary: oklch(0.28 0.005 80);
+  --secondary-foreground: var(--cream);
+  --muted: oklch(0.28 0.005 80);
+  --muted-foreground: oklch(0.70 0.005 80);
+  --accent: var(--gold);
+  --accent-foreground: oklch(1 0 0);
+  --border: oklch(1 0 0 / 0.10);
+  --input: oklch(1 0 0 / 0.15);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-body);
+    font-weight: 300;
+    letter-spacing: 0.01em;
+  }
+  h1, h2, h3, h4, h5 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--gold) 30%, transparent);
+    color: var(--onyx);
+  }
+}
+
+@utility container-page {
+  margin-inline: auto;
+  max-width: 80rem;
+  padding-inline: 1.5rem;
+}
+
+@utility eyebrow {
+  font-size: 0.625rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@utility animate-fade-in-up {
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+
+
+@utility field-input {
+  width: 100%;
+  border: 1px solid color-mix(in oklab, var(--color-onyx) 15%, transparent);
+  background: white;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 1px;
+  }
+}
+
+
+.demo-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:#322c24;color:#f7eddc;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 20px;font:10px/1.5 Montserrat,sans-serif}.demo-bar strong{letter-spacing:1.4px;color:#e4cda5}.demo-bar nav{display:flex;gap:16px;flex-wrap:wrap}.demo-bar a,.demo-bar button{text-decoration:underline;text-underline-offset:3px;cursor:pointer}.demo-bar-space{height:44px}header.fixed.top-0{top:44px}@media(max-width:850px){.demo-bar{flex-wrap:wrap;justify-content:center;gap:5px;min-height:72px}.demo-bar>span{display:none}.demo-bar-space{height:72px}header.fixed.top-0{top:72px}}
