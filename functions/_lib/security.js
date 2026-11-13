@@ -63,7 +63,8 @@ export async function validUpload(token,orderId,secret) {
  if(!secret || !token)return false;
  const parts=String(token).split(".");
  if(parts.length!==3 || parts[0]!==orderId || !/^\d{10}$/.test(parts[1]) || Number(parts[1])<Date.now()/1000)return false;
- try{return await crypto.subtle.verify("HMAC",await hmacKey(secret),decode64(parts[2]),encoder.encode(parts[0]+"."+parts[1]));}catch{return false;}
+ try{const sig=decode64(parts[2]);if(b64url(sig)!==parts[2] || sig.length!==32)return false;
+ return await crypto.subtle.verify("HMAC",await hmacKey(secret),sig,encoder.encode(parts[0]+"."+parts[1]));}catch{return false;}
 }
 let certCache={at:0,keys:[]};
 export async function requireOwner(request,env) {
@@ -117,7 +118,8 @@ export async function validTracking(token,orderId,secret) {
  if(p.length!==4 || p[0]!=="tracking" || p[1]!==orderId ||
     !/^\d{10}$/.test(p[2]) || Number(p[2])<Date.now()/1000)return false;
  try {
-  return await crypto.subtle.verify("HMAC",await hmacKey(secret),decode64(p[3]),encoder.encode(p.slice(0,3).join(".")));
+  const sig=decode64(p[3]);if(b64url(sig)!==p[3] || sig.length!==32)return false;
+  return await crypto.subtle.verify("HMAC",await hmacKey(secret),sig,encoder.encode(p.slice(0,3).join(".")));
  }catch{return false;}
 }
 
