@@ -20,7 +20,7 @@ export const DEITIES: DeityItem[] = [
     templeCity: "નાથદ્વારા ધામ",
     description: "Pushtimargiya divine darshan in traditional Gujarati Haveli style with lotus and gold details.",
     defaultFormat: "translight",
-    imageUrl: "/deities/shrinathji.svg",
+    imageUrl: "/deities/shrinathji.jpg",
   },
   {
     id: "ganesha",
@@ -29,7 +29,7 @@ export const DEITIES: DeityItem[] = [
     templeCity: "પ્રથમ પૂજ્ય · સિદ્ધિ ક્ષેત્ર",
     description: "Auspicious beginnings, prosperity, and blessings for home mandir and new ventures.",
     defaultFormat: "acrylic",
-    imageUrl: "/deities/ganesha.svg",
+    imageUrl: "/deities/ganesha.jpg",
   },
   {
     id: "radha-krishna",
@@ -38,7 +38,7 @@ export const DEITIES: DeityItem[] = [
     templeCity: "વૃંદાવન / દ્વારકા",
     description: "Devotional blessing and divine love for home mandir and living spaces.",
     defaultFormat: "translight",
-    imageUrl: "/deities/radha-krishna.svg",
+    imageUrl: "/deities/radha-krishna.jpg",
   },
   {
     id: "shiva-parvati",
@@ -47,7 +47,7 @@ export const DEITIES: DeityItem[] = [
     templeCity: "સોમનાથ / કૈલાશ",
     description: "Calm spiritual energy, trishul aura, and harmonious family blessings.",
     defaultFormat: "acrylic",
-    imageUrl: "/deities/shiva-parvati.svg",
+    imageUrl: "/deities/shiva-parvati.jpg",
   },
   {
     id: "ram-darbar",
@@ -56,7 +56,7 @@ export const DEITIES: DeityItem[] = [
     templeCity: "અયોધ્યા ધામ",
     description: "Shri Ram, Sita Mata, Lakshmanji and Hanumanji in royal divine grace.",
     defaultFormat: "frame",
-    imageUrl: "/deities/ram-darbar.svg",
+    imageUrl: "/deities/ram-darbar.jpg",
   },
   {
     id: "tirupati-balaji",
@@ -65,7 +65,7 @@ export const DEITIES: DeityItem[] = [
     templeCity: "તિરુમાલા તિરુપતિ",
     description: "Govinda divine abundance, shankha, chakra and sacred namam blessings.",
     defaultFormat: "acrylic",
-    imageUrl: "/deities/tirupati-balaji.svg",
+    imageUrl: "/deities/tirupati-balaji.jpg",
   },
   {
     id: "umiya-mataji",
@@ -74,7 +74,7 @@ export const DEITIES: DeityItem[] = [
     templeCity: "ઊંઝા લક્ષચંડી ધામ",
     description: "Sacred Kuldevi protection and auspicious presence for Gujarati homes.",
     defaultFormat: "translight",
-    imageUrl: "/deities/umiya-mataji.svg",
+    imageUrl: "/deities/umiya-mataji.jpg",
   },
   {
     id: "khodiyar-mataji",
@@ -83,7 +83,7 @@ export const DEITIES: DeityItem[] = [
     templeCity: "માટેલ / ગળધરા ધામ",
     description: "Trishul and crocodile vahana darshan for divine guidance and grace.",
     defaultFormat: "frame",
-    imageUrl: "/deities/khodiyar-mataji.svg",
+    imageUrl: "/deities/khodiyar-mataji.jpg",
   },
 ];
 

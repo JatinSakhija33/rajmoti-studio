@@ -25,14 +25,14 @@ export interface MagazineConfig {
 }
 
 const DEFAULT_MAGAZINE_PHOTOS = [
-  "/products/magazine-cover.svg",
-  "/products/frame-sample-wedding.svg",
-  "/products/frame-sample-anniversary.svg",
-  "/products/translight-sample.svg",
-  "/products/frame-sample-wedding.svg",
-  "/products/frame-sample-anniversary.svg",
-  "/products/frame-sample-wedding.svg",
-  "/products/frame-sample-anniversary.svg",
+  "/products/magazine-cover.jpg",
+  "/products/frame-sample-wedding.jpg",
+  "/products/frame-sample-anniversary.jpg",
+  "/products/translight-sample.jpg",
+  "/products/frame-sample-wedding.jpg",
+  "/products/frame-sample-anniversary.jpg",
+  "/products/frame-sample-wedding.jpg",
+  "/products/frame-sample-anniversary.jpg",
 ];
 
 export function CoupleMagazineFlipbook({

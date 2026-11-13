@@ -14,7 +14,7 @@ export function TranslightPreview({
   onPhotoUploaded,
 }: TranslightPreviewProps) {
   const [photoUrl, setPhotoUrl] = useState<string>(
-    defaultPhotoUrl || "/products/translight-sample.svg",
+    defaultPhotoUrl || "/products/translight-sample.jpg",
   );
   const [isLightOn, setIsLightOn] = useState<boolean>(true);
   const [colorTemp, setColorTemp] = useState<"warm" | "pure">("warm"); // 3000K Warm vs 4000K Pure

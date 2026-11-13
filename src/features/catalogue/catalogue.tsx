@@ -237,12 +237,12 @@ export function Catalogue({ productId }: { productId?: string }) {
               >
                 <div className="relative aspect-[4/3] bg-stone-100 overflow-hidden">
                   <img
-                    src="/products/frame-sample-wedding.svg"
-                    alt="Handcrafted Teak & Acrylic Frames"
+                    src="/products/frame-sample-wedding.jpg"
+                    alt="Frame & Collage Studio"
                     className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
-                    Handcrafted Wood & Acrylic
+                    Single, Triptych & Multi-Grid
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
                     <span className="text-xs font-semibold text-white flex items-center gap-1.5">
@@ -253,16 +253,16 @@ export function Catalogue({ productId }: { productId?: string }) {
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
                     <h3 className="font-display text-xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
-                      Crafted frames that outlast time.
+                      Frame & Collage Studio
                     </h3>
                     <p className="text-xs text-stone-600 mt-1.5 leading-relaxed">
-                      Single, triptych, and multi-photo heritage collages in Saurashtra teak wood, charcoal matte, gold leaf, and floating acrylic.
+                      Single, triptych, 4-grid & family-5 collages in Saurashtra teak wood, charcoal matte, royal gold leaf, and floating acrylic.
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
                     <span className="text-stone-500 font-mono text-[11px]">8×12 to 20×30 in</span>
                     <span className="font-semibold text-amber-800 flex items-center gap-1">
-                      Personalize & Preview <ArrowRight size={13} />
+                      Open studio <ArrowRight size={13} />
                     </span>
                   </div>
                 </div>
@@ -273,11 +273,11 @@ export function Catalogue({ productId }: { productId?: string }) {
                 onClick={() => setActiveStudio("mugs")}
                 className="group cursor-pointer rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
               >
-                <div className="relative aspect-[4/3] bg-[#2E1C16] overflow-hidden flex items-center justify-center p-4">
+                <div className="relative aspect-[4/3] bg-stone-900 overflow-hidden flex items-center justify-center">
                   <img
-                    src="/products/mug-sample-couple.svg"
-                    alt="3D Ceramic & Thermochromic Magic Mugs"
-                    className="w-4/5 h-auto object-contain rounded-lg shadow-lg group-hover:scale-105 transition-transform duration-500"
+                    src="/products/mug-sample-couple.jpg"
+                    alt="3D Photo Mug Studio"
+                    className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
                     Ceramic & Magic Reveal
@@ -289,16 +289,16 @@ export function Catalogue({ productId }: { productId?: string }) {
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
                     <h3 className="font-display text-xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
-                      Your memories, with every morning.
+                      3D Photo Mug Studio
                     </h3>
                     <p className="text-xs text-stone-600 mt-1.5 leading-relaxed">
-                      Gloss white ceramic or thermochromic magic mugs that reveal your photograph when pouring hot chai or coffee.
+                      Rotatable 3D ceramic mugs with Cold / Hot thermochromic magic reveal switch that shows your photo when hot chai is poured.
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
                     <span className="text-stone-500 font-mono text-[11px]">Cold / Hot Thermal Switch</span>
                     <span className="font-semibold text-amber-800 flex items-center gap-1">
-                      Rotate & Make Yours <ArrowRight size={13} />
+                      Open studio <ArrowRight size={13} />
                     </span>
                   </div>
                 </div>
@@ -309,14 +309,12 @@ export function Catalogue({ productId }: { productId?: string }) {
                 onClick={() => setActiveStudio("translight")}
                 className="group cursor-pointer rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
               >
-                <div className="relative aspect-[4/3] bg-[#14120E] overflow-hidden flex items-center justify-center p-3">
-                  <div className="relative h-full aspect-[2/3] rounded-xs border-4 border-amber-950 shadow-[0_0_30px_rgba(255,200,100,0.35)] overflow-hidden">
-                    <img
-                      src="/products/translight-sample.svg"
-                      alt="Backlit LED Translight"
-                      className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  </div>
+                <div className="relative aspect-[4/3] bg-[#14120E] overflow-hidden flex items-center justify-center">
+                  <img
+                    src="/products/translight-sample.jpg"
+                    alt="Backlit LED Translight"
+                    className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
                   <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
                     Edge-Lit Optical Film
                   </div>
@@ -327,16 +325,16 @@ export function Catalogue({ productId }: { productId?: string }) {
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
                     <h3 className="font-display text-xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
-                      Art that glows from within.
+                      Backlit Translight
                     </h3>
                     <p className="text-xs text-stone-600 mt-1.5 leading-relaxed">
-                      Evenly diffused internal LED panel brings portraits to life in soft golden hour warmth or pure gallery white.
+                      Interactive Light Off / Light On toggle. Evenly diffused internal LED illumination in 3000K Warm Golden or 4000K Pure White.
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
                     <span className="text-stone-500 font-mono text-[11px]">12×18 & 16×24 in</span>
                     <span className="font-semibold text-amber-800 flex items-center gap-1">
-                      Experience Lighting <ArrowRight size={13} />
+                      Open studio <ArrowRight size={13} />
                     </span>
                   </div>
                 </div>
@@ -347,11 +345,11 @@ export function Catalogue({ productId }: { productId?: string }) {
                 onClick={() => setActiveStudio("devotional")}
                 className="group cursor-pointer rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
               >
-                <div className="relative aspect-[4/3] bg-[#16283D] overflow-hidden flex items-center justify-center p-3">
+                <div className="relative aspect-[4/3] bg-[#16283D] overflow-hidden flex items-center justify-center">
                   <img
-                    src="/deities/shrinathji.svg"
-                    alt="Sacred Devotional Art"
-                    className="h-full aspect-[2/3] object-cover rounded shadow-lg group-hover:scale-105 transition-transform duration-500"
+                    src="/deities/shrinathji.jpg"
+                    alt="God's Devotional Collection"
+                    className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
                     Pavitra Darshan
@@ -363,16 +361,16 @@ export function Catalogue({ productId }: { productId?: string }) {
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
                     <h3 className="font-display text-xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
-                      Sacred blessings for your sanctum.
+                      God's Devotional Collection
                     </h3>
                     <p className="text-xs text-stone-600 mt-1.5 leading-relaxed">
-                      Revered Gujarati deities including Shrinathji, Ganesha, Radha Krishna & Maa Umiya in Acrylic, Teak & Translight.
+                      8 authentic Gujarati deities in Bitu Acrylic, Teak Frame & LED Translight including Shrinathji, Ganesha, Radha Krishna & Maa Umiya.
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
                     <span className="text-stone-500 font-mono text-[11px]">Mandir & Living Room</span>
                     <span className="font-semibold text-amber-800 flex items-center gap-1">
-                      View Collection <ArrowRight size={13} />
+                      Open studio <ArrowRight size={13} />
                     </span>
                   </div>
                 </div>
@@ -384,10 +382,10 @@ export function Catalogue({ productId }: { productId?: string }) {
                 className="group cursor-pointer rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between lg:col-span-2"
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 h-full">
-                  <div className="relative aspect-[4/3] sm:aspect-auto bg-[#1E1916] overflow-hidden flex items-center justify-center p-4">
+                  <div className="relative aspect-[4/3] sm:aspect-auto bg-[#1E1916] overflow-hidden flex items-center justify-center p-3">
                     <img
-                      src="/products/magazine-cover.svg"
-                      alt="Couple Story Editorial Magazine"
+                      src="/products/magazine-cover.jpg"
+                      alt="Couple Story Magazine"
                       className="h-full max-h-[220px] aspect-[2/3] object-cover rounded shadow-2xl group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
@@ -400,16 +398,16 @@ export function Catalogue({ productId }: { productId?: string }) {
                         8–20 Curated Photographs · Song QR
                       </span>
                       <h3 className="font-display text-2xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
-                        A love story, printed in timeless pages.
+                        Couple Story Magazine
                       </h3>
                       <p className="text-xs text-stone-600 mt-2 leading-relaxed">
-                        Flip through a genuine romantic editorial magazine with chapter spreads, custom dates, vows, and an interactive QR code linked to your couple song.
+                        8–20 photo editorial flipbook with chapter spreads, custom dates, vows, and an interactive QR code linked to your couple song.
                       </p>
                     </div>
                     <div className="mt-5 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
                       <span className="text-stone-500 font-mono text-[11px]">Hardcover & Matte Spreads</span>
                       <span className="font-semibold text-amber-800 flex items-center gap-1">
-                        Turn the Pages <ArrowRight size={13} />
+                        Open studio <ArrowRight size={13} />
                       </span>
                     </div>
                   </div>

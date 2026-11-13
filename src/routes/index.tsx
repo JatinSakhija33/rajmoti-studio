@@ -45,7 +45,7 @@ const PHOTOGRAPHY_CATEGORIES = [
     name: "Their little beginnings",
     label: "Baby & Milestones",
     text: "Tiny fingers, peaceful yawns, and joyful first-year cake smash milestones.",
-    image: "/portfolio/baby-milestone.svg",
+    image: "/portfolio/baby-milestone.jpg",
     serviceId: "baby",
   },
   {
@@ -61,7 +61,7 @@ const PHOTOGRAPHY_CATEGORIES = [
     name: "Together, as you are",
     label: "Heritage Family",
     text: "Three generations in one frame. Natural poses, joyful laughter, and lasting legacy.",
-    image: "/editorial/family-hero.png",
+    image: "/portfolio/family-heritage.jpg",
     serviceId: "family",
   },
   {
@@ -69,7 +69,7 @@ const PHOTOGRAPHY_CATEGORIES = [
     name: "A day. A lifetime.",
     label: "Weddings & Mandap",
     text: "Authentic Gujarati ceremonies: Lagan, Pithi, Mandap and candid couple moments.",
-    image: "/portfolio/wedding-mandap.svg",
+    image: "/portfolio/wedding-mandap.jpg",
     serviceId: "wedding",
   },
   {
@@ -85,7 +85,7 @@ const PHOTOGRAPHY_CATEGORIES = [
     name: "Two souls. One story.",
     label: "Couple Stories",
     text: "Cinematic golden hour outdoor sets and fine-art pre-wedding memories.",
-    image: "/portfolio/couple-prewedding.svg",
+    image: "/portfolio/couple-prewedding.jpg",
     serviceId: "couple",
   },
 ];

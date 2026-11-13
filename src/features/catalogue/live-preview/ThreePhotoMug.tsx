@@ -18,7 +18,7 @@ export function ThreePhotoMug({
 }: ThreePhotoMugProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const [photoUrl, setPhotoUrl] = useState<string>(
-    defaultPhotoUrl || "/products/mug-sample-couple.svg",
+    defaultPhotoUrl || "/products/mug-sample-couple.jpg",
   );
   const [isHot, setIsHot] = useState<boolean>(true); // For magic mug: Cold vs Hot
   const [currentType, setCurrentType] = useState<MugType>(mugType);

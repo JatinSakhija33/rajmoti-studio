@@ -67,11 +67,11 @@ const LAYOUTS: Record<
 };
 
 const DEFAULT_FRAME_SAMPLES = [
-  "/products/frame-sample-wedding.svg",
-  "/products/frame-sample-anniversary.svg",
-  "/products/frame-sample-family.svg",
-  "/products/frame-sample-baby.svg",
-  "/products/frame-sample-wedding.svg",
+  "/products/frame-sample-wedding.jpg",
+  "/products/frame-sample-anniversary.jpg",
+  "/products/frame-sample-family.jpg",
+  "/products/frame-sample-baby.jpg",
+  "/products/frame-sample-wedding.jpg",
 ];
 
 interface FrameCollageCanvasProps {
