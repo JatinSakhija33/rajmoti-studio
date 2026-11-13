@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
-import { ArrowLeft, RefreshCw, ShieldCheck, IndianRupee, Download, Search } from "lucide-react";
+import { RefreshCw, ShieldCheck, IndianRupee, Download, Search } from "lucide-react";
+import { DeskNav } from "@/components/desk-nav";
 const stages = ["received","editing","review","printing","framing","ready","delivered","cancelled"] as const;
 const printSizes = ["4×6","6×8","8×12","10×14","12×18","14×20","16×24","18×24","20×30","35×45 mm passport","Custom"];
 const checks = {
@@ -156,12 +157,12 @@ function Desk() {
     }catch(e){setError(e instanceof Error?e.message:"Cleanup failed");}
     finally{setSaving(false);}
   }
-  return <div className="min-h-dvh bg-[#f8f5ef] text-[#27231d]">
-    <header className="border-b border-[#d8d0c4] p-5 md:px-10 flex items-center justify-between gap-4">
+  return <div className="desk-app min-h-dvh bg-[#f8f5ef] text-[#27231d]">
+    <DeskNav active="overview"/>
+    <header className="desk-workflow-heading border-b border-[#d8d0c4] p-5 md:px-10 flex items-center justify-between gap-4">
       <div><p className="uppercase text-xs tracking-[0.22em] text-[#9a7845]">Rajmoti Studio · Private</p>
-        <h1 className="font-display text-2xl md:text-4xl">Owner Work Desk</h1></div>
-      <div className="flex items-center gap-3"><Link to="/" className="text-sm underline flex items-center gap-1"><ArrowLeft size={14}/> Website</Link>
-        <button onClick={()=>void load()} className="border p-2" aria-label="Refresh jobs"><RefreshCw size={18}/></button></div>
+        <h1 className="font-display text-2xl md:text-4xl">Your studio, <em>beautifully organised.</em></h1></div>
+      <div className="flex items-center gap-3"><button onClick={()=>void load()} className="desk-light-btn" aria-label="Refresh jobs"><RefreshCw size={18}/> Refresh</button></div>
     </header>
     <main className="max-w-7xl mx-auto p-5 md:p-10">
       <p className="text-sm text-[#675e53] mb-6"><ShieldCheck size={16} className="inline"/> Owner access is verified on the server. This desk manages real intake, job stages, photos and manual payment records. Website demo administration is not used here.</p>
