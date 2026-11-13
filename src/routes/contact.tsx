@@ -1,324 +1,236 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
-import { ArrowRight, CheckCircle2, X, Heart, Package, ArrowLeft } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { ArrowRight, CheckCircle2, Heart, Package, Upload, ShieldCheck, MessageCircle } from "lucide-react";
+import { whatsappLink } from "@/lib/site";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
-import { useStyles, useQuote, useProducts, read, write } from "@/features/catalogue/store";
+import { useStyles, useQuote, useProducts } from "@/features/catalogue/store";
+
 export const Route = createFileRoute("/contact")({
   validateSearch: (s: Record<string, unknown>) => ({
     package: typeof s.package === "string" ? s.package : undefined,
     session: typeof s.session === "string" ? s.session : undefined,
   }),
-  head: () => ({ meta: [{ title: "Plan your session — Rajmoti Studio" }] }),
+  head: () => ({ meta: [{ title: "Plan your session or photo gift — Rajmoti Studio" }] }),
   component: Contact,
 });
-const texts = {
-  en: {
-    kicker: "Let’s make a little room for your story",
-    title: "Tell us what you have in mind.",
-    intro:
-      "A few details are all we need to begin. Your selected styles and gifts stay with your enquiry.",
-    type: "What are you planning?",
-    date: "Preferred date (optional)",
-    name: "Your name",
-    phone: "WhatsApp number",
-    age: "Baby’s age",
-    submit: "Save demo enquiry",
-    notice: "Private demonstration. Use fictional details. Nothing is sent to the studio.",
-    language: "ગુજરાતીમાં મદદ",
-    help: "Dates, pricing and delivery are confirmed personally by the studio.",
-  },
-  gu: {
-    kicker: "તમારી યાદોને સાચવવાની શરૂઆત",
-    title: "તમને શું કરાવવું છે તે જણાવો.",
-    intro: "થોડી વિગતો જણાવો. પસંદ કરેલા ફોટોની શૈલી અને ભેટોની માહિતી તમારી પૂછપરછ સાથે રહેશે.",
-    type: "કઈ સેવા જોઈએ છે?",
-    date: "પસંદગીની તારીખ (વૈકલ્પિક)",
-    name: "તમારું નામ",
-    phone: "વોટ્સએપ નંબર",
-    age: "બાળકની ઉંમર",
-    submit: "નમૂનાની પૂછપરછ સાચવો",
-    notice: "આ માત્ર નમૂનો છે. કાલ્પનિક વિગતો વાપરો. સ્ટુડિયોને કંઈ મોકલવામાં આવશે નહીં.",
-    language: "English form",
-    help: "તારીખ, કિંમત અને ડિલિવરીની પુષ્ટિ સ્ટુડિયો કરશે.",
-  },
-};
+type UploadGrant = { id: string; reference: string; uploadToken: string; trackingToken: string };
+type TurnstileWidget = { render: (el: HTMLElement, options: Record<string, unknown>) => string; reset: (id?: string) => void; remove: (id: string) => void };
 function Contact() {
   const search = Route.useSearch();
-  const [gu, setGu] = useState(false);
-  const t = gu ? texts.gu : texts.en;
-  const [styles, setStyles] = useStyles();
-  const [quote, setQuote] = useQuote();
+  const [styles] = useStyles();
+  const [quote] = useQuote();
   const [products] = useProducts();
-  const [type, setType] = useState(
-    [
-      "Baby",
-      "Maternity",
-      "Family",
-      "Wedding",
-      "Photo gifting",
-      "Corporate / bulk gifts",
-      "Other",
-    ].find((x) => x.toLowerCase() === search.session?.toLowerCase()) ||
-      (quote.length ? "Photo gifting" : "Baby"),
-  );
+  const [type, setType] = useState(quote.length ? "Photo gifting" : search.session || "Baby");
   const [date, setDate] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [age, setAge] = useState("");
-  const [sent, setSent] = useState<string | null>(null);
+  const [notes, setNotes] = useState("");
+  const [grant, setGrant] = useState<UploadGrant | null>(null);
   const [error, setError] = useState("");
-  const day = new Date();
-  const today = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
-  function submit(e: FormEvent) {
-    e.preventDefault();
+  const [uploadError, setUploadError] = useState("");
+  const [uploaded, setUploaded] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const widgetRef = useRef<HTMLDivElement>(null);
+  const widgetId = useRef<string | null>(null);
+  const requestId = useRef(crypto.randomUUID());
+  const turnstileKey = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+  const isProduction = import.meta.env.PROD;
+
+  useEffect(() => {
+    if (!isProduction || !turnstileKey || !widgetRef.current) return;
+    let cancelled = false;
+    const scriptId = "rajmoti-turnstile";
+    const render = () => {
+      const ts = (window as Window & { turnstile?: TurnstileWidget }).turnstile;
+      if (!cancelled && widgetRef.current && ts && !widgetId.current) {
+        widgetId.current = ts.render(widgetRef.current, {
+          sitekey: turnstileKey,
+          callback: (t: string) => setTurnstileToken(t),
+          "expired-callback": () => setTurnstileToken(""),
+          "error-callback": () => setTurnstileToken(""),
+          theme: "light",
+        });
+      }
+    };
+    let script = document.getElementById(scriptId) as HTMLScriptElement | null;
+    if (!script) {
+      script = document.createElement("script");
+      script.id = scriptId;
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      script.async = true;
+      document.head.appendChild(script);
+    }
+    script.addEventListener("load", render);
+    render();
+    return () => {
+      cancelled = true;
+      script?.removeEventListener("load", render);
+      const ts = (window as Window & { turnstile?: TurnstileWidget }).turnstile;
+      if (ts && widgetId.current) ts.remove(widgetId.current);
+      widgetId.current = null;
+    };
+  }, [isProduction, turnstileKey]);
+
+  const today = new Date().toLocaleDateString("en-CA");
+  const whatsappMessage = [
+    "Hello Rajmoti Studio! I am enquiring through your website.",
+    "Service: " + type,
+    name.trim() ? "Name: " + name.trim() : "",
+    date ? "Preferred date: " + date : "",
+    search.package ? "Collection: " + search.package : "",
+    quote.length ? "Selected gifts: " + quote.map((line) => {
+      const p = products.find(p => p.id === line.productId);
+      const variant = p?.variants.find(v => v.id === line.variantId);
+      return (p?.name || "Photo gift") + " (" + (variant?.size || "size to confirm") + ", qty " + line.quantity + ")";
+    }).join("; ") : "",
+    notes.trim() ? "Instructions: " + notes.trim() : "",
+    "Please share availability, pricing and next steps. Thank you!"
+  ].filter(Boolean).join("\n");
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setError("");
-    if (name.trim().length < 2) {
-      setError(gu ? "કૃપા કરીને નામ લખો." : "Please enter a name of at least two characters.");
+    if (!turnstileKey || !turnstileToken) {
+      setError("Secure ordering is being set up. Please contact the studio using WhatsApp for now.");
       return;
     }
     if (!/^(?:91)?[6-9]\d{9}$/.test(phone.replace(/\D/g, ""))) {
-      setError(
-        gu
-          ? "સાચા ફોર્મેટમાં ૧૦ અંકનો નમૂનાનો મોબાઇલ નંબર લખો."
-          : "Use a 10-digit Indian mobile number format, optionally prefixed with +91.",
-      );
-      return;
+      setError("Enter a valid 10-digit Indian mobile number."); return;
     }
-    const id = `DEMO-${Date.now().toString(36).toUpperCase()}`;
+    setBusy(true);
     try {
-      write("rajmoti:editorial:enquiries:v2", [
-        ...read<any[]>("rajmoti:editorial:enquiries:v2", []),
-        {
-          id,
-          type,
-          date,
-          name: name.trim(),
-          phone,
-          age: type === "Baby" ? age : null,
-          package: search.package || null,
-          styles,
-          quote,
-          status: "awaiting_confirmation",
-          demo: true,
-          createdAt: new Date().toISOString(),
-        },
-      ]);
-      setSent(id);
-    } catch {
-      setError("Could not save in this browser. Please check browser storage and retry.");
-    }
+      const response = await fetch("/api/orders", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientRequestId: requestId.current, name, phone, type, date, age,
+          package: search.package || "", notes,
+          styles: styles.map((s) => ({ id: s.id, title: s.title })),
+          quote, turnstileToken,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw Error(result.error || "Could not save your request");
+      setGrant(result);
+      setTurnstileToken("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Request failed. Please retry.");
+      (window as Window & { turnstile?: TurnstileWidget }).turnstile?.reset(widgetId.current || undefined);
+      setTurnstileToken("");
+    } finally { setBusy(false); }
   }
-  return (
-    <div className="editorial">
-      <SiteNav />
-      <main className="ed-wrap enquiry-page">
-        {sent ? (
-          <section className="enquiry-success">
-            <CheckCircle2 size={42} />
-            <p className="ed-kicker">Saved on this browser only</p>
-            <h1>
-              Your demo enquiry
-              <br />
-              <em>is ready.</em>
-            </h1>
-            <p className="status-pill">Awaiting confirmation · simulated</p>
-            <p>No booking or order has been made. No message was sent to Rajmoti Studio.</p>
-            <ol>
-              <li>The live studio would review your session or gift selection.</li>
-              <li>You would agree on date, inclusions, price and delivery.</li>
-              <li>Your booking would be confirmed only after that conversation.</li>
-            </ol>
-            <code>{sent}</code>
-            <div className="ed-actions">
-              <button className="ed-button" onClick={() => setSent(null)}>
-                Edit another demo enquiry
-              </button>
-              <Link to="/" className="ed-text-button">
-                Return home
-              </Link>
+
+  async function sendPhotos(files: FileList | null) {
+    if (!grant || !files?.length || uploaded >= 5) return;
+    setUploading(true); setUploadError("");
+    try {
+      const selected = Array.from(files);
+      if (selected.length + uploaded > 5) throw Error("Maximum five photos per request.");
+      for (const file of selected) {
+        if (file.size > 10_000_000 || !["image/jpeg", "image/png", "image/webp"].includes(file.type))
+          throw Error("Please upload JPG, PNG or WebP files smaller than 10 MB each.");
+        const form = new FormData();
+        form.append("photo", file);
+        const response = await fetch("/api/orders/" + encodeURIComponent(grant.id) + "/photos", {
+          method: "POST", headers: { "X-Rajmoti-Upload-Token": grant.uploadToken }, body: form,
+        });
+        const result = await response.json();
+        if (!response.ok) throw Error(result.error || "Upload failed");
+        setUploaded((n) => n + 1);
+      }
+    } catch (e) { setUploadError(e instanceof Error ? e.message : "Upload failed"); }
+    finally { setUploading(false); }
+  }
+
+  return <div className="editorial">
+    <SiteNav />
+    <main className="ed-wrap enquiry-page">
+      {grant ? <section className="enquiry-success">
+        <CheckCircle2 size={42}/>
+        <p className="ed-kicker">Request received securely</p>
+        <h1>Thank you. <em>We'll be in touch.</em></h1>
+        <p>Reference <strong>{grant.reference}</strong>. Your request is not a confirmed booking or payment; we will discuss details with you.</p>
+        <Link to="/track/$id" params={{id:grant.id}} search={{token:grant.trackingToken}} className="ed-text-button">Track your order privately <ArrowRight size={14}/></Link>
+        <div className="mt-8 border border-stone-200 bg-white p-6">
+          <h2 className="text-2xl font-display mb-2">Add photos for your order</h2>
+          <p className="text-sm mb-4">Optional. Up to 5 originals, 10 MB each. For the best print quality, upload the original photograph rather than a WhatsApp-compressed copy.</p>
+          <label className="ed-button cursor-pointer inline-flex items-center gap-2">
+            <Upload size={17}/>{uploading ? "Uploading…" : "Choose photographs"}
+            <input aria-label="Upload order photographs" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden disabled={uploading || uploaded>=5}
+              onChange={(e) => { void sendPhotos(e.target.files); e.currentTarget.value = ""; }}/>
+          </label>
+          <p className="text-sm mt-3">{uploaded} of 5 uploaded</p>
+          {uploadError && <p role="alert" className="form-error">{uploadError}</p>}
+          <p className="ed-footnote">Customer files are private and kept only while needed for production and the agreed retention period.</p>
+        </div>
+        <div className="ed-actions"><Link to="/" className="ed-text-button">Back to home</Link></div>
+      </section> : <>
+        <div className="enquiry-heading">
+          <p className="ed-kicker">An experience made personal</p>
+          <h1>Your story. <em>Beautifully preserved.</em></h1>
+          <p className="ed-copy">Tell us about your photography session or personalised gift. A real person at Rajmoti Studio will confirm the details.</p>
+        </div>
+        <div className="enquiry-layout">
+          <form className="enquiry-form" onSubmit={submit}>
+            <label>What are you planning?
+              <select value={type} onChange={(e) => setType(e.target.value)}>
+                {["Baby","Maternity","Family","Wedding","Photo gifting","Corporate / bulk gifts","Passport / ID","Restoration","Memorial portrait","Other"].map(t=><option key={t}>{t}</option>)}
+              </select>
+            </label>
+            {type==="Baby" && <label>Baby's age
+              <select value={age} onChange={(e) => setAge(e.target.value)}>
+                <option value="">Please select</option>
+                {["Newborn (0–2 months)","3–6 months","7–12 months","1–3 years","Older / not sure"].map(x=><option key={x}>{x}</option>)}
+              </select>
+            </label>}
+            <label>Preferred date (optional)
+              <input type="date" min={today} value={date} onChange={e=>setDate(e.target.value)}/>
+            </label>
+            <label>Your name
+              <input required minLength={2} maxLength={120} autoComplete="name" value={name} onChange={e=>setName(e.target.value)} placeholder="Full name"/>
+            </label>
+            <label>WhatsApp number
+              <input type="tel" required inputMode="tel" autoComplete="tel" maxLength={16} value={phone} onChange={e=>setPhone(e.target.value)} placeholder="+91"/>
+            </label>
+            <label>Details (optional)
+              <textarea rows={3} maxLength={1000} value={notes} onChange={e=>setNotes(e.target.value)}
+                placeholder="Print size, occasion, quantity, special instructions…" />
+            </label>
+            <label className="text-sm flex gap-2 items-start"><input type="checkbox" required className="mt-1"/> I consent to Rajmoti Studio using these details and any uploaded photos only to respond to and fulfil my request.</label>
+            {turnstileKey && <div ref={widgetRef}/>}
+            {error && <p className="form-error" role="alert">{error}</p>}
+            {!turnstileKey && <div className="rounded-2xl bg-[#f3eadd] p-5 text-sm text-[#695744]">
+              <p className="mb-3">Prefer to speak with us directly? Your selection can be shared through WhatsApp while online order processing is being connected.</p>
+              <a className="ed-button" href={whatsappLink(whatsappMessage)} target="_blank" rel="noopener noreferrer">
+                <MessageCircle size={18}/> Continue on WhatsApp <ArrowRight size={15}/>
+              </a>
+            </div>}
+            <button type="submit" className="ed-button" disabled={busy || !turnstileKey || !turnstileToken}>
+              {busy ? "Saving request…" : "Send enquiry"} <ArrowRight size={16}/>
+            </button>
+            <p className="ed-footnote"><ShieldCheck size={14} className="inline"/> Your information is private. Prices, dates and payments are confirmed personally.</p>
+          </form>
+          <aside className="enquiry-summary">
+            <h2>Everything in one place.</h2>
+            <div className="summary-section"><h3><Heart size={17}/> Saved styles <span>{styles.length}</span></h3>
+              {styles.length ? styles.map(s=><p key={s.id}>{s.title}</p>):<p>Browse our photography collections and save the styles you love.</p>}
+              <Link to="/portfolios" className="ed-text-button">Explore portfolio <ArrowRight size={14}/></Link>
             </div>
-          </section>
-        ) : (
-          <>
-            <div className="enquiry-heading">
-              <p className="ed-kicker">{t.kicker}</p>
-              <h1>
-                {gu ? (
-                  t.title
-                ) : (
-                  <>
-                    A little conversation.
-                    <br />
-                    <em>A lovely beginning.</em>
-                  </>
-                )}
-              </h1>
-              <p className="ed-copy">{t.intro}</p>
-              <button onClick={() => setGu(!gu)} className="ed-text-button">
-                {t.language}
-              </button>
+            <div className="summary-section"><h3><Package size={17}/> Selected gifts <span>{quote.length}</span></h3>
+              {quote.length?quote.map((v,i)=>{
+                const p=products.find(p=>p.id===v.productId);
+                const option=p?.variants.find(x=>x.id===v.variantId);
+                return <p key={i}>{p?.name||v.productId} · {option?.size||v.variantId} · Qty {v.quantity}</p>;
+              }):<p>Add custom photo gifts to your shortlist.</p>}
+              <Link to="/gifts" className="ed-text-button">Explore gifts <ArrowRight size={14}/></Link>
             </div>
-            <div className="enquiry-layout">
-              <form className="enquiry-form" onSubmit={submit}>
-                <p className="ed-notice">{t.notice}</p>
-                {search.package && <p className="status-pill">Collection: {search.package}</p>}
-                <label>
-                  {t.type}
-                  <select value={type} onChange={(e) => setType(e.target.value)}>
-                    {[
-                      "Baby",
-                      "Maternity",
-                      "Family",
-                      "Wedding",
-                      "Photo gifting",
-                      "Corporate / bulk gifts",
-                      "Other",
-                    ].map((x) => (
-                      <option key={x}>{x}</option>
-                    ))}
-                  </select>
-                </label>
-                {type === "Baby" && (
-                  <label>
-                    {t.age}
-                    <select required value={age} onChange={(e) => setAge(e.target.value)}>
-                      <option value="">{gu ? "પસંદ કરો" : "Please select"}</option>
-                      {[
-                        "Newborn (0–2 months)",
-                        "3–6 months",
-                        "7–12 months",
-                        "1–3 years",
-                        "Older / not sure",
-                      ].map((a) => (
-                        <option key={a}>{a}</option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-                <label>
-                  {t.date}
-                  <input
-                    type="date"
-                    value={date}
-                    min={today}
-                    onChange={(e) => setDate(e.target.value)}
-                  />
-                </label>
-                <label>
-                  {t.name}
-                  <input
-                    required
-                    minLength={2}
-                    maxLength={120}
-                    autoComplete="off"
-                    placeholder="Demo customer"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </label>
-                <label>
-                  {t.phone}
-                  <input
-                    required
-                    type="tel"
-                    inputMode="tel"
-                    autoComplete="off"
-                    maxLength={16}
-                    placeholder="10-digit demo number"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                </label>
-                {error && (
-                  <p role="alert" className="form-error">
-                    {error}
-                  </p>
-                )}
-                <button className="ed-button" type="submit">
-                  {t.submit}
-                  <ArrowRight size={16} />
-                </button>
-                <p className="ed-footnote">{t.help} The demo does not promise a response time.</p>
-              </form>
-              <aside className="enquiry-summary">
-                <h2>Your inspiration, together.</h2>
-                <div className="summary-section">
-                  <h3>
-                    <Heart size={17} /> Saved styles <span>{styles.length}</span>
-                  </h3>
-                  {styles.length ? (
-                    styles.map((s) => (
-                      <div className="saved-style-row" key={s.id}>
-                        <img src={s.image} alt="Saved demonstration style" width="64" height="72" />
-                        <div>
-                          <strong>{s.title}</strong>
-                          <small>{s.id}</small>
-                        </div>
-                        <button
-                          aria-label={`Remove style ${s.title}`}
-                          onClick={() => setStyles(styles.filter((x) => x.id !== s.id))}
-                        >
-                          <X size={15} />
-                        </button>
-                      </div>
-                    ))
-                  ) : (
-                    <p>Save a style from a gallery to include it here.</p>
-                  )}
-                  <Link to="/portfolios" className="ed-text-button">
-                    Browse photography <ArrowUpRightMini />
-                  </Link>
-                </div>
-                <div className="summary-section">
-                  <h3>
-                    <Package size={17} /> Gift shortlist <span>{quote.length}</span>
-                  </h3>
-                  {quote.length ? (
-                    quote.map((line, i) => {
-                      const p = products.find((p) => p.id === line.productId);
-                      const v = p?.variants.find((v) => v.id === line.variantId);
-                      return (
-                        <div className="quote-summary-row" key={i}>
-                          <div>
-                            <strong>{p?.name || line.productId}</strong>
-                            <small>
-                              {v?.size} · Qty {line.quantity}
-                            </small>
-                            <small>
-                              {line.personalisation} · {line.packaging}
-                            </small>
-                            <small>{line.variantId} · Price to confirm</small>
-                          </div>
-                          <button
-                            aria-label={`Remove gift ${p?.name}`}
-                            onClick={() => setQuote(quote.filter((_, j) => j !== i))}
-                          >
-                            <X size={15} />
-                          </button>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <p>Choose products and variants from the gift directory.</p>
-                  )}
-                  <Link to="/gifts" className="ed-text-button">
-                    Explore photo gifts <ArrowUpRightMini />
-                  </Link>
-                </div>
-                <p className="ed-footnote">
-                  No file uploads, payments or external submissions. Your demonstration details
-                  remain in this browser.
-                </p>
-              </aside>
-            </div>
-          </>
-        )}
-      </main>
-      <SiteFooter />
-    </div>
-  );
-}
-function ArrowUpRightMini() {
-  return <ArrowRight size={14} />;
+            <p className="ed-footnote">We confirm every order before printing. No payment is collected on this page.</p>
+          </aside>
+        </div>
+      </>}
+    </main>
+    <SiteFooter/>
+  </div>;
 }

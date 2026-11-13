@@ -1,5 +1,4 @@
 import {liveBackend,backendConfigured} from "@/lib/backend-mode";
-import { DemoBar } from "@/demo/banner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -123,7 +122,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <HeadContent /><DemoBar /><Outlet />
+        <HeadContent /><Outlet />
         <Toaster position="top-center" />
       </AuthProvider>
     </QueryClientProvider>

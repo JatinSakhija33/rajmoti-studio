@@ -170,4 +170,3 @@
 }
 
 
-.demo-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:#322c24;color:#f7eddc;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 20px;font:10px/1.5 Montserrat,sans-serif}.demo-bar strong{letter-spacing:1.4px;color:#e4cda5}.demo-bar nav{display:flex;gap:16px;flex-wrap:wrap}.demo-bar a,.demo-bar button{text-decoration:underline;text-underline-offset:3px;cursor:pointer}.demo-bar-space{height:44px}header.fixed.top-0{top:44px}@media(max-width:850px){.demo-bar{flex-wrap:wrap;justify-content:center;gap:5px;min-height:72px}.demo-bar>span{display:none}.demo-bar-space{height:72px}header.fixed.top-0{top:72px}}

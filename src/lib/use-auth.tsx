@@ -10,6 +10,8 @@ type Auth = {
   isAdmin: boolean;
 };
 const demoUser = { id: "demo-owner", email: "demo@example.invalid" } as User;
+// Never grant the demonstration owner identity in a production build.
+const allowDemoOwner = !import.meta.env.PROD && !liveBackend;
 const Ctx = createContext<Auth>({
   user: null,
   session: null,
@@ -85,11 +87,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin: admin && checked === session?.user.id,
       }
     : {
-        user: demoUser,
-        session: { user: demoUser } as Session,
+        user: allowDemoOwner ? demoUser : null,
+        session: allowDemoOwner ? ({ user: demoUser } as Session) : null,
         loading: false,
         adminLoading: false,
-        isAdmin: true,
+        isAdmin: allowDemoOwner,
       };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
