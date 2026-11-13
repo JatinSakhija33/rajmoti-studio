@@ -4,7 +4,9 @@
     "src/start.ts",
     "src/server.ts",
     "src/integrations/supabase/auth-attacher.ts",
-    "src/integrations/supabase/auth-middleware.ts"
+    "src/integrations/supabase/auth-middleware.ts",
+    "src/routes/api/**/*.ts",
+    "src/routes/sitemap[.]xml.ts"
   ],
   "compilerOptions": {
     "target": "ES2022",
