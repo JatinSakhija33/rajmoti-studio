@@ -24,6 +24,7 @@ function rupees(paise: number) { return (Number(paise||0)/100).toLocaleString("e
 function parseRupees(s: string) { const n=Number(s); return Number.isFinite(n)&&n>=0 ? Math.round(n*100) : NaN; }
 function Desk() {
   const [jobs,setJobs]=useState<Job[]>([]);
+  const [usage,setUsage]=useState<{bytes:number;limitBytes:number;photoCount:number}|null>(null);
   const [selected,setSelected]=useState<Job|null>(null);
   const [query,setQuery]=useState("");
   const [status,setStatus]=useState("all");
@@ -55,6 +56,8 @@ function Desk() {
       const data=await r.json();
       if(!r.ok)throw Error(data.error||"Unable to access the owner work desk");
       setJobs(data.orders||[]);
+      try { const r=await fetch("/api/owner/usage",{credentials:"same-origin",cache:"no-store"});
+        if(r.ok)setUsage(await r.json()); }catch{}
     }catch(e){setError(e instanceof Error?e.message:"Unable to retrieve orders");}
     finally{setLoading(false);}
   },[]);
@@ -201,6 +204,14 @@ function Desk() {
           <button className="bg-[#24211d] text-white px-4 py-3 disabled:opacity-50" disabled={saving}>{saving?"Saving…":"Create studio job"}</button>
         </form>}
       </section>
+      {usage && <div className="border border-[#e9dfd4] bg-white p-4 mb-5 text-sm" aria-label="Temporary cloud photo storage">
+        <div className="flex flex-wrap justify-between gap-3 mb-2">
+          <strong>Temporary customer photo storage</strong>
+          <span>{(usage.bytes/1000000).toFixed(1)} MB / {(usage.limitBytes/1000000000).toFixed(1)} GB · {usage.photoCount} files</span>
+        </div>
+        <div className="w-full h-2 rounded-full bg-[#e8e4db] overflow-hidden"><div className="h-full bg-[#688b73]" style={{width:Math.min(100,usage.bytes/usage.limitBytes*100)+"%"}}/></div>
+        <p className="text-xs mt-2 text-[#70665d]">{usage.bytes/usage.limitBytes>=0.8?"Upload quota approaching. Verify archives and clean eligible completed orders.":"Within the app storage cap. Originals are private; permanent local backups remain your responsibility."}</p>
+      </div>}
       <div className="flex justify-end mb-3"><a href="/api/owner/export" className="text-xs underline flex items-center gap-2"><Download size={14}/> Export encrypted-backup-ready order data (JSON)</a></div>
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <label className="flex items-center bg-white border px-3 flex-1 gap-2"><Search size={16}/>
