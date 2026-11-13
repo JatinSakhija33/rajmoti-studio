@@ -85,7 +85,7 @@ export function KeychainCustomizer({
     return (
       `Namaste Rajmoti Studio! 🔑 I designed a custom Photo Keychain in your Live Studio:\n` +
       `• Shape: ${shape.toUpperCase()}\n` +
-      `• Material: ${material === "acrylic" ? "Clear Diamond Acrylic" : material === "teak" ? "Saurashtra Teak Wood" : "Brushed Metallic"}\n` +
+      `• Material: ${material === "acrylic" ? "Clear Acrylic" : material === "teak" ? "Teak Finish Wood" : "Brushed Metallic"}\n` +
       `• Front: Personal Photo\n` +
       `• Back: ${backMode === "text" ? `Custom Inscription ("${backText}" - "${backSubtext}")` : "Second Photo"}\n` +
       `• Indicative Price: ₹${getPrice()}\n\n` +
@@ -260,7 +260,7 @@ export function KeychainCustomizer({
                     : "bg-white text-stone-800 border-stone-200 hover:border-amber-700"
                 }`}
               >
-                <span className="text-xs font-bold block">Diamond Acrylic</span>
+                <span className="text-xs font-bold block">Clear Acrylic</span>
                 <span className="text-[10px] text-stone-400 block mt-0.5">₹199 · High Gloss</span>
               </button>
 
@@ -273,7 +273,7 @@ export function KeychainCustomizer({
                     : "bg-white text-stone-800 border-stone-200 hover:border-amber-700"
                 }`}
               >
-                <span className="text-xs font-bold block">Saurashtra Teak</span>
+                <span className="text-xs font-bold block">Teak Wood Finish</span>
                 <span className="text-[10px] text-stone-400 block mt-0.5">₹149 · Organic Wood</span>
               </button>
 

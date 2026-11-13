@@ -456,10 +456,10 @@ export function FrameCollageCanvas({
         <span className="font-semibold text-stone-700">Finish:</span>
         {(
           [
-            ["teak", "Saurashtra Teak Wood"],
+            ["teak", "Teak Finish Wood"],
             ["charcoal", "Matte Charcoal Wood"],
-            ["gold", "Royal Gold Leaf"],
-            ["acrylic", "Clear Acrylic Block"],
+            ["gold", "Gold Finish"],
+            ["acrylic", "Acrylic Frame"],
             ["sparkle", "Inner Sparkle Inlay (14×20)"],
             ["canvas", "Gallery Canvas Wrap"],
           ] as [FrameFinish, string][]

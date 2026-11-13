@@ -349,7 +349,7 @@ export function CheckoutDialog({
                   <strong>₹{(confirmed.totalAmountPaise / 100).toFixed(2)}</strong> in Cash or UPI at our studio counter upon collection in Jetpur.
                 </p>
                 <p className="text-stone-500 font-mono text-[11px]">
-                  Studio Address: Rajmoti Studio, Near Rajmoti Cinema, Jetpur, Gujarat 360370.
+                  Studio Location: Rajmoti Studio, Jetpur, Gujarat 360370. For directions, please contact us on WhatsApp.
                 </p>
               </div>
             )}
@@ -588,7 +588,7 @@ export function CheckoutDialog({
                             required
                             value={line1}
                             onChange={(e) => setLine1(e.target.value)}
-                            placeholder="e.g. 14, Shanti Nagar, Opp. Rajmoti Cinema"
+                            placeholder="e.g. 14, Sardar Chowk"
                             className="w-full border border-stone-300 rounded-lg p-2 bg-white text-xs"
                           />
                         </label>
@@ -599,7 +599,7 @@ export function CheckoutDialog({
                             type="text"
                             value={line2}
                             onChange={(e) => setLine2(e.target.value)}
-                            placeholder="e.g. Station Road"
+                            placeholder="e.g. Near Main Bazar"
                             className="w-full border border-stone-300 rounded-lg p-2 bg-white text-xs"
                           />
                         </label>

@@ -193,7 +193,7 @@ export function GodsCollection({ onSelectOrder }: { onSelectOrder?: (msg: string
   const whatsappMessage = `Namaste ${SITE.name}! 🙏 I would like to order a Sacred Devotional Keepake:
 Deity: ${deity.nameEn} (${deity.nameGu})
 Dham: ${deity.dham}
-Format: ${format === "translight" ? "Backlit LED Translight Frame" : format === "acrylic" ? "Diamond Polished Bitu Acrylic" : "Handcrafted Teak Wood Frame"}
+Format: ${format === "translight" ? "Backlit LED Translight Frame" : format === "acrylic" ? "Acrylic Block" : "Wood Frame"}
 Size: ${size}
 Please confirm available finishing and timeline. Jai Shri Krishna / Har Har Mahadev!`;
 
@@ -204,7 +204,7 @@ Please confirm available finishing and timeline. Jai Shri Krishna / Har Har Maha
         <div className="flex items-center gap-2">
           <ShieldCheck size={16} className="text-amber-800 shrink-0" />
           <span>
-            <strong>Authentic Gujarat & Saurashtra Mandir Collection</strong> · Reverently handcrafted in Jetpur using archival gold leaf, diamond acrylic & edge-lit translight.
+            <strong>Regional Devotional Collection</strong> · Dedicated sacred deity art available in acrylic, wood frame and backlit translight formats.
           </span>
         </div>
         <span className="hidden sm:inline text-[10px] font-mono uppercase bg-amber-200/60 px-2 py-0.5 rounded text-amber-900">
@@ -305,9 +305,9 @@ Please confirm available finishing and timeline. Jai Shri Krishna / Har Har Maha
           </div>
 
           <p className="text-[11px] text-stone-500 text-center mt-3">
-            {format === "acrylic" && "Diamond-beveled acrylic block with high-gloss depth"}
-            {format === "frame" && "Handcrafted Saurashtra Teak wood frame with gold foil fillet"}
-            {format === "translight" && "Backlit LED optical translight with warm temple illumination"}
+            {format === "acrylic" && "High-gloss acrylic block with polished edges"}
+            {format === "frame" && "Wood frame moulding with protective glass"}
+            {format === "translight" && "Backlit LED translight with temple illumination"}
           </p>
         </div>
 

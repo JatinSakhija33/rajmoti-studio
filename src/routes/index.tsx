@@ -32,7 +32,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Rajmoti Studio in Jetpur, Gujarat (Est. 1982). Baby photoshoots, maternity, family, wedding photography, teak collage frames, diamond acrylics & 3D photo mugs.",
+          "Rajmoti Studio in Jetpur, Gujarat (Since 1982). Baby photoshoots, maternity, family, wedding photography, personalized photo framing & thoughtful photo gifts.",
       },
     ],
   }),
@@ -60,7 +60,7 @@ const PHOTOGRAPHY_CATEGORIES = [
     slug: "family",
     name: "Together, as you are",
     label: "Heritage Family",
-    text: "Three generations in one frame. Natural poses, joyful laughter, and lasting legacy.",
+    text: "Natural poses, candid smiles, and meaningful family milestones.",
     image: "/portfolio/family-heritage.jpg",
     serviceId: "family",
   },
@@ -68,7 +68,7 @@ const PHOTOGRAPHY_CATEGORIES = [
     slug: "wedding",
     name: "A day. A lifetime.",
     label: "Weddings & Mandap",
-    text: "Authentic Gujarati ceremonies: Lagan, Pithi, Mandap and candid couple moments.",
+    text: "Authentic ceremonies, candid moments, and timeless wedding memories.",
     image: "/portfolio/wedding-mandap.jpg",
     serviceId: "wedding",
   },
@@ -84,7 +84,7 @@ const PHOTOGRAPHY_CATEGORIES = [
     slug: "couple",
     name: "Two souls. One story.",
     label: "Couple Stories",
-    text: "Cinematic golden hour outdoor sets and fine-art pre-wedding memories.",
+    text: "Cinematic outdoor sets and fine-art pre-wedding memories.",
     image: "/portfolio/couple-prewedding.jpg",
     serviceId: "couple",
   },
@@ -92,28 +92,28 @@ const PHOTOGRAPHY_CATEGORIES = [
 
 const LOCAL_FAQS = [
   {
-    q: "Where is Rajmoti Studio located in Jetpur?",
-    a: "Rajmoti Studio is situated near Rajmoti Cinema on Station Road in Jetpur, Gujarat (PIN: 360370). We have been serving families across Jetpur, Gondal, Dhoraji, and Rajkot district since 1982.",
+    q: "Where is Rajmoti Studio located?",
+    a: "Rajmoti Studio is based in Jetpur, Gujarat, PIN 360370. For our exact location and directions, please contact us on WhatsApp or use our verified business listing.",
   },
   {
-    q: "What frame sizes and finishes do you manufacture?",
-    a: "We handcraft frames from 8×12 inches up to 20×30 inches in genuine Saurashtra Teak wood, matte charcoal, royal gold leaf, diamond-polished floating acrylic blocks, and edge-lit LED translights.",
+    q: "What photo frame sizes are available?",
+    a: "Rajmoti Studio offers photo framing and personalized print products in several sizes, including 8×12, 10×14, 10×10 square, 12×18, 14×20, 16×24, 18×24 and 20×30 inches. Available sizes, materials, finishes and orientations depend on the selected product. Choose a product to view its actual options and owner-configured price.",
   },
   {
-    q: "Can I customize a photo gift with my own photos before ordering?",
-    a: "Yes! You can preview multi-photo collage frames, rotate 3D ceramic mugs, test thermochromic magic reveal effects, and inspect LED translight illumination directly on our website. Our master framers confirm every crop and finish with you on WhatsApp (+91 94290 70317) before final crafting.",
+    q: "Can I customize photo gifts with my own photographs?",
+    a: "Yes. We offer personalized photo frames, collages, mugs, keychains and other photo gifts. You can explore available designs and sizes on our website and discuss your preferred photographs, names, dates and customization requirements with us through WhatsApp.",
   },
   {
-    q: "How does payment and studio collection work?",
-    a: "For Studio Collection in Jetpur, you can pay online via UPI or choose 'Pay at Studio' to settle your balance in Cash or UPI when collecting your finished keepsake at our counter. For Home Delivery across Gujarat & India, 100% online prepayment via UPI is required before dispatch.",
+    q: "How does payment and collection work?",
+    a: "You can collect your order from Rajmoti Studio in Jetpur and pay online or at the studio. For an approved home-delivery order, full online payment must be verified before dispatch. Cash on delivery is not available. Delivery locations, charges and availability are confirmed by the studio.",
   },
   {
-    q: "How do I book a baby or maternity photoshoot?",
-    a: "You can click 'Plan a Session' on our website to choose your preferred date and service, or message us directly on WhatsApp (+91 94290 70317). Our private indoor studio is temperature-controlled and paced gently with breaks for feeding and settling.",
+    q: "How can I book a baby or maternity photoshoot?",
+    a: "Explore our baby and maternity photography portfolios, then send us your preferred session and date through the booking enquiry or WhatsApp. We will confirm availability, package details and any preparation instructions directly with you.",
   },
   {
-    q: "Do you offer old photo restoration and heritage framing?",
-    a: "Yes. Photo restoration is one of our specialty studio disciplines. We digitize vintage, faded, or torn ancestral photographs, delicately repair scratches while strictly preserving original facial identity, and frame them in archival teak.",
+    q: "Do you offer old photo restoration?",
+    a: "Yes. Rajmoti Studio provides photo restoration services for old, faded and damaged photographs. We aim to preserve the original person's recognizable features while repairing visible damage and improving the photograph where possible. The results depend on the condition of the source photograph. Framing and printing options can be discussed with the studio.",
   },
 ];
 
@@ -176,7 +176,7 @@ function Home() {
             </div>
             <div className="hero-signature">
               <span className="signature-line" />
-              A family studio. Three generations of memories.
+              A family studio. Cherished memories since 1982.
             </div>
           </div>
           <figure className="home-hero-image">
@@ -203,9 +203,9 @@ function Home() {
 
         {/* Heritage Trust Line */}
         <div className="ed-wrap heritage-line">
-          <span>Photographing 3 generations since 1982</span>
-          <span>Archival prints, teak wood & diamond acrylic</span>
-          <span>Studio & workshop near Rajmoti Cinema, Jetpur</span>
+          <span>Est. 1982</span>
+          <span>Photography · Photo Prints · Personalized Frames & Gifts</span>
+          <span>Based in Jetpur, Gujarat</span>
         </div>
 
         {/* Photography Categories: Image-Led Grid */}
@@ -291,8 +291,7 @@ function Home() {
               <em>can touch & feel.</em>
             </h2>
             <p className="ed-copy">
-              Explore 18 product families crafted in our Jetpur workshop: multi-photo teak collages,
-              3D ceramic & thermochromic magic mugs, edge-lit LED translights, and couple photobooks.
+              Explore personalized photo frames, collages, ceramic & magic mugs, backlit LED translights, and photobooks. Available finishes and sizes vary by product.
             </p>
             <div className="flex flex-wrap gap-3 mt-4">
               <Link to="/gifts" className="ed-button flex items-center gap-2">
@@ -347,38 +346,40 @@ function Home() {
           </div>
         </section>
 
-        {/* Local Studio Contact & Hours Banner */}
+        {/* Local Studio Contact & Location Banner */}
         <section className="ed-wrap mb-14">
           <div className="rounded-3xl bg-[#29251F] text-amber-100 p-8 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl">
             <div className="space-y-2">
               <span className="text-[10px] font-bold uppercase tracking-widest text-[#B49A72] block">
-                VISIT RAJMOTI STUDIO IN JETPUR
+                LOCAL STUDIO IN JETPUR
               </span>
               <h2 className="font-display text-2xl sm:text-3xl font-bold text-white">
-                Near Rajmoti Cinema, Station Road
+                Visit Rajmoti Studio in Jetpur
               </h2>
               <p className="text-xs text-stone-300 max-w-lg leading-relaxed">
-                Jetpur, Gujarat 360370. Serving families across Saurashtra for over 40 years. Open Monday to Saturday: 9:00 AM – 8:00 PM · Sunday: 10:00 AM – 6:00 PM.
+                Photography, photo printing, personalized frames and thoughtful photo gifts in Jetpur, Gujarat 360370. For directions, visiting hours or enquiries, please contact us on WhatsApp.
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
               <a
-                href={whatsappLink(waMessage.booking())}
+                href="https://maps.app.goo.gl/nYgKFSidpihg1Nft6"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ed-button flex items-center justify-center gap-2 bg-amber-100 text-stone-950 hover:bg-white text-xs py-3 px-5 font-bold shadow-xs whitespace-nowrap"
+              >
+                <ArrowRight size={15} />
+                <span>Get Directions</span>
+              </a>
+              <a
+                href={whatsappLink(waMessage.general())}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="ed-button flex items-center justify-center gap-2 bg-[#25D366] text-white border-[#25D366] hover:bg-[#20b858] text-xs py-3 px-5 shadow-xs whitespace-nowrap"
               >
                 <MessageCircle size={16} />
-                <span>WhatsApp: +91 94290 70317</span>
+                <span>WhatsApp Our Studio</span>
               </a>
-              <button
-                type="button"
-                onClick={() => openBooking("family")}
-                className="ed-button bg-amber-100 text-stone-950 hover:bg-white text-xs py-3 px-5 font-bold shadow-xs whitespace-nowrap"
-              >
-                Plan a Studio Visit
-              </button>
             </div>
           </div>
         </section>

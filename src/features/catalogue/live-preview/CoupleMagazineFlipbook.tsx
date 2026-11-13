@@ -414,7 +414,7 @@ Please confirm production timeline and proof draft. Thank you!`,
 
             <div className="text-center pt-2 border-t border-stone-200 text-[8px] text-stone-400 font-mono">
               <p>Printed on 250 GSM Matte Art Paper</p>
-              <p className="mt-0.5">Rajmoti Studio · Station Road, Jetpur</p>
+              <p className="mt-0.5">Rajmoti Studio · Jetpur, Gujarat</p>
             </div>
           </div>
         </div>

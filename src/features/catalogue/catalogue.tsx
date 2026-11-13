@@ -196,9 +196,9 @@ export function Catalogue({ productId }: { productId?: string }) {
               Explore the directory <ArrowRight size={16} />
             </a>
             <div className="ed-inline-facts">
-              <span>18 product families</span>
-              <span>{products.length} crafted products</span>
-              <span>Made personal</span>
+              <span>Personalized gifts</span>
+              <span>{products.length} catalogue items</span>
+              <span>Personal proofing on WhatsApp</span>
             </div>
           </div>
           <figure className="gift-intro-image">
@@ -220,13 +220,13 @@ export function Catalogue({ productId }: { productId?: string }) {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
               <div>
                 <p className="ed-kicker flex items-center gap-1.5 text-amber-900 font-semibold">
-                  <Sparkles size={15} className="text-amber-700" /> Handcrafted in Jetpur · Interactive Showcase
+                  <Sparkles size={15} className="text-amber-700" /> Interactive Preview Studios
                 </p>
                 <h2 className="text-3xl sm:text-4xl font-display text-stone-900 mt-1.5">
                   See how your keepsake will look.
                 </h2>
                 <p className="text-sm text-stone-600 mt-1 max-w-2xl leading-relaxed">
-                  Every product is crafted by our master framers in Jetpur. Select a family below to explore realistic lighting, 360° 3D rotations, tactile page flips, and sample personalizations.
+                  Personalize and preview your photos before ordering. Select a product family below to explore available sizes, finishes, 360° views, and sample customizations.
                 </p>
               </div>
               <div>
@@ -268,7 +268,7 @@ export function Catalogue({ productId }: { productId?: string }) {
                       Frame & Collage Studio
                     </h3>
                     <p className="text-xs text-stone-600 mt-1.5 leading-relaxed">
-                      Single, triptych, 4-grid & family-5 collages in Saurashtra teak wood, charcoal matte, royal gold leaf, and floating acrylic.
+                      Single, triptych, 4-grid & family-5 collages. Available in teak finish, charcoal matte, gold finish, and acrylic.
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
@@ -506,7 +506,7 @@ export function Catalogue({ productId }: { productId?: string }) {
           <div className="ed-notice">
             <Layers size={18} />
             <p>
-              <strong>Handcrafted in Jetpur.</strong> Every gift is tailored to your specifications, printed with archival inks, and verified with a personal digital proof on WhatsApp before production.
+              <strong>Personalized Photo Products.</strong> Available sizes, materials and finishes depend on the selected product. Options and details are confirmed with you on WhatsApp.
             </p>
           </div>
         </div>
@@ -900,7 +900,7 @@ export function Catalogue({ productId }: { productId?: string }) {
               {activeStudio === "keychains" && "Double-Sided Custom Photo Keychains"}
             </DialogTitle>
             <DialogDescription>
-              Handcrafted in Jetpur. Personalize your keepsake, explore finishes, and confirm production with our master framers.
+              Personalize your keepsake, explore finishes, and discuss options directly with Rajmoti Studio on WhatsApp.
             </DialogDescription>
           </DialogHeader>
 

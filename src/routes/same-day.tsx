@@ -73,26 +73,26 @@ const SAME_DAY_PRODUCTS: SameDayProduct[] = [
   },
   {
     id: "sd-frame-8x12",
-    name: "8×12 Instant Teak Wood Photo Frame",
+    name: "8×12 Instant Photo Frame",
     category: "Framing",
     turnaround: "2 to 4 hours",
     pricePickup: 499,
     priceDelivery: 569,
     imageUrl: "/products/frame-sample-wedding.jpg",
-    tag: "Heirloom Framing",
-    description: "Genuine Saurashtra teak wood moulding with archival lustre print and clear protective glass. Ready to hang or table-stand.",
+    tag: "Wood Frame",
+    description: "Solid wood frame moulding with clear protective glass. Ready to hang or table-stand. Available finishes vary by stock.",
     requiresPhotoCount: "1 photo",
   },
   {
     id: "sd-acrylic-8x12",
-    name: "8×12 Diamond Acrylic Photo Block",
+    name: "8×12 Acrylic Photo Block",
     category: "Substrates",
     turnaround: "3 to 4 hours",
     pricePickup: 799,
     priceDelivery: 869,
     imageUrl: "/products/frame-sample-anniversary.jpg",
-    tag: "Luxury Modern Finish",
-    description: "8mm solid crystal acrylic block with diamond-beveled edges. Stands independently on desks, sideboards, or mantels.",
+    tag: "Modern Acrylic",
+    description: "Solid crystal acrylic block with polished edges. Stands independently on desks, sideboards, or mantels.",
     requiresPhotoCount: "1 photo",
   },
   {
@@ -103,14 +103,14 @@ const SAME_DAY_PRODUCTS: SameDayProduct[] = [
     pricePickup: 199,
     priceDelivery: 249,
     imageUrl: "/products/frame-sample-family.jpg",
-    tag: "Quick Pocket Memory",
-    description: "Solid high-gloss acrylic with your photo on the front and custom anniversary date, initials, or car plate number on the reverse.",
+    tag: "Pocket Keepsake",
+    description: "Gloss acrylic or wood finish with your photo on the front and custom anniversary date, initials, or text on the reverse.",
     requiresPhotoCount: "1 or 2 photos",
   },
 ];
 
 const JETPUR_LOCALITIES = [
-  "Station Road / Rajmoti Cinema Area",
+  "Main Market / City Area",
   "Kanakiya Plot",
   "Navagadh & GIDC",
   "Dhoraji Road",
@@ -180,14 +180,14 @@ export function SameDayGiftsPage() {
             <div className="flex items-center gap-3">
               <AlertCircle size={20} className="text-amber-400 shrink-0" />
               <div className="text-xs">
-                <span className="font-bold text-white block">Strict Handcrafted Quality Constraint:</span>
+                <span className="font-bold text-white block">Daily Studio Production Limit:</span>
                 <span className="text-amber-200/90">
-                  To protect archival colour accuracy, we accept a maximum of 12 same-day personalized gifts per day.
+                  To ensure careful attention to detail, same-day personalized gifts are subject to daily studio capacity and stock confirmation.
                 </span>
               </div>
             </div>
             <div className="text-xs text-stone-300 font-medium whitespace-nowrap bg-stone-900/60 px-3 py-1.5 rounded-lg border border-stone-700">
-              Station Road Studio · Jetpur
+              Jetpur Studio · Gujarat 360370
             </div>
           </div>
         </section>
@@ -350,7 +350,7 @@ export function SameDayGiftsPage() {
               </div>
               <h4 className="font-bold text-sm text-stone-900">Send Original Photo</h4>
               <p className="text-xs text-stone-600">
-                Attach your high-resolution portrait directly in WhatsApp. Our master framer verifies face framing and sharpness.
+                Attach your high-resolution portrait directly in WhatsApp. We verify face framing and sharpness with you.
               </p>
             </div>
 
@@ -360,7 +360,7 @@ export function SameDayGiftsPage() {
               </div>
               <h4 className="font-bold text-sm text-stone-900">Collect or Receive</h4>
               <p className="text-xs text-stone-600">
-                Pick up at Station Road counter (pay at pickup), or receive doorstep delivery anywhere in Jetpur town.
+                Pick up at the studio counter in Jetpur (pay at pickup), or receive doorstep delivery in Jetpur town.
               </p>
             </div>
           </div>

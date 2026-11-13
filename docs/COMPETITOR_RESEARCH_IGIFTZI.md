@@ -16,7 +16,7 @@ Indian personalized gifting is dominated by centralized aggregators (Zoomin, iGi
 
 **Rajmoti Studio's Strategic Advantage:**
 - **Zero-Friction WhatsApp Commerce:** No login or account required.
-- **Physical Craftsmanship & Human Proofing:** Master framers in Jetpur inspect photo bleed, face positioning, and resolution before outputting to 12-color archival printers.
+- **Physical Craftsmanship & Human Proofing:** Studio framers in Jetpur inspect photo bleed, face positioning, and resolution before outputting prints.
 - **Same-Day Production & Counter Pickup:** Local Jetpur clients can pick up framed gifts or mugs in as little as 2 to 4 hours.
 
 ---
@@ -25,7 +25,7 @@ Indian personalized gifting is dominated by centralized aggregators (Zoomin, iGi
 
 | Product Family | iGiftzi / Zoomin Benchmark | Rajmoti Studio Specification | Advantage / Differentiation |
 | :--- | :--- | :--- | :--- |
-| **Collage & Portrait Frames** | MDF / Engineered wood, synthetic glass (acrylic sheet), 6×8 to 12×18 inches. Fixed grid layouts. | Genuine Saurashtra Teak Wood, Matte Charcoal, Royal Gold Leaf & Floating Acrylic. 8×12 to 20×30 inches. Single, Triptych, 4-Grid, Family-5 layouts. | Solid wood framing, heirloom durability, 12mm print-safe bleed, live DPI resolution check. |
+| **Collage & Portrait Frames** | MDF / Engineered wood, synthetic glass (acrylic sheet), 6×8 to 12×18 inches. Fixed grid layouts. | Wood Finish Moulding, Matte Charcoal, Gold Finish & Acrylic. 8×12 to 20×30 inches. Single, Triptych, 4-Grid, Family-5 layouts. | Custom framing options, 12mm print-safe bleed, live DPI resolution check. |
 | **Photo Ceramic Mugs** | 11oz White Ceramic, Heat-sensitive Magic Mug (China-grade blank). Simple wrap. | Grade-A High Gloss Ceramic, Inner Colour options, Thermochromic Magic Reveal. Interactive 360° Three.js preview with Hot/Cold thermal reveal simulator. | 3D tactile simulation before purchase; non-destructive photo containment. |
 | **Acrylic Photo Blocks** | 3mm to 5mm extruded acrylic, flat UV direct print. 4×6 to 8×10. | 8mm to 12mm Crystal Acrylic with diamond-polished beveled edges and stainless steel standoff hardware. 8×12 and 12×18. | Museum-grade depth effect, scratch-resistant surface, rich black density. |
 | **Backlit LED Translights** | Rare or limited to thin plastic desktop light boxes (5×7). | Commercial-grade extruded aluminum / wood frame with edge-lit 4000K & 3000K LEDs, frosted optical diffuser, 12×18 & 16×24 inches. | Authentic home mandir & cinematic living room centerpiece with dual-temperature switch. |

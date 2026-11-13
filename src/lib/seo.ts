@@ -1,21 +1,24 @@
 import { SITE } from "@/lib/site";
+import { getVerifiedBusinessInfo } from "@/lib/business-info";
 
 /** Production origin used for canonical + Open Graph URLs. */
 export const SITE_URL = (import.meta.env.VITE_PUBLIC_SITE_URL || "https://rajmotistudio.in").replace(/\/$/, "");
 
-/** Single source of truth for the local business entity in Jetpur. */
+const verified = getVerifiedBusinessInfo();
+
+/** Single source of truth for the local business entity in Jetpur (strictly verified facts). */
 export const STUDIO = {
-  name: SITE.name,
-  city: "Jetpur",
-  region: "Gujarat",
-  postalCode: "360370",
-  address: "Near Rajmoti Cinema, Station Road, Jetpur, Gujarat 360370",
-  country: "IN",
-  phone: SITE.whatsapp,
-  email: SITE.email,
+  name: verified.name,
+  city: verified.city,
+  region: verified.region,
+  postalCode: verified.postalCode,
+  country: verified.country,
+  phone: verified.phone,
+  email: verified.email,
   instagram: SITE.instagram,
-  /** Genuinely served areas in Saurashtra */
-  serviceAreas: ["Jetpur", "Gondal", "Rajkot", "Junagadh", "Dhoraji"],
+  mapsUrl: verified.mapsUrl,
+  /** Verified delivery and studio service scope */
+  serviceAreas: verified.serviceAreas,
 } as const;
 
 export function absUrl(path: string) {
@@ -31,7 +34,7 @@ export function canonicalFor(path: string) {
 }
 
 export function localBusinessJsonLd(googleProfileUrl?: string | null) {
-  const sameAs = [STUDIO.instagram, googleProfileUrl].filter(Boolean);
+  const sameAs = [STUDIO.instagram, STUDIO.mapsUrl, googleProfileUrl].filter(Boolean);
   return {
     "@context": "https://schema.org",
     "@type": "PhotographyBusiness",
@@ -40,10 +43,12 @@ export function localBusinessJsonLd(googleProfileUrl?: string | null) {
     telephone: STUDIO.phone,
     email: STUDIO.email,
     image: absUrl("/favicon.ico"),
+    hasMap: STUDIO.mapsUrl,
     address: {
       "@type": "PostalAddress",
       addressLocality: STUDIO.city,
       addressRegion: STUDIO.region,
+      postalCode: STUDIO.postalCode,
       addressCountry: STUDIO.country,
     },
     areaServed: STUDIO.serviceAreas.map((a) => ({ "@type": "Place", name: a })),

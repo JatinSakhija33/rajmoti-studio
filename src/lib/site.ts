@@ -4,7 +4,8 @@ export const SITE = {
   email: "rajmotistudio@gmail.com",
   whatsapp: "+919429070317",
   instagram: "https://www.instagram.com/rajmoti_studio/",
-  location: "Jetpur, Gujarat, India",
+  location: "Jetpur, Gujarat, PIN 360370",
+  mapsUrl: "https://maps.app.goo.gl/nYgKFSidpihg1Nft6",
 };
 
 export function whatsappLink(message?: string, phone = SITE.whatsapp) {
@@ -20,9 +21,9 @@ export function telLink(phone = SITE.whatsapp) {
   return `tel:${phone.replace(/[^\d+]/g, "")}`;
 }
 
-/** Opens the studio location in the visitor's maps app. */
-export function directionsLink(place = `${SITE.name}, ${SITE.location}`) {
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}`;
+/** Opens the verified studio location in Google Maps. */
+export function directionsLink() {
+  return SITE.mapsUrl;
 }
 
 /** Canonical Instagram profile URL (also used by the "Follow" button). */

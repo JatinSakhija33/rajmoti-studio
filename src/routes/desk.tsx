@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { DeskNav } from "@/components/desk-nav";
 import { whatsappLink, waMessage, telLink } from "@/lib/site";
+import { RAJMOTI_BUSINESS_REGISTRY } from "@/lib/business-info";
 
 const stages = ["received", "editing", "review", "printing", "framing", "ready", "delivered", "cancelled"] as const;
 const printSizes = [
@@ -155,6 +156,7 @@ function Desk() {
   const [showIntake, setShowIntake] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
   const [showMockupManager, setShowMockupManager] = useState(false);
+  const [showBusinessRegistry, setShowBusinessRegistry] = useState(false);
   const [inventory, setInventory] = useState<InventoryItem[]>(() => {
     try {
       const saved = localStorage.getItem("rajmoti:inventory");
@@ -628,6 +630,13 @@ function Desk() {
             <ImageIcon size={15} />
             <span>{showMockupManager ? "Hide Media Manager" : "Product & Devotional Media"}</span>
           </button>
+          <button
+            onClick={() => setShowBusinessRegistry(!showBusinessRegistry)}
+            className="desk-light-btn text-xs font-semibold"
+          >
+            <ShieldCheck size={15} />
+            <span>{showBusinessRegistry ? "Hide Registry" : "Verified Business Registry"}</span>
+          </button>
           <button onClick={() => void load()} className="desk-light-btn text-xs" aria-label="Refresh jobs">
             <RefreshCw size={15} />
             <span>Refresh</span>
@@ -863,6 +872,81 @@ function Desk() {
                   </div>
                 ))}
               </div>
+            </div>
+          </section>
+        )}
+
+        {/* Authoritative Business Registry & Verification Panel */}
+        {showBusinessRegistry && (
+          <section className="bg-white border border-[#EAE4DC] rounded-2xl p-6 mb-6 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-5 border-b border-stone-200">
+              <div>
+                <h3 className="font-display text-xl font-bold text-stone-900 flex items-center gap-2">
+                  <ShieldCheck size={20} className="text-emerald-800" />
+                  Authoritative Business Information & SEO Verification Registry
+                </h3>
+                <p className="text-xs text-stone-500 mt-0.5">
+                  Single source of truth for business information, location, contacts, and service scope. Only verified and owner-approved fields are emitted in public SEO and structured data.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowBusinessRegistry(false)}
+                className="text-xs px-3 py-1.5 rounded-lg border border-stone-300 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold"
+              >
+                Close Registry Panel
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Object.values(RAJMOTI_BUSINESS_REGISTRY).map((fact) => (
+                <div
+                  key={fact.key}
+                  className="p-4 rounded-xl border border-stone-200 bg-stone-50/70 flex flex-col justify-between space-y-2"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="text-[10px] font-mono text-stone-500 uppercase">{fact.key}</span>
+                      <h4 className="text-xs font-bold text-stone-900 mt-0.5">{fact.label}</h4>
+                    </div>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 ${
+                        fact.status === "verified"
+                          ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                          : fact.status === "pending_owner_confirmation"
+                          ? "bg-amber-100 text-amber-800 border border-amber-300"
+                          : "bg-red-100 text-red-800 border border-red-300"
+                      }`}
+                    >
+                      {fact.status === "verified"
+                        ? "Verified"
+                        : fact.status === "pending_owner_confirmation"
+                        ? "Pending Confirmation"
+                        : "Unverified"}
+                    </span>
+                  </div>
+
+                  <div className="p-2 rounded-lg bg-white border border-stone-200 text-xs font-mono text-stone-800 break-words">
+                    {Array.isArray(fact.value)
+                      ? fact.value.join(", ")
+                      : fact.value || <em className="text-stone-400 font-sans">Not configured / unverified</em>}
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px] text-stone-500 pt-1 border-t border-stone-200">
+                    <span>
+                      Updated: {fact.lastUpdated} · Public: {fact.isPublic ? "Yes" : "Hidden"}
+                    </span>
+                    <span>
+                      Owner Approved: {fact.ownerApproved ? "✓ Approved" : "✕ Needs Approval"}
+                    </span>
+                  </div>
+                  {fact.notes && (
+                    <p className="text-[10px] text-amber-800 bg-amber-50 p-1.5 rounded border border-amber-200">
+                      Note: {fact.notes}
+                    </p>
+                  )}
+                </div>
+              ))}
             </div>
           </section>
         )}

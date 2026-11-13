@@ -9370,17 +9370,17 @@
       "category": "gods-collection",
       "name": "Devotional Bitu Acrylic Shrine",
       "type": "Bitu Acrylic Devotional",
-      "material": "Ultra-clear cast acrylic with bevelled diamond-polished edges",
+      "material": "Clear cast acrylic with polished edges",
       "shape": "Arch / Rectangle",
-      "printing": "Direct UV print with gold leaf foil backing",
+      "printing": "Direct UV print with foil backing",
       "usage": "Pooja room, sanctum, or mantelpiece",
       "photoCapacity": "1 sacred portrait",
       "orientation": [
         "Portrait"
       ],
       "finishes": [
-        "Gold Leaf Border",
-        "Diamond Gloss Acrylic"
+        "Gold Foil Border",
+        "High Gloss Acrylic"
       ],
       "personalisation": [
         "Deity selection",
@@ -9398,7 +9398,7 @@
       "production": "2-3 working days in Jetpur studio",
       "delivery": [
         "Studio collection",
-        "Safe delivery across Gujarat"
+        "Delivery confirmed by studio"
       ],
       "description": "Vibrant sacred deity portraits (Radha Krishna, Srinathji, Ganeshji, Ambaji, Jalaram Bapa) sealed behind crystalline 6mm acrylic with golden foil radiance.",
       "variants": [
@@ -9407,7 +9407,7 @@
           "size": "8×12 in",
           "metric": "20.3 × 30.5 cm",
           "thickness": "6 mm",
-          "finish": "Gold Leaf Border",
+          "finish": "Gold Foil Border",
           "price": null,
           "status": "In stock"
         },
@@ -9416,7 +9416,7 @@
           "size": "12×18 in",
           "metric": "30.5 × 45.7 cm",
           "thickness": "8 mm",
-          "finish": "Diamond Gloss Acrylic",
+          "finish": "High Gloss Acrylic",
           "price": null,
           "status": "In stock"
         },
@@ -9425,7 +9425,7 @@
           "size": "16×24 in",
           "metric": "40.6 × 61.0 cm",
           "thickness": "10 mm",
-          "finish": "Gold Leaf Border",
+          "finish": "Gold Foil Border",
           "price": null,
           "status": "In stock"
         }
@@ -9527,7 +9527,7 @@
       ],
       "finishes": [
         "Golden Starlight Inlay",
-        "Diamond Silver Inlay"
+        "Silver Inlay"
       ],
       "personalisation": [
         "Photo",
@@ -9543,7 +9543,7 @@
       "production": "2-3 working days",
       "delivery": [
         "Studio collection",
-        "Delivery across Gujarat"
+        "Delivery confirmed by studio"
       ],
       "description": "Subtle light-catching micro-glimmer border illuminates family and wedding portraits with an ethereal glow.",
       "variants": [

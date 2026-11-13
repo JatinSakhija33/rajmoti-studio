@@ -425,11 +425,11 @@ function LocalSeoSection() {
     "Rajmoti Studio — Photography, Framing & Personalised Photo Gifts in Jetpur",
   );
   const [desc, setDesc] = useState(
-    "Rajmoti Studio (Est. 1982, Jetpur): Baby photoshoots, maternity, family, wedding photography, handcrafted teak collage frames, diamond acrylic blocks, 3D photo mugs, and backlit LED translights in Jetpur, Gujarat.",
+    "Rajmoti Studio in Jetpur, Gujarat (Est. 1982). Baby photoshoots, maternity, family, wedding photography, personalized photo framing, and thoughtful photo gifts.",
   );
   const [phone, setPhone] = useState("+91 94290 70317");
-  const [address, setAddress] = useState("Near Rajmoti Cinema, Station Road, Jetpur, Gujarat 360370");
-  const [hours, setHours] = useState("Mon–Sat: 9:00 AM – 8:00 PM · Sun: 10:00 AM – 6:00 PM");
+  const [address, setAddress] = useState("Jetpur, Gujarat 360370");
+  const [hours, setHours] = useState("Contact on WhatsApp for visiting hours");
 
   return (
     <div className="space-y-6">

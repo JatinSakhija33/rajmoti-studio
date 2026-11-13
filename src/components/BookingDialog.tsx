@@ -147,7 +147,7 @@ Could you please share package details and studio availability? Thank you!`,
               </div>
               <div className="flex justify-between">
                 <span className="text-stone-500">Studio Location:</span>
-                <span className="font-semibold text-stone-900">Near Rajmoti Cinema, Jetpur</span>
+                <span className="font-semibold text-stone-900">Jetpur, Gujarat 360370</span>
               </div>
             </div>
 

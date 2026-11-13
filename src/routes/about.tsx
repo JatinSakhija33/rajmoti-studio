@@ -10,7 +10,7 @@ import placeholder from "@/assets/image-placeholder.svg";
 
 const TITLE = "About Rajmoti Studio | Photography Studio in Jetpur";
 const DESC =
-  "Rajmoti Studio is a photography studio in Jetpur, Gujarat, photographing baby, maternity, family and wedding sessions for families from Jetpur, Rajkot and nearby areas.";
+  "Rajmoti Studio is a photography studio based in Jetpur, Gujarat (PIN 360370), specializing in baby, maternity, family and wedding photography, photo framing and personalized gifts.";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -48,7 +48,7 @@ function About() {
   const eyebrow = about.eyebrow || "The Studio";
   const heading = about.heading || "A quiet practice, devoted to memory.";
   const body = about.body ||
-    "Rajmoti Studio was founded on a single conviction — that a photograph, made with care, becomes an heirloom from the moment it is captured.\n\nWe work slowly. We listen first. We compose for light, for posture, for the unhurried instant between performance and presence. Every session is delivered as a considered edit, never a flood of files.\n\nToday the studio serves families, parents-to-be, and couples across India, photographing the milestones that quietly define a life.";
+    "Rajmoti Studio was founded on a single conviction — that a photograph, made with care, becomes an heirloom from the moment it is captured.\n\nWe work attentively with every client. Every session is delivered as a considered edit, never a flood of uninspected files.\n\nBased in Jetpur, Gujarat, the studio photographs family milestones and crafts personalized photo keepsakes.";
   const image = about.image || placeholder;
 
   return (
@@ -64,7 +64,7 @@ function About() {
                 <p key={i}>{p}</p>
               ))}
               <p>
-                The studio is based in Jetpur, Gujarat, and photographs families from Jetpur, Rajkot and surrounding areas.
+                The studio is based in Jetpur, Gujarat (PIN 360370). For our exact location, visiting hours or enquiries, please contact us on WhatsApp or use our verified business listing.
               </p>
             </div>
           </div>

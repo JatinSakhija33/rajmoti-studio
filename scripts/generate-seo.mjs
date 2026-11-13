@@ -9,7 +9,9 @@ let origin = "https://rajmotistudio.in";
 try {
   const u = new URL(candidate);
   if (
-    (u.protocol === "https:" || (u.hostname === "localhost" && u.protocol === "http:")) &&
+    u.protocol === "https:" &&
+    u.hostname !== "localhost" &&
+    !u.hostname.includes("127.0.0.1") &&
     !u.hostname.includes("YOUR-") &&
     u.hostname !== "YOUR-DOMAIN.example"
   ) {
