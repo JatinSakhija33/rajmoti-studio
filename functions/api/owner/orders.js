@@ -14,9 +14,9 @@ export async function onRequestPost({request,env}) {
   const actor=await requireOwner(request,env);
   assertOrigin(request);
   if(!env.ORDER_DB)return failure("Database not connected",503);
-  const data=cleanOrder(await request.json());
+  const input=await request.json();
+  const data=cleanOrder(input);
   const id=crypto.randomUUID();
-  const input=await request.clone().json();
   const requested_size=clean(input.requested_size,30);
   const priority=clean(input.priority,20)||"normal";
   if(!["low","normal","high","urgent"].includes(priority))return failure("Invalid priority");
