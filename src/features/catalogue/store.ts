@@ -13,7 +13,7 @@ export type QuoteLine = {
 export type SavedStyle = { id: string; title: string; image: string };
 export const categories = seed.categories;
 export const keys = {
-  catalogue: "rajmoti:editorial:catalogue:v2",
+  catalogue: "rajmoti:editorial:catalogue:v3",
   quote: "rajmoti:editorial:quote:v2",
   styles: "rajmoti:editorial:styles:v2",
 };

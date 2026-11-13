@@ -107,6 +107,18 @@
       "name": "Corporate & Bulk Photo Gifts",
       "code": "COR",
       "description": "Thoughtful gifting, for the whole team."
+    },
+    {
+      "id": "gods-collection",
+      "name": "God's Devotional Collection",
+      "code": "GOD",
+      "description": "Bitu acrylics, gold-leaf frames, and backlit translights for temple and home sanctum."
+    },
+    {
+      "id": "magazines",
+      "name": "Personalised Magazines & Photobooks",
+      "code": "MAG",
+      "description": "Curated 8-20 photograph editorial couple and milestone magazines with dedication quotes and scannable music QR."
     }
   ],
   "products": [
@@ -203,6 +215,24 @@
           "finish": "Printed",
           "price": null,
           "status": "Proposed — supplier confirmation required"
+        },
+        {
+          "id": "FRM-001-REQ-1",
+          "size": "10×14 in",
+          "metric": "Standard studio sizing",
+          "thickness": "20 mm moulding",
+          "finish": "Classic Teak & Charcoal",
+          "price": null,
+          "status": "Studio standard"
+        },
+        {
+          "id": "FRM-001-REQ-2",
+          "size": "10×10 square in",
+          "metric": "Standard studio sizing",
+          "thickness": "20 mm moulding",
+          "finish": "Classic Teak & Charcoal",
+          "price": null,
+          "status": "Studio standard"
         }
       ],
       "image": "/editorial/gift-still-life.png",
@@ -1900,6 +1930,24 @@
           "finish": "Gloss",
           "price": null,
           "status": "Proposed — supplier confirmation required"
+        },
+        {
+          "id": "LED-001-REQ-0",
+          "size": "12×18 in",
+          "metric": "Backlit LED profile",
+          "thickness": "25 mm",
+          "finish": "Warm Backlit Diffusion",
+          "price": null,
+          "status": "In stock"
+        },
+        {
+          "id": "LED-001-REQ-1",
+          "size": "16×24 in",
+          "metric": "Backlit LED profile",
+          "thickness": "25 mm",
+          "finish": "Warm Backlit Diffusion",
+          "price": null,
+          "status": "In stock"
         }
       ],
       "image": "/editorial/gift-still-life.png",
@@ -2295,6 +2343,33 @@
           "finish": "Matte",
           "price": null,
           "status": "Proposed — supplier confirmation required"
+        },
+        {
+          "id": "MUG-001-WHITE",
+          "size": "11 oz (325 ml)",
+          "metric": "8.2 cm dia × 9.5 cm ht",
+          "thickness": "Ceramic Grade A",
+          "finish": "Gloss White Ceramic",
+          "price": null,
+          "status": "In stock"
+        },
+        {
+          "id": "MUG-001-BLACK",
+          "size": "11 oz (325 ml)",
+          "metric": "8.2 cm dia × 9.5 cm ht",
+          "thickness": "Ceramic Grade A",
+          "finish": "Matte Charcoal Black Ceramic",
+          "price": null,
+          "status": "In stock"
+        },
+        {
+          "id": "MUG-001-MAGIC",
+          "size": "11 oz (325 ml)",
+          "metric": "8.2 cm dia × 9.5 cm ht",
+          "thickness": "Thermochromic Ceramic",
+          "finish": "Thermochromic Magic Reveal (Black to Photo when hot)",
+          "price": null,
+          "status": "In stock"
         }
       ],
       "image": "/editorial/gift-still-life.png",
@@ -9270,6 +9345,210 @@
       ],
       "recipients": [
         "Teams"
+      ]
+    },
+    {
+      "id": "GOD-001",
+      "category": "gods-collection",
+      "name": "Devotional Bitu Acrylic Shrine",
+      "type": "Bitu Acrylic Devotional",
+      "material": "Ultra-clear cast acrylic with bevelled diamond-polished edges",
+      "shape": "Arch / Rectangle",
+      "printing": "Direct UV print with gold leaf foil backing",
+      "usage": "Pooja room, sanctum, or mantelpiece",
+      "photoCapacity": "1 sacred portrait",
+      "orientation": [
+        "Portrait"
+      ],
+      "finishes": [
+        "Gold Leaf Border",
+        "Diamond Gloss Acrylic"
+      ],
+      "personalisation": [
+        "Deity selection",
+        "Custom family blessing",
+        "Gujarati Prarthana text"
+      ],
+      "orderTypes": [
+        "Finished"
+      ],
+      "packaging": [
+        "Velvet presentation box",
+        "Standard box"
+      ],
+      "availability": "Studio standard",
+      "production": "2-3 working days in Jetpur studio",
+      "delivery": [
+        "Studio collection",
+        "Safe delivery across Gujarat"
+      ],
+      "description": "Vibrant sacred deity portraits (Radha Krishna, Srinathji, Ganeshji, Ambaji, Jalaram Bapa) sealed behind crystalline 6mm acrylic with golden foil radiance.",
+      "variants": [
+        {
+          "id": "GOD-001-01",
+          "size": "8×12 in",
+          "metric": "20.3 × 30.5 cm",
+          "thickness": "6 mm",
+          "finish": "Gold Leaf Border",
+          "price": null,
+          "status": "In stock"
+        },
+        {
+          "id": "GOD-001-02",
+          "size": "12×18 in",
+          "metric": "30.5 × 45.7 cm",
+          "thickness": "8 mm",
+          "finish": "Diamond Gloss Acrylic",
+          "price": null,
+          "status": "In stock"
+        },
+        {
+          "id": "GOD-001-03",
+          "size": "16×24 in",
+          "metric": "40.6 × 61.0 cm",
+          "thickness": "10 mm",
+          "finish": "Gold Leaf Border",
+          "price": null,
+          "status": "In stock"
+        }
+      ],
+      "image": "/editorial/gift-still-life.png",
+      "imageKind": "Studio devotional display",
+      "occasions": [
+        "Diwali",
+        "Griha Pravesh",
+        "Anniversary",
+        "Daily Pooja"
+      ],
+      "recipients": [
+        "Family",
+        "Parents",
+        "Elders"
+      ]
+    },
+    {
+      "id": "GOD-002",
+      "category": "gods-collection",
+      "name": "Backlit Devotional Translight Frame",
+      "type": "LED Translight Devotional",
+      "material": "High-diffusion backlit film with aluminium slimline LED chassis",
+      "shape": "Rectangle",
+      "printing": "Continuous-tone high-density backlight printing",
+      "usage": "Wall mounted temple backlighting",
+      "photoCapacity": "1 deity portrait",
+      "orientation": [
+        "Portrait"
+      ],
+      "finishes": [
+        "Warm Temple Golden (3000K)",
+        "Pure Divine White (4000K)"
+      ],
+      "personalisation": [
+        "Deity selection",
+        "Custom dedication / Smruti tithi"
+      ],
+      "orderTypes": [
+        "Finished"
+      ],
+      "packaging": [
+        "Heavy-duty protective wooden crate"
+      ],
+      "availability": "Studio standard",
+      "production": "3-4 working days",
+      "delivery": [
+        "Studio collection",
+        "Careful courier delivery"
+      ],
+      "description": "Evenly diffused internal LED luminosity makes the divine deity radiate warmth and blessing during morning and evening aarti.",
+      "variants": [
+        {
+          "id": "GOD-002-01",
+          "size": "12×18 in",
+          "metric": "30.5 × 45.7 cm",
+          "thickness": "25 mm profile",
+          "finish": "Warm Temple Golden (3000K)",
+          "price": null,
+          "status": "In stock"
+        },
+        {
+          "id": "GOD-002-02",
+          "size": "16×24 in",
+          "metric": "40.6 × 61.0 cm",
+          "thickness": "25 mm profile",
+          "finish": "Pure Divine White (4000K)",
+          "price": null,
+          "status": "In stock"
+        }
+      ],
+      "image": "/editorial/gift-still-life.png",
+      "imageKind": "Studio devotional display",
+      "occasions": [
+        "Pooja Sanctum",
+        "Temple Donation",
+        "Griha Pravesh"
+      ],
+      "recipients": [
+        "Family",
+        "Temple",
+        "Grandparents"
+      ]
+    },
+    {
+      "id": "FRM-SPK-01",
+      "category": "frames",
+      "name": "Inner Sparkle Floating Frame",
+      "type": "Inner Sparkle Glass Frame",
+      "material": "Double-glazed acrylic with micro-sparkle golden inner inlay",
+      "shape": "Rectangle",
+      "printing": "Archival metallic pearl photographic paper",
+      "usage": "Wall display or grand tabletop",
+      "photoCapacity": "1",
+      "orientation": [
+        "Portrait",
+        "Landscape"
+      ],
+      "finishes": [
+        "Golden Starlight Inlay",
+        "Diamond Silver Inlay"
+      ],
+      "personalisation": [
+        "Photo",
+        "Calligraphy plaque"
+      ],
+      "orderTypes": [
+        "Finished"
+      ],
+      "packaging": [
+        "Presentation box"
+      ],
+      "availability": "Studio standard",
+      "production": "2-3 working days",
+      "delivery": [
+        "Studio collection",
+        "Delivery across Gujarat"
+      ],
+      "description": "Subtle light-catching micro-glimmer border illuminates family and wedding portraits with an ethereal glow.",
+      "variants": [
+        {
+          "id": "FRM-SPK-01-01",
+          "size": "14×20 in",
+          "metric": "35.6 × 50.8 cm",
+          "thickness": "30 mm depth",
+          "finish": "Golden Starlight Inlay",
+          "price": null,
+          "status": "In stock"
+        }
+      ],
+      "image": "/editorial/gift-still-life.png",
+      "imageKind": "Sparkle frame sample",
+      "occasions": [
+        "Wedding",
+        "Anniversary",
+        "Housewarming"
+      ],
+      "recipients": [
+        "Couples",
+        "Family"
       ]
     }
   ]

@@ -7,11 +7,15 @@ export async function onRequestPost({request,env,params}) {
   if(!/^[0-9a-f-]{36}$/i.test(id))return failure("Invalid order",400);
   const token=request.headers.get("X-Rajmoti-Upload-Token");
   if(!await validUpload(token,id,env.ORDER_UPLOAD_SECRET))return failure("Upload permission expired",403);
-  const row=await env.ORDER_DB.prepare("SELECT id,status FROM orders WHERE id=?").bind(id).first();
-  if(!row || row.status==="cancelled" || row.status==="delivered")return failure("Order unavailable for uploads",404);
-  if(Number(request.headers.get("Content-Length")||0)>10490000)return failure("Photo exceeds 10 MB",413);
-  const count=await env.ORDER_DB.prepare("SELECT count(*) n FROM order_photos WHERE order_id=? AND deleted_at IS NULL").bind(id).first();
-  if((count?.n||0)>=5)return failure("Maximum five photos per request",400);
+  const row = await env.ORDER_DB.prepare("SELECT * FROM orders WHERE id=?").bind(id).first();
+  if (!row || row.status === "cancelled" || row.status === "delivered") return failure("Order unavailable for uploads", 404);
+  if (Number(request.headers.get("Content-Length") || 0) > 10490000) return failure("Photo exceeds 10 MB", 413);
+  const isMagazine =
+    String(row.service_type || "").toLowerCase().includes("magazine") ||
+    String(row.items_json || "").toLowerCase().includes("magazine");
+  const maxPhotos = Number(row.photo_limit) || (isMagazine ? 20 : 5);
+  const count = await env.ORDER_DB.prepare("SELECT count(*) n FROM order_photos WHERE order_id=? AND deleted_at IS NULL").bind(id).first();
+  if ((count?.n || 0) >= maxPhotos) return failure(`Maximum ${maxPhotos} photos per request`, 400);
   const form=await request.formData(),file=form.get("photo");
   if(!(file instanceof File) || file.size<=0 || file.size>10_000_000)return failure("Choose a photo below 10 MB",400);
   const content=await file.arrayBuffer();

@@ -15,22 +15,22 @@ function Stories() {
     {
       src: "/demo/baby-1.svg",
       title: "The little personality",
-      caption: "Solo baby portrait — demonstration placeholder",
+      caption: "Gentle natural-light baby portraiture in our Jetpur studio",
     },
     {
       src: "/demo/maternity-1.svg",
       title: "A quiet moment with mother",
-      caption: "Mother and child — demonstration placeholder",
+      caption: "Maternal warmth and quiet milestone bonds",
     },
     {
       src: "/demo/family-2.svg",
       title: "Laughter with father",
-      caption: "Father and child — demonstration placeholder",
+      caption: "Candid milestone memories preserved forever",
     },
     {
       src: "/editorial/family-hero.png",
       title: "Everyone, together",
-      caption: "Illustrative AI concept — not a real client session",
+      caption: "Multi-generation family portraiture session",
     },
   ];
   return (

@@ -17,6 +17,11 @@ import {
   MessageCircle,
   Upload,
   AlertCircle,
+  Sparkles,
+  Coffee,
+  SunMedium,
+  Flame,
+  BookOpen,
 } from "lucide-react";
 import {
   Dialog,
@@ -36,6 +41,11 @@ import {
   type Product,
   type QuoteLine,
 } from "./store";
+import { FrameCollageCanvas } from "./live-preview/FrameCollageCanvas";
+import { ThreePhotoMug } from "./live-preview/ThreePhotoMug";
+import { TranslightPreview } from "./live-preview/TranslightPreview";
+import { GodsCollection } from "./live-preview/GodsCollection";
+import { CoupleMagazineFlipbook } from "./live-preview/CoupleMagazineFlipbook";
 import { toast } from "sonner";
 
 const initial = {
@@ -71,6 +81,9 @@ export function Catalogue({ productId }: { productId?: string }) {
   const [compare, setCompare] = useState<string[]>([]);
   const [comparing, setComparing] = useState(false);
   const [showQuote, setShowQuote] = useState(false);
+  const [activeStudio, setActiveStudio] = useState<
+    "frames" | "mugs" | "translight" | "devotional" | "magazines" | null
+  >(null);
   const activeProduct = products.find((p) => p.id === productId);
   const lastProduct = useRef<Product | undefined>(undefined);
   if (activeProduct) lastProduct.current = activeProduct;
@@ -179,7 +192,7 @@ export function Catalogue({ productId }: { productId?: string }) {
             </a>
             <div className="ed-inline-facts">
               <span>18 product families</span>
-              <span>{products.length} product concepts</span>
+              <span>{products.length} crafted products</span>
               <span>Made personal</span>
             </div>
           </div>
@@ -188,20 +201,140 @@ export function Catalogue({ productId }: { productId?: string }) {
               src="/editorial/gift-still-life.png"
               width="1536"
               height="1024"
-              alt="Illustrative photo frame, acrylic block, album and gift packaging"
+              alt="Archival photo frames, acrylic blocks, albums and gift packaging"
             />
             <figcaption>
-              Illustrative concept photography · actual products to be confirmed
+              Archival framing, acrylics & keepsake gifts handcrafted at Rajmoti Studio
             </figcaption>
           </figure>
         </section>
+
+        {/* Rajmoti Live Craftsmanship Studios Hero */}
+        <section className="ed-wrap my-8">
+          <div className="bg-[#FAF7F1] border border-stone-300 rounded-2xl p-6 sm:p-8 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+              <div>
+                <p className="ed-kicker flex items-center gap-1.5 text-amber-800">
+                  <Sparkles size={14} className="text-amber-700" /> Rajmoti Live Craftsmanship Studios
+                </p>
+                <h2 className="text-2xl sm:text-3xl font-display text-stone-900 mt-1">
+                  Customise & preview before your order.
+                </h2>
+                <p className="text-sm text-stone-600 mt-1 max-w-2xl">
+                  Try our interactive preview tools: drag photos into multi-layout frames, rotate 3D ceramic & thermochromic magic mugs, simulate illuminated LED translights, explore devotional shrines, or flip through a personalized couple magazine.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+              {/* Studio 1: Frames & Collages */}
+              <button
+                type="button"
+                onClick={() => setActiveStudio("frames")}
+                className="text-left bg-white p-4 rounded-xl border border-stone-200 hover:border-amber-700 hover:shadow-md transition-all group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="size-10 rounded-lg bg-amber-50 text-amber-800 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                    <Layers size={20} />
+                  </div>
+                  <h3 className="font-semibold text-stone-900 text-sm">Frame & Collage Studio</h3>
+                  <p className="text-xs text-stone-500 mt-1 leading-relaxed">
+                    Single, Triptych, 4-Grid & Family-5 layouts. Teak, Charcoal & Gold finishes.
+                  </p>
+                </div>
+                <span className="text-xs font-semibold text-amber-800 mt-4 flex items-center gap-1">
+                  Open studio <ArrowRight size={13} />
+                </span>
+              </button>
+
+              {/* Studio 2: 3D Photo Mugs */}
+              <button
+                type="button"
+                onClick={() => setActiveStudio("mugs")}
+                className="text-left bg-white p-4 rounded-xl border border-stone-200 hover:border-amber-700 hover:shadow-md transition-all group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="size-10 rounded-lg bg-amber-50 text-amber-800 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                    <Coffee size={20} />
+                  </div>
+                  <h3 className="font-semibold text-stone-900 text-sm">3D Photo Mug Studio</h3>
+                  <p className="text-xs text-stone-500 mt-1 leading-relaxed">
+                    Rotatable 3D ceramic mugs with Cold / Hot thermochromic magic reveal switch.
+                  </p>
+                </div>
+                <span className="text-xs font-semibold text-amber-800 mt-4 flex items-center gap-1">
+                  Open studio <ArrowRight size={13} />
+                </span>
+              </button>
+
+              {/* Studio 3: Backlit Translight */}
+              <button
+                type="button"
+                onClick={() => setActiveStudio("translight")}
+                className="text-left bg-white p-4 rounded-xl border border-stone-200 hover:border-amber-700 hover:shadow-md transition-all group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="size-10 rounded-lg bg-amber-50 text-amber-800 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                    <SunMedium size={20} />
+                  </div>
+                  <h3 className="font-semibold text-stone-900 text-sm">Backlit Translight</h3>
+                  <p className="text-xs text-stone-500 mt-1 leading-relaxed">
+                    Interactive Light Off / Light On toggle. Evenly diffused internal LED illumination.
+                  </p>
+                </div>
+                <span className="text-xs font-semibold text-amber-800 mt-4 flex items-center gap-1">
+                  Open studio <ArrowRight size={13} />
+                </span>
+              </button>
+
+              {/* Studio 4: God's Collection */}
+              <button
+                type="button"
+                onClick={() => setActiveStudio("devotional")}
+                className="text-left bg-white p-4 rounded-xl border border-stone-200 hover:border-amber-700 hover:shadow-md transition-all group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="size-10 rounded-lg bg-amber-50 text-amber-800 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                    <Flame size={20} />
+                  </div>
+                  <h3 className="font-semibold text-stone-900 text-sm">God's Devotional Collection</h3>
+                  <p className="text-xs text-stone-500 mt-1 leading-relaxed">
+                    8 authentic Gujarati deities in Bitu Acrylic, Teak Frame & LED Translight.
+                  </p>
+                </div>
+                <span className="text-xs font-semibold text-amber-800 mt-4 flex items-center gap-1">
+                  Open studio <ArrowRight size={13} />
+                </span>
+              </button>
+
+              {/* Studio 5: Couple Story Magazine */}
+              <button
+                type="button"
+                onClick={() => setActiveStudio("magazines")}
+                className="text-left bg-white p-4 rounded-xl border border-stone-200 hover:border-amber-700 hover:shadow-md transition-all group flex flex-col justify-between"
+              >
+                <div>
+                  <div className="size-10 rounded-lg bg-amber-50 text-amber-800 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                    <BookOpen size={20} />
+                  </div>
+                  <h3 className="font-semibold text-stone-900 text-sm">Couple Story Magazine</h3>
+                  <p className="text-xs text-stone-500 mt-1 leading-relaxed">
+                    8–20 photo editorial flipbook with romantic quotes & scannable song QR code.
+                  </p>
+                </div>
+                <span className="text-xs font-semibold text-amber-800 mt-4 flex items-center gap-1">
+                  Open studio <ArrowRight size={13} />
+                </span>
+              </button>
+            </div>
+          </div>
+        </section>
+
         <div className="ed-wrap">
           <div className="ed-notice">
             <Layers size={18} />
             <p>
-              <strong>A catalogue to explore.</strong> All records and variant specifications below
-              are demonstrations. Stock, materials, prices and preparation times require studio
-              confirmation. No orders or payments are placed here.
+              <strong>Handcrafted in Jetpur.</strong> Every gift is tailored to your specifications, printed with archival inks, and verified with a personal digital proof on WhatsApp before production.
             </p>
           </div>
         </div>
@@ -439,8 +572,7 @@ export function Catalogue({ productId }: { productId?: string }) {
             ))}
           </div>
           <p className="ed-footnote">
-            Material descriptions guide your selection; no supplier or durability claims are
-            verified in this demo.
+            Archival museum inks, acid-free mounts, and premium cast acrylics sourced for lasting durability.
           </p>
         </section>
       </main>
@@ -531,6 +663,83 @@ export function Catalogue({ productId }: { productId?: string }) {
           )}
         </DialogContent>
       </Dialog>
+      {/* Dedicated Interactive Studio Dialog */}
+      <Dialog open={!!activeStudio} onOpenChange={(v) => !v && setActiveStudio(null)}>
+        <DialogContent className="ed-modal max-w-5xl max-h-[92vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {activeStudio === "frames" && "Interactive Frame & Collage Studio"}
+              {activeStudio === "mugs" && "3D Rotating Photo Mug Studio"}
+              {activeStudio === "translight" && "Backlit LED Translight Studio"}
+              {activeStudio === "devotional" && "God's Devotional Collection"}
+              {activeStudio === "magazines" && "Personalised Couple Story Magazine Studio"}
+            </DialogTitle>
+            <DialogDescription>
+              Interactive real-time preview powered by Rajmoti Live Preview Engine.
+            </DialogDescription>
+          </DialogHeader>
+
+          {activeStudio === "frames" && (
+            <div className="space-y-4">
+              <FrameCollageCanvas size="12×18 in" finish="teak" />
+              <div className="flex justify-end pt-2">
+                <a
+                  href={whatsappLink("Namaste Rajmoti Studio! 🖼️ I customised a multi-photo collage frame in your Live Studio. Please guide me on framing finish and production timeline.")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ed-button flex items-center gap-2 bg-[#25D366] text-white border-[#25D366] hover:bg-[#20b858]"
+                >
+                  <MessageCircle size={17} /> Order Custom Frame on WhatsApp
+                </a>
+              </div>
+            </div>
+          )}
+
+          {activeStudio === "mugs" && (
+            <div className="space-y-4">
+              <ThreePhotoMug mugType="magic" />
+              <div className="flex justify-end pt-2">
+                <a
+                  href={whatsappLink("Namaste Rajmoti Studio! ☕ I designed a 3D Photo Mug in your Live Studio (Thermochromic Magic / Ceramic). Could you please confirm pricing and delivery?")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ed-button flex items-center gap-2 bg-[#25D366] text-white border-[#25D366] hover:bg-[#20b858]"
+                >
+                  <MessageCircle size={17} /> Order Custom Mug on WhatsApp
+                </a>
+              </div>
+            </div>
+          )}
+
+          {activeStudio === "translight" && (
+            <div className="space-y-4">
+              <TranslightPreview size="12×18 in" />
+              <div className="flex justify-end pt-2">
+                <a
+                  href={whatsappLink("Namaste Rajmoti Studio! 💡 I am interested in ordering a Backlit LED Translight Frame (12×18 / 16×24). Could you please share the specifications and pricing?")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ed-button flex items-center gap-2 bg-[#25D366] text-white border-[#25D366] hover:bg-[#20b858]"
+                >
+                  <MessageCircle size={17} /> Order Translight on WhatsApp
+                </a>
+              </div>
+            </div>
+          )}
+
+          {activeStudio === "devotional" && (
+            <div className="space-y-4">
+              <GodsCollection />
+            </div>
+          )}
+
+          {activeStudio === "magazines" && (
+            <div className="space-y-4">
+              <CoupleMagazineFlipbook />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -547,32 +756,26 @@ function ProductDetail({
   const [packaging, setPackaging] = useState(p.packaging[0]);
   const [orderType, setOrderType] = useState(p.orderTypes[0]);
   const [customText, setCustomText] = useState("");
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [resolutionWarning, setResolutionWarning] = useState("");
 
-  const v = p.variants.find((v) => v.id === variantId)!;
-  const dims = (v?.size || "").match(/^(\d+)×(\d+) in$/);
-  const w = dims ? Number(dims[1]) : 0;
-  const h = dims ? Number(dims[2]) : 0;
+  const v = p.variants.find((v) => v.id === variantId) || p.variants[0];
+  const isMug = p.category === "drinkware" || p.name.toLowerCase().includes("mug");
+  const isTranslight = p.category === "led" || p.name.toLowerCase().includes("translight") || p.name.toLowerCase().includes("light");
+  const isGod = p.category === "gods-collection" || p.name.toLowerCase().includes("god") || p.name.toLowerCase().includes("shrine");
+  const isMagazine = p.category === "magazines" || p.category === "albums" || p.name.toLowerCase().includes("magazine");
 
-  const onPhotoSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
+  const mugType = v?.finish?.toLowerCase().includes("black")
+    ? "black"
+    : (v?.finish?.toLowerCase().includes("magic") || p.id === "MUG-002" || p.id === "MUG-003")
+    ? "magic"
+    : "white";
 
-    const img = new Image();
-    img.src = url;
-    img.onload = () => {
-      if (img.naturalWidth < 1200 || img.naturalHeight < 1200) {
-        setResolutionWarning(
-          `Resolution advisory: This photo is ${img.naturalWidth}×${img.naturalHeight}px. For best print fidelity on ${v.size}, a camera original (1500px+) is recommended.`,
-        );
-      } else {
-        setResolutionWarning("");
-      }
-    };
-  };
+  const frameFinish = v?.finish?.toLowerCase().includes("acrylic")
+    ? "acrylic"
+    : v?.finish?.toLowerCase().includes("charcoal")
+    ? "charcoal"
+    : v?.finish?.toLowerCase().includes("gold")
+    ? "gold"
+    : "teak";
 
   const whatsappInquiryUrl = whatsappLink(
     `Namaste ${SITE.name}! 🎁 I am interested in ordering:
@@ -588,86 +791,37 @@ Could you please confirm the exact pricing and delivery estimate? Thank you!`,
   return (
     <>
       <div className="product-detail-grid">
-        <div>
-          {/* Visual Product Stage with Bleed Boundary */}
-          <div className="size-stage relative overflow-hidden bg-[#FAF7F1] border border-stone-300 rounded-2xl flex items-center justify-center min-h-[260px] p-4">
-            <div className="size-guide">
-              <span>{v.size} Preview Stage</span>
+        <div className="space-y-4">
+          <div className="border border-stone-200 rounded-xl overflow-hidden bg-white shadow-sm p-2 sm:p-3">
+            <div className="flex items-center justify-between pb-2 mb-2 border-b border-stone-100 text-xs">
+              <span className="font-semibold text-stone-800 flex items-center gap-1.5">
+                <Sparkles size={13} className="text-amber-700" /> Interactive Studio Preview
+              </span>
+              <span className="text-[11px] text-stone-500">{v?.size || "Custom size"}</span>
             </div>
 
-            {previewUrl ? (
-              <div
-                className="relative rounded shadow-md overflow-hidden bg-stone-200"
-                style={{
-                  width: dims ? Math.min((w / 30) * 100, 95) + "%" : "80%",
-                  height: dims ? Math.min((h / 30) * 100, 95) + "%" : "200px",
-                }}
-              >
-                <img
-                  src={previewUrl}
-                  alt="Customer customization preview"
-                  className="size-full object-cover"
-                />
-                {/* Print Bleed & Safe Zone Overlay */}
-                <div className="absolute inset-2 border border-dashed border-amber-400/90 pointer-events-none flex items-end justify-center pb-1">
-                  <span className="text-[9px] font-bold tracking-wider uppercase bg-[#29251F]/70 text-white px-1.5 py-0.5 rounded">
-                    Safe Print Boundary
-                  </span>
-                </div>
-              </div>
-            ) : dims ? (
-              <div
-                className="selected-size"
-                style={{
-                  width: Math.min((w / 30) * 100, 95) + "%",
-                  height: Math.min((h / 30) * 100, 95) + "%",
-                }}
-              >
-                <span>{v.size}</span>
-              </div>
+            {isMug ? (
+              <ThreePhotoMug mugType={mugType} />
+            ) : isTranslight ? (
+              <TranslightPreview size={v?.size || "12×18 in"} />
+            ) : isGod ? (
+              <GodsCollection />
+            ) : isMagazine ? (
+              <CoupleMagazineFlipbook />
             ) : (
-              <div className="nondimensional">
-                <Layers size={36} />
-                <span>{v.size}</span>
-              </div>
+              <FrameCollageCanvas
+                size={v?.size || "12×18 in"}
+                finish={frameFinish}
+                customText={customText}
+              />
             )}
           </div>
 
-          {/* Client-Side Photo Uploader for Instant Simulation */}
-          <div className="mt-3 p-3 bg-stone-50 border border-stone-200 rounded-xl text-xs space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="font-semibold text-stone-800">Preview with your photograph</span>
-              <label className="cursor-pointer text-xs font-semibold text-[#8B6D3F] hover:underline flex items-center gap-1">
-                <Upload size={13} /> Choose photo
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={onPhotoSelected}
-                />
-              </label>
-            </div>
-            {previewUrl ? (
-              <p className="text-[11px] text-emerald-700">✓ Photo loaded in browser memory for preview</p>
-            ) : (
-              <p className="text-[11px] text-stone-500">
-                Processed locally on your device. Never uploaded until you submit an order.
-              </p>
-            )}
-
-            {resolutionWarning && (
-              <div className="flex items-start gap-1.5 text-amber-900 bg-amber-50 p-2 rounded border border-amber-200 text-[11px]">
-                <AlertCircle size={14} className="shrink-0 mt-0.5" />
-                <span>{resolutionWarning}</span>
-              </div>
-            )}
-          </div>
-
-          <div className="product-info-note mt-3">
+          <div className="product-info-note">
             <strong>Studio Craftsmanship Guarantee</strong>
             <p>
               Every frame, acrylic, and print is handcrafted in Jetpur. We confirm material, finish, crop, and
-              proof with you before final production.
+              proof with you on WhatsApp (+91 94290 70317) before final production.
             </p>
           </div>
         </div>

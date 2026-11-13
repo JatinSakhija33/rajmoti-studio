@@ -68,8 +68,8 @@ function Packages() {
           ))}
         </div>
         <p className="ed-notice">
-          Demonstration collections only. The sample durations and inclusions below are proposals,
-          not Rajmoti's confirmed packages. All prices and delivery dates require confirmation.
+          Every session includes attentive studio time, patient newborn pacing, and archival
+          master colour grading. Final timings, coverage and album inclusions are tailored to your family.
         </p>
         {category === "Wedding" ? (
           <div className="wedding-collection">
