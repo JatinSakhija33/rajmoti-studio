@@ -5,7 +5,7 @@ import { ArrowRight, ArrowUpRight, Heart, Check, MessageCircle } from "lucide-re
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { useStyles } from "@/features/catalogue/store";
-import { whatsappLink } from "@/lib/site";
+import { whatsappLink, waMessage } from "@/lib/site";
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "Rajmoti Studio — Little moments. Lasting stories. | Jetpur" }] }),
   component: Home,
@@ -36,7 +36,7 @@ function Home() {
               <Link to="/portfolios" className="ed-button">
                 Explore sessions <ArrowRight size={17} />
               </Link>
-              <a className="ed-text-button" href={whatsappLink()}>
+              <a className="ed-text-button" href={whatsappLink(waMessage.booking())} target="_blank" rel="noopener noreferrer">
                 <MessageCircle size={16} /> Let's talk
               </a>
             </div>
@@ -62,11 +62,7 @@ function Home() {
                 }
               />
             </picture>
-            <figcaption>
-              {customHero
-                ? "Studio-selected photograph"
-                : "Illustrative AI concept · not Rajmoti client work"}
-            </figcaption>
+            {!customHero && <figcaption className="concept-credit">Illustrative image — client portfolio photography to be added</figcaption>}
             <div className="photo-note">
               The everyday.
               <br />
@@ -136,7 +132,7 @@ function Home() {
                     height="1500"
                     loading="lazy"
                   />
-                  <span>{c.slug === "family" ? "Concept image" : "Photography pending"}</span>
+    
                 </div>
                 <div className="chapter-label">
                   <span>
@@ -160,9 +156,7 @@ function Home() {
                 loading="lazy"
                 alt="Fictional family used to demonstrate the story layout"
               />
-              <figcaption>
-                Illustrative story concept · replace with a consented client session
-              </figcaption>
+              <figcaption className="concept-credit">Illustrative editorial image</figcaption>
             </figure>
             <div>
               <p className="ed-kicker">More than a single frame</p>
@@ -175,9 +169,7 @@ function Home() {
                 Explore how a complete session can bring together a child's personality, quiet
                 parent moments and everyone in one frame.
               </p>
-              <p className="ed-footnote">
-                Demonstration story. No real customer names or testimonials are used.
-              </p>
+
               <div className="ed-actions">
                 <Link to="/stories" className="ed-button outline">
                   Explore the story <ArrowRight size={16} />
@@ -277,7 +269,7 @@ function Home() {
               loading="lazy"
               alt="Illustrative photo gifts styled in a warm interior"
             />
-            <figcaption>AI concept image · product availability to be confirmed</figcaption>
+            <figcaption className="concept-credit">Illustrative product styling · final selection confirmed by studio</figcaption>
           </figure>
         </section>
         <section className="ed-wrap ed-section closing-invite">
@@ -287,9 +279,9 @@ function Home() {
             <br />
             <em>to remember?</em>
           </h2>
-          <Link to="/contact" className="ed-button">
-            Plan your session <ArrowUpRight size={16} />
-          </Link>
+          <a href={whatsappLink(waMessage.booking())} target="_blank" rel="noopener noreferrer" className="ed-button">
+            Let's talk on WhatsApp <MessageCircle size={16}/>
+          </a>
           <p className="ed-footnote">ગુજરાતીમાં વાત કરવી છે? અમે મદદ કરીશું.</p>
         </section>
       </main>

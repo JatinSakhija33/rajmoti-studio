@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, MessageCircle } from "lucide-react";
-import { whatsappLink } from "@/lib/site";
+import { whatsappLink, waMessage, telLink, SITE } from "@/lib/site";
 export function SiteFooter() {
   return (
     <footer className="studio-footer">
@@ -31,16 +31,18 @@ export function SiteFooter() {
             <Link to="/contact">
               Plan a studio visit <ArrowUpRight size={14} />
             </Link>
-            <a href={whatsappLink()}>
+            <a href={whatsappLink(waMessage.general())} target="_blank" rel="noopener noreferrer">
               WhatsApp the studio <MessageCircle size={14} />
             </a>
+            <a href={telLink()}>{SITE.whatsapp}</a>
             <a href="mailto:rajmotistudio@gmail.com">rajmotistudio@gmail.com</a>
             <p>Jetpur, Gujarat, India</p>
           </div>
         </div>
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} Rajmoti Studio</span>
-          <span>Private demonstration · no live orders, uploads or payments</span>
+          <span>Photography · Prints · Thoughtful photo gifts</span>
+          <Link to="/desk">Studio owner access</Link>
           <Link to="/contact">ગુજરાતીમાં મદદ ઉપલબ્ધ છે</Link>
         </div>
       </div>

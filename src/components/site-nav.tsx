@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Menu, X, Heart, ArrowUpRight } from "lucide-react";
+import { Menu, X, Heart, ArrowUpRight, MessageCircle } from "lucide-react";
+import { whatsappLink, waMessage } from "@/lib/site";
 import { useStyles } from "@/features/catalogue/store";
 const links = [
   { to: "/portfolios", label: "Photography" },
@@ -34,9 +35,9 @@ export function SiteNav({ overlay = false }: { overlay?: boolean }) {
             <Heart size={18} />
             {styles.length > 0 && <span>{styles.length}</span>}
           </Link>
-          <Link to="/contact" className="ed-button nav-enquire">
-            Plan your session <ArrowUpRight size={15} />
-          </Link>
+          <a className="ed-button nav-enquire" href={whatsappLink(waMessage.booking())} target="_blank" rel="noopener noreferrer">
+            <MessageCircle size={16} /> WhatsApp us <ArrowUpRight size={14} />
+          </a>
           <button
             className="mobile-menu-button"
             aria-label={open ? "Close navigation" : "Open navigation"}
@@ -55,9 +56,10 @@ export function SiteNav({ overlay = false }: { overlay?: boolean }) {
               <ArrowUpRight size={16} />
             </Link>
           ))}
-          <Link to="/contact" onClick={() => setOpen(false)}>
-            Plan your session
-          </Link>
+          <Link to="/contact" onClick={() => setOpen(false)}>Plan your session</Link>
+          <a href={whatsappLink(waMessage.general())} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>
+            Chat on WhatsApp <MessageCircle size={16}/>
+          </a>
         </nav>
       )}
     </header>
