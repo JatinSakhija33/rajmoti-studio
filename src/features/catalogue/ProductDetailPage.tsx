@@ -85,7 +85,7 @@ export function ProductDetailPage({
   onOpenStudio,
 }: ProductDetailProps) {
   const [selectedSize, setSelectedSize] = useState(sizes[0] || { id: "12x18", label: "12×18 in", metric: "30×45 cm", widthInches: 12, heightInches: 18 });
-  const [selectedFinish, setSelectedFinish] = useState(finishes[0] || { id: "teak", label: "Saurashtra Teak Finish", desc: "Hand-finished warm timber border" });
+  const [selectedFinish, setSelectedFinish] = useState(finishes[0] || { id: "teak", label: "Natural Teak Finish", desc: "Hand-finished warm timber border" });
   const [designPath, setDesignPath] = useState<"self" | "rajmoti">("self");
   const [activeImageKey, setActiveImageKey] = useState<"primary" | "angle" | "room" | "detail">("primary");
   const [showPersonalizer, setShowPersonalizer] = useState<boolean>(false);

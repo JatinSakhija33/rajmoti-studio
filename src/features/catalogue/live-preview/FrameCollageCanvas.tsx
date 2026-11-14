@@ -17,7 +17,7 @@ import {
   Sliders,
 } from "lucide-react";
 
-export type FrameLayout = "single" | "triptych" | "grid4" | "family5";
+export type FrameLayout = "single" | "triptych" | "grid4" | "family5" | "anniversary3" | "weddingHero5";
 export type FrameFinish = "teak" | "charcoal" | "gold" | "acrylic" | "sparkle" | "canvas";
 export type FitMode = "cover" | "contain";
 
@@ -92,14 +92,33 @@ const LAYOUTS: Record<
       { id: 4, x: 61, y: 74, width: 34, height: 21 },
     ],
   },
+  anniversary3: {
+    name: "Anniversary (Hero + 2 Vows)",
+    slots: [
+      { id: 0, x: 5, y: 5, width: 90, height: 55 },
+      { id: 1, x: 5, y: 64, width: 43, height: 31 },
+      { id: 2, x: 52, y: 64, width: 43, height: 31 },
+    ],
+  },
+  weddingHero5: {
+    name: "Royal Wedding Mosaic (Hero + 4)",
+    slots: [
+      { id: 0, x: 5, y: 5, width: 55, height: 90 },
+      { id: 1, x: 63, y: 5, width: 32, height: 20 },
+      { id: 2, x: 63, y: 28, width: 32, height: 20 },
+      { id: 3, x: 63, y: 51, width: 32, height: 20 },
+      { id: 4, x: 63, y: 74, width: 32, height: 21 },
+    ],
+  },
 };
 
 const DEFAULT_FRAME_SAMPLES = [
   "/products/frame-sample-wedding.jpg",
   "/products/frame-sample-anniversary.jpg",
   "/products/frame-sample-family.jpg",
+  "/portfolio/couple-prewedding.jpg",
   "/products/frame-sample-baby.jpg",
-  "/products/frame-sample-wedding.jpg",
+  "/portfolio/birthday-celebration.jpg",
 ];
 
 interface FrameCollageCanvasProps {

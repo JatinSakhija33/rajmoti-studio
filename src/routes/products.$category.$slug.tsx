@@ -204,9 +204,9 @@ function SlugPage() {
           { id: "20x30", label: "20×30 in", metric: "50×75 cm", widthInches: 20, heightInches: 30, popular: true },
         ]}
         finishes={[
-          { id: "teak", label: "Saurashtra Teak Wood Finish", desc: "Warm, rich timber tone with organic grain texture" },
+          { id: "teak", label: "Natural Teak Finish Wood", desc: "Warm, rich timber tone with organic grain texture" },
           { id: "charcoal", label: "Matte Charcoal Black", desc: "Understated contemporary border for modern interiors" },
-          { id: "gold", label: "Royal Gold Leaf Accent", desc: "Classic ceremonial gold bevel for wedding and anniversary portraits" },
+          { id: "gold", label: "Classic Gold Bevel Finish", desc: "Ceremonial gold bevel for wedding and anniversary portraits" },
           { id: "acrylic", label: "Floating Acrylic Standoff", desc: "Frameless optical acrylic with polished bevel edges and steel studs" },
         ]}
         specifications={{

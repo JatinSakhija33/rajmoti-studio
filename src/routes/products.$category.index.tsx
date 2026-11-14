@@ -14,7 +14,7 @@ export const Route = createFileRoute("/products/$category/")({
       },
       frames: {
         title: "Handcrafted Photo Frames & Heritage Collages — Rajmoti Studio Jetpur",
-        desc: "Single, triptych, and multi-photo wall frames crafted with Saurashtra teak wood finish and charcoal matte borders. 8×12 to 20×30 in.",
+        desc: "Single, triptych, and multi-photo wall frames crafted with natural teak finish and charcoal matte borders. 8×12 to 20×30 in.",
       },
       mugs: {
         title: "3D Ceramic & Thermochromic Magic Photo Mugs — Rajmoti Studio Jetpur",
@@ -29,8 +29,8 @@ export const Route = createFileRoute("/products/$category/")({
         desc: "8–20 curated photographs printed on heavy editorial matte paper with vows, dedication dates, and scannable music QR.",
       },
       acrylic: {
-        title: "Diamond-Polished Floating Acrylic Photo Blocks — Rajmoti Studio Jetpur",
-        desc: "Crystal-clear optical depth and diamond-polished edges with floating wall standoff studs. High-impact modern photographic displays.",
+        title: "Cast Optical Acrylic Photo Blocks & Standoffs — Rajmoti Studio Jetpur",
+        desc: "Crystal-clear optical depth and precision-polished edges with floating wall standoff studs. High-impact modern photographic displays.",
       },
       canvas: {
         title: "Fine Art Stretched Canvas Photo Wraps — Rajmoti Studio Jetpur",

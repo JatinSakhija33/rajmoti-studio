@@ -49,7 +49,7 @@ function About() {
   const heading = about.heading || "A quiet practice, devoted to memory.";
   const body = about.body ||
     "Rajmoti Studio was founded on a single conviction — that a photograph, made with care, becomes an heirloom from the moment it is captured.\n\nWe work attentively with every client. Every session is delivered as a considered edit, never a flood of uninspected files.\n\nBased in Jetpur, Gujarat, the studio photographs family milestones and crafts personalized photo keepsakes.";
-  const image = about.image || placeholder;
+  const image = about.image || "/portfolio/family-heritage.jpg";
 
   return (
     <div className="bg-cream text-onyx min-h-dvh">

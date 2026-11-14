@@ -70,7 +70,7 @@ function PortfoliosIndex() {
               className={`group relative aspect-[4/5] overflow-hidden ${i % 2 === 1 ? "md:mt-16" : ""}`}
             >
               <img
-                src={c.cover_image_url || defaults[c.slug] || placeholder}
+                src={c.cover_image_url || defaults[c.slug] || "/portfolio/wedding-mandap.jpg"}
                 alt={`${c.name} photography by Rajmoti Studio`}
                 loading={i < 2 ? "eager" : "lazy"}
                 className="absolute inset-0 size-full object-cover transition-transform duration-[1200ms] group-hover:scale-105 motion-reduce:transform-none"

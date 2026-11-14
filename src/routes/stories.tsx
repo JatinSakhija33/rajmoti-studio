@@ -13,17 +13,17 @@ function Stories() {
   const [lightbox, setLightbox] = useState<number | null>(null);
   const images = [
     {
-      src: "/demo/baby-1.svg",
+      src: "/portfolio/baby-milestone.jpg",
       title: "The little personality",
       caption: "Gentle natural-light baby portraiture in our Jetpur studio",
     },
     {
-      src: "/demo/maternity-1.svg",
+      src: "/portfolio/maternity-grace.jpg",
       title: "A quiet moment with mother",
       caption: "Maternal warmth and quiet milestone bonds",
     },
     {
-      src: "/demo/family-2.svg",
+      src: "/portfolio/family-heritage.jpg",
       title: "Laughter with father",
       caption: "Candid milestone memories preserved forever",
     },

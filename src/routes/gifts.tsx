@@ -1,13 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Catalogue } from "@/features/catalogue/catalogue";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+
 export const Route = createFileRoute("/gifts")({
-  validateSearch: (s: Record<string, unknown>) => ({
-    product: typeof s.product === "string" ? s.product : undefined,
-  }),
-  head: () => ({ meta: [{ title: "Photo gifts & product directory — Rajmoti Studio" }] }),
-  component: Page,
+  beforeLoad: ({ search }) => {
+    throw redirect({
+      to: "/products",
+      search,
+    });
+  },
+  component: () => null,
 });
-function Page() {
-  const { product } = Route.useSearch();
-  return <Catalogue productId={product} />;
-}
+

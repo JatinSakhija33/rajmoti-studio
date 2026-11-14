@@ -708,13 +708,13 @@ export function Catalogue({
               {
                 id: "wood",
                 name: "Handcrafted Wood",
-                desc: "Saurashtra teak finish & matte charcoal wood borders",
+                desc: "Natural teak finish & matte charcoal wood borders",
                 filter: "wood",
               },
               {
                 id: "acrylic",
                 name: "Cast Acrylic",
-                desc: "High-gloss diamond polished edges with floating standoff studs",
+                desc: "High-gloss polished edges with clean standoff studs",
                 filter: "acrylic",
               },
               {
