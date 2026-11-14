@@ -44,11 +44,16 @@ import { Route as AdminWorkflowRouteImport } from './routes/admin.workflow'
 import { Route as DeskCalendarRouteImport } from './routes/desk_.calendar'
 import { Route as DeskContactsRouteImport } from './routes/desk_.contacts'
 import { Route as PhotoShortIdRouteImport } from './routes/photo.$shortId'
+import { Route as PhotographyCategoryRouteImport } from './routes/photography.$category'
 import { Route as PortfoliosIndexRouteImport } from './routes/portfolios.index'
+import { Route as ProductsIndexRouteImport } from './routes/products.index'
 import { Route as ReelShortIdRouteImport } from './routes/reel.$shortId'
+import { Route as ServicesPhotoRestorationRouteImport } from './routes/services.photo-restoration'
 import { Route as TrackIdRouteImport } from './routes/track.$id'
 import { Route as PortfoliosCategoryIndexRouteImport } from './routes/portfolios.$category.index'
 import { Route as PortfoliosCategorySubcategoryRouteImport } from './routes/portfolios.$category.$subcategory'
+import { Route as ProductsCategoryIndexRouteImport } from './routes/products.$category.index'
+import { Route as ProductsCategorySlugRouteImport } from './routes/products.$category.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -225,16 +230,32 @@ const PhotoShortIdRoute = PhotoShortIdRouteImport.update({
   path: '/photo/$shortId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PhotographyCategoryRoute = PhotographyCategoryRouteImport.update({
+  id: '/photography/$category',
+  path: '/photography/$category',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortfoliosIndexRoute = PortfoliosIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => PortfoliosRoute,
+} as any)
+const ProductsIndexRoute = ProductsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProductsRoute,
 } as any)
 const ReelShortIdRoute = ReelShortIdRouteImport.update({
   id: '/reel/$shortId',
   path: '/reel/$shortId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ServicesPhotoRestorationRoute =
+  ServicesPhotoRestorationRouteImport.update({
+    id: '/services/photo-restoration',
+    path: '/services/photo-restoration',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const TrackIdRoute = TrackIdRouteImport.update({
   id: '/track/$id',
   path: '/track/$id',
@@ -251,6 +272,16 @@ const PortfoliosCategorySubcategoryRoute =
     path: '/$category/$subcategory',
     getParentRoute: () => PortfoliosRoute,
   } as any)
+const ProductsCategoryIndexRoute = ProductsCategoryIndexRouteImport.update({
+  id: '/$category/',
+  path: '/$category/',
+  getParentRoute: () => ProductsRoute,
+} as any)
+const ProductsCategorySlugRoute = ProductsCategorySlugRouteImport.update({
+  id: '/$category/$slug',
+  path: '/$category/$slug',
+  getParentRoute: () => ProductsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -264,7 +295,7 @@ export interface FileRoutesByFullPath {
   '/gifts': typeof GiftsRoute
   '/packages': typeof PackagesRoute
   '/portfolios': typeof PortfoliosRouteWithChildren
-  '/products': typeof ProductsRoute
+  '/products': typeof ProductsRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/same-day': typeof SameDayRoute
   '/stories': typeof StoriesRoute
@@ -287,12 +318,17 @@ export interface FileRoutesByFullPath {
   '/desk/calendar': typeof DeskCalendarRoute
   '/desk/contacts': typeof DeskContactsRoute
   '/photo/$shortId': typeof PhotoShortIdRoute
+  '/photography/$category': typeof PhotographyCategoryRoute
   '/reel/$shortId': typeof ReelShortIdRoute
+  '/services/photo-restoration': typeof ServicesPhotoRestorationRoute
   '/track/$id': typeof TrackIdRoute
   '/admin/': typeof AdminIndexRoute
   '/portfolios/': typeof PortfoliosIndexRoute
+  '/products/': typeof ProductsIndexRoute
   '/portfolios/$category/$subcategory': typeof PortfoliosCategorySubcategoryRoute
+  '/products/$category/$slug': typeof ProductsCategorySlugRoute
   '/portfolios/$category/': typeof PortfoliosCategoryIndexRoute
+  '/products/$category/': typeof ProductsCategoryIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -304,7 +340,6 @@ export interface FileRoutesByTo {
   '/desk': typeof DeskRoute
   '/gifts': typeof GiftsRoute
   '/packages': typeof PackagesRoute
-  '/products': typeof ProductsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/same-day': typeof SameDayRoute
   '/stories': typeof StoriesRoute
@@ -327,12 +362,17 @@ export interface FileRoutesByTo {
   '/desk/calendar': typeof DeskCalendarRoute
   '/desk/contacts': typeof DeskContactsRoute
   '/photo/$shortId': typeof PhotoShortIdRoute
+  '/photography/$category': typeof PhotographyCategoryRoute
   '/reel/$shortId': typeof ReelShortIdRoute
+  '/services/photo-restoration': typeof ServicesPhotoRestorationRoute
   '/track/$id': typeof TrackIdRoute
   '/admin': typeof AdminIndexRoute
   '/portfolios': typeof PortfoliosIndexRoute
+  '/products': typeof ProductsIndexRoute
   '/portfolios/$category/$subcategory': typeof PortfoliosCategorySubcategoryRoute
+  '/products/$category/$slug': typeof ProductsCategorySlugRoute
   '/portfolios/$category': typeof PortfoliosCategoryIndexRoute
+  '/products/$category': typeof ProductsCategoryIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -347,7 +387,7 @@ export interface FileRoutesById {
   '/gifts': typeof GiftsRoute
   '/packages': typeof PackagesRoute
   '/portfolios': typeof PortfoliosRouteWithChildren
-  '/products': typeof ProductsRoute
+  '/products': typeof ProductsRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/same-day': typeof SameDayRoute
   '/stories': typeof StoriesRoute
@@ -370,12 +410,17 @@ export interface FileRoutesById {
   '/desk_/calendar': typeof DeskCalendarRoute
   '/desk_/contacts': typeof DeskContactsRoute
   '/photo/$shortId': typeof PhotoShortIdRoute
+  '/photography/$category': typeof PhotographyCategoryRoute
   '/reel/$shortId': typeof ReelShortIdRoute
+  '/services/photo-restoration': typeof ServicesPhotoRestorationRoute
   '/track/$id': typeof TrackIdRoute
   '/admin/': typeof AdminIndexRoute
   '/portfolios/': typeof PortfoliosIndexRoute
+  '/products/': typeof ProductsIndexRoute
   '/portfolios/$category/$subcategory': typeof PortfoliosCategorySubcategoryRoute
+  '/products/$category/$slug': typeof ProductsCategorySlugRoute
   '/portfolios/$category/': typeof PortfoliosCategoryIndexRoute
+  '/products/$category/': typeof ProductsCategoryIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -414,12 +459,17 @@ export interface FileRouteTypes {
     | '/desk/calendar'
     | '/desk/contacts'
     | '/photo/$shortId'
+    | '/photography/$category'
     | '/reel/$shortId'
+    | '/services/photo-restoration'
     | '/track/$id'
     | '/admin/'
     | '/portfolios/'
+    | '/products/'
     | '/portfolios/$category/$subcategory'
+    | '/products/$category/$slug'
     | '/portfolios/$category/'
+    | '/products/$category/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -431,7 +481,6 @@ export interface FileRouteTypes {
     | '/desk'
     | '/gifts'
     | '/packages'
-    | '/products'
     | '/reset-password'
     | '/same-day'
     | '/stories'
@@ -454,12 +503,17 @@ export interface FileRouteTypes {
     | '/desk/calendar'
     | '/desk/contacts'
     | '/photo/$shortId'
+    | '/photography/$category'
     | '/reel/$shortId'
+    | '/services/photo-restoration'
     | '/track/$id'
     | '/admin'
     | '/portfolios'
+    | '/products'
     | '/portfolios/$category/$subcategory'
+    | '/products/$category/$slug'
     | '/portfolios/$category'
+    | '/products/$category'
   id:
     | '__root__'
     | '/'
@@ -496,12 +550,17 @@ export interface FileRouteTypes {
     | '/desk_/calendar'
     | '/desk_/contacts'
     | '/photo/$shortId'
+    | '/photography/$category'
     | '/reel/$shortId'
+    | '/services/photo-restoration'
     | '/track/$id'
     | '/admin/'
     | '/portfolios/'
+    | '/products/'
     | '/portfolios/$category/$subcategory'
+    | '/products/$category/$slug'
     | '/portfolios/$category/'
+    | '/products/$category/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -516,14 +575,16 @@ export interface RootRouteChildren {
   GiftsRoute: typeof GiftsRoute
   PackagesRoute: typeof PackagesRoute
   PortfoliosRoute: typeof PortfoliosRouteWithChildren
-  ProductsRoute: typeof ProductsRoute
+  ProductsRoute: typeof ProductsRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   SameDayRoute: typeof SameDayRoute
   StoriesRoute: typeof StoriesRoute
   DeskCalendarRoute: typeof DeskCalendarRoute
   DeskContactsRoute: typeof DeskContactsRoute
   PhotoShortIdRoute: typeof PhotoShortIdRoute
+  PhotographyCategoryRoute: typeof PhotographyCategoryRoute
   ReelShortIdRoute: typeof ReelShortIdRoute
+  ServicesPhotoRestorationRoute: typeof ServicesPhotoRestorationRoute
   TrackIdRoute: typeof TrackIdRoute
 }
 
@@ -774,6 +835,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PhotoShortIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/photography/$category': {
+      id: '/photography/$category'
+      path: '/photography/$category'
+      fullPath: '/photography/$category'
+      preLoaderRoute: typeof PhotographyCategoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/portfolios/': {
       id: '/portfolios/'
       path: '/'
@@ -781,11 +849,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortfoliosIndexRouteImport
       parentRoute: typeof PortfoliosRoute
     }
+    '/products/': {
+      id: '/products/'
+      path: '/'
+      fullPath: '/products/'
+      preLoaderRoute: typeof ProductsIndexRouteImport
+      parentRoute: typeof ProductsRoute
+    }
     '/reel/$shortId': {
       id: '/reel/$shortId'
       path: '/reel/$shortId'
       fullPath: '/reel/$shortId'
       preLoaderRoute: typeof ReelShortIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/services/photo-restoration': {
+      id: '/services/photo-restoration'
+      path: '/services/photo-restoration'
+      fullPath: '/services/photo-restoration'
+      preLoaderRoute: typeof ServicesPhotoRestorationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/track/$id': {
@@ -808,6 +890,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/portfolios/$category/$subcategory'
       preLoaderRoute: typeof PortfoliosCategorySubcategoryRouteImport
       parentRoute: typeof PortfoliosRoute
+    }
+    '/products/$category/': {
+      id: '/products/$category/'
+      path: '/$category'
+      fullPath: '/products/$category/'
+      preLoaderRoute: typeof ProductsCategoryIndexRouteImport
+      parentRoute: typeof ProductsRoute
+    }
+    '/products/$category/$slug': {
+      id: '/products/$category/$slug'
+      path: '/$category/$slug'
+      fullPath: '/products/$category/$slug'
+      preLoaderRoute: typeof ProductsCategorySlugRouteImport
+      parentRoute: typeof ProductsRoute
     }
   }
 }
@@ -870,6 +966,22 @@ const PortfoliosRouteWithChildren = PortfoliosRoute._addFileChildren(
   PortfoliosRouteChildren,
 )
 
+interface ProductsRouteChildren {
+  ProductsIndexRoute: typeof ProductsIndexRoute
+  ProductsCategorySlugRoute: typeof ProductsCategorySlugRoute
+  ProductsCategoryIndexRoute: typeof ProductsCategoryIndexRoute
+}
+
+const ProductsRouteChildren: ProductsRouteChildren = {
+  ProductsIndexRoute: ProductsIndexRoute,
+  ProductsCategorySlugRoute: ProductsCategorySlugRoute,
+  ProductsCategoryIndexRoute: ProductsCategoryIndexRoute,
+}
+
+const ProductsRouteWithChildren = ProductsRoute._addFileChildren(
+  ProductsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -882,14 +994,16 @@ const rootRouteChildren: RootRouteChildren = {
   GiftsRoute: GiftsRoute,
   PackagesRoute: PackagesRoute,
   PortfoliosRoute: PortfoliosRouteWithChildren,
-  ProductsRoute: ProductsRoute,
+  ProductsRoute: ProductsRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   SameDayRoute: SameDayRoute,
   StoriesRoute: StoriesRoute,
   DeskCalendarRoute: DeskCalendarRoute,
   DeskContactsRoute: DeskContactsRoute,
   PhotoShortIdRoute: PhotoShortIdRoute,
+  PhotographyCategoryRoute: PhotographyCategoryRoute,
   ReelShortIdRoute: ReelShortIdRoute,
+  ServicesPhotoRestorationRoute: ServicesPhotoRestorationRoute,
   TrackIdRoute: TrackIdRoute,
 }
 export const routeTree = rootRouteImport
