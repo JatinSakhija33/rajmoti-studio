@@ -23,6 +23,7 @@ import {
   Flame,
   BookOpen,
   Smartphone,
+  ShoppingBag,
 } from "lucide-react";
 import {
   Dialog,
@@ -49,6 +50,8 @@ import { GodsCollection } from "./live-preview/GodsCollection";
 import { CoupleMagazineFlipbook } from "./live-preview/CoupleMagazineFlipbook";
 import { PhoneCoverCustomizer } from "./live-preview/PhoneCoverCustomizer";
 import { KeychainCustomizer } from "./live-preview/KeychainCustomizer";
+import { GiftFinder } from "./GiftFinder";
+import { WallSizeVisualizer } from "./WallSizeVisualizer";
 import { CheckoutDialog } from "./CheckoutDialog";
 import { calculateVariantPriceInr } from "@/lib/pricing";
 import { toast } from "sonner";
@@ -74,6 +77,18 @@ function normal(s: string) {
     .replace(/\s+/g, "")
     .replace(/inches|inch/g, "in");
 }
+function getCategorySampleImage(cat: string, prodId: string): string {
+  const pId = prodId.toLowerCase();
+  if (cat === "drinkware" || pId.includes("mug")) return "/products/mug-sample-couple.jpg";
+  if (cat === "led" || pId.includes("translight")) return "/products/translight-sample.jpg";
+  if (cat === "gods-collection" || cat === "devotional" || pId.includes("deity")) return "/deities/shrinathji.jpg";
+  if (cat === "magazines" || pId.includes("mag")) return "/products/magazine-cover.jpg";
+  if (cat === "acrylic") return "/products/frame-sample-anniversary.jpg";
+  if (cat === "canvas") return "/products/frame-sample-family.jpg";
+  if (cat === "prints") return "/products/frame-sample-baby.jpg";
+  return "/products/frame-sample-wedding.jpg";
+}
+
 export function Catalogue({ productId }: { productId?: string }) {
   const [products] = useProducts();
   const [quote, setQuote] = useQuote();
@@ -135,11 +150,17 @@ export function Catalogue({ productId }: { productId?: string }) {
     [products, q, filters, sort],
   );
   const update = (key: keyof Filters, value: string) => {
-    setFilters((f) => ({ ...f, [key]: value }));
+    setFilters((f) => {
+      // Prevent mutually exclusive zero-result combinations
+      if (key === "category") {
+        return { ...f, category: value, occasion: "", usage: "" };
+      }
+      return { ...f, [key]: value };
+    });
     setShown(12);
   };
   const open = (id?: string) =>
-    navigate({ to: "/gifts", search: { product: id }, resetScroll: false });
+    navigate({ to: "/products", search: { product: id }, resetScroll: false });
   function toggleCompare(id: string) {
     setCompare((list) => {
       if (list.includes(id)) return list.filter((x) => x !== id);
@@ -182,66 +203,80 @@ export function Catalogue({ productId }: { productId?: string }) {
       <main>
         <section className="gift-intro ed-wrap">
           <div>
-            <p className="ed-kicker">The Rajmoti gift collection</p>
+            <p className="ed-kicker">Rajmoti Studio · Jetpur</p>
             <h1>
-              Keep a little
+              Made personal.
               <br />
-              <em>of what matters.</em>
+              <em>Made to keep.</em>
             </h1>
             <p className="ed-copy">
-              From a favourite photograph to something you can hold. Find the right material, size
-              and finish for your story.
+              A beautiful home for your photographs, favorite people and meaningful moments. Explore handcrafted frames, rotatable 3D mugs, devotional sanctums, and editorial magazines.
             </p>
-            <a className="ed-button" href="#directory">
-              Explore the directory <ArrowRight size={16} />
-            </a>
-            <div className="ed-inline-facts">
-              <span>Personalized gifts</span>
+            <div className="flex flex-wrap items-center gap-3 mt-4">
+              <button
+                type="button"
+                className="ed-button"
+                onClick={() => setActiveStudio("frames")}
+              >
+                Explore Frames <ArrowRight size={16} />
+              </button>
+              <a className="ed-button outline" href="#gift-finder">
+                Find a Gift
+              </a>
+              <button
+                type="button"
+                className="ed-button outline"
+                onClick={() => setActiveStudio("devotional")}
+              >
+                Devotional Collection
+              </button>
+              <Link
+                to="/same-day"
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-bold bg-[#FAF4ED] text-amber-900 border border-amber-800/30 hover:bg-amber-100 transition-colors"
+              >
+                <Sparkles size={13} className="text-amber-600" />
+                Same-Day in Jetpur (2–4 hrs)
+              </Link>
+            </div>
+            <div className="ed-inline-facts mt-6">
+              <span>Personalized keepsakes</span>
               <span>{products.length} catalogue items</span>
               <span>Personal proofing on WhatsApp</span>
             </div>
           </div>
           <figure className="gift-intro-image">
             <img
-              src="/editorial/gift-still-life.png"
+              src="/products/frame-sample-wedding.jpg"
               width="1536"
               height="1024"
-              alt="Archival photo frames, acrylic blocks, albums and gift packaging"
+              alt="Handcrafted archival frames, acrylic blocks and keepsakes"
+              className="object-cover rounded-2xl shadow-xl"
             />
             <figcaption>
-              Archival framing, acrylics & keepsake gifts handcrafted at Rajmoti Studio
+              Authentic keepsake photography handcrafted at Rajmoti Studio Jetpur
             </figcaption>
           </figure>
         </section>
 
-        {/* Visual Product Discovery Showcase */}
+        {/* 4 Hero Signature Collection Cards */}
         <section className="ed-wrap my-10">
           <div className="bg-[#FAF7F1] border border-stone-300 rounded-3xl p-6 sm:p-10 shadow-sm">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
               <div>
-                <p className="ed-kicker flex items-center gap-1.5 text-amber-900 font-semibold">
-                  <Sparkles size={15} className="text-amber-700" /> Interactive Preview Studios
+                <p className="ed-kicker flex items-center gap-1.5 text-amber-900 font-semibold text-xs tracking-wider uppercase">
+                  <Sparkles size={14} className="text-amber-700" /> Signature Live Studios
                 </p>
-                <h2 className="text-3xl sm:text-4xl font-display text-stone-900 mt-1.5">
-                  See how your keepsake will look.
+                <h2 className="text-3xl sm:text-4xl font-display text-stone-900 mt-1">
+                  Customise & preview before your order.
                 </h2>
                 <p className="text-sm text-stone-600 mt-1 max-w-2xl leading-relaxed">
-                  Personalize and preview your photos before ordering. Select a product family below to explore available sizes, finishes, 360° views, and sample customizations.
+                  Try our interactive preview tools: drag photos into multi-layout frames, rotate 3D ceramic mugs, explore backlit translights, or flip through a personalized couple magazine.
                 </p>
-              </div>
-              <div>
-                <Link
-                  to="/same-day"
-                  className="inline-flex items-center gap-2 bg-[#2D241E] text-amber-100 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-stone-900 transition-all shadow-sm border border-amber-900/40"
-                >
-                  <Sparkles size={14} className="text-amber-400" />
-                  Same-Day Gifts in Jetpur (2–4 hrs) →
-                </Link>
               </div>
             </div>
 
             {/* Visual Product Showcase Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Card 1: Frames & Collages */}
               <div
                 onClick={() => setActiveStudio("frames")}
@@ -316,43 +351,7 @@ export function Catalogue({ productId }: { productId?: string }) {
                 </div>
               </div>
 
-              {/* Card 3: Backlit LED Translight */}
-              <div
-                onClick={() => setActiveStudio("translight")}
-                className="group cursor-pointer rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
-              >
-                <div className="relative aspect-[4/3] bg-[#14120E] overflow-hidden flex items-center justify-center">
-                  <img
-                    src="/products/translight-sample.jpg"
-                    alt="Backlit LED Translight"
-                    className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
-                    Edge-Lit Optical Film
-                  </div>
-                  <div className="absolute bottom-3 right-3 bg-amber-600/90 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <SunMedium size={11} /> 3000K & 4000K
-                  </div>
-                </div>
-                <div className="p-5 flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="font-display text-xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
-                      Backlit Translight
-                    </h3>
-                    <p className="text-xs text-stone-600 mt-1.5 leading-relaxed">
-                      Interactive Light Off / Light On toggle. Evenly diffused internal LED illumination in 3000K Warm Golden or 4000K Pure White.
-                    </p>
-                  </div>
-                  <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
-                    <span className="text-stone-500 font-mono text-[11px]">12×18 & 16×24 in</span>
-                    <span className="font-semibold text-amber-800 flex items-center gap-1">
-                      Open studio <ArrowRight size={13} />
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 4: Devotional Collection */}
+              {/* Card 3: Devotional Photos */}
               <div
                 onClick={() => setActiveStudio("devotional")}
                 className="group cursor-pointer rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
@@ -360,11 +359,11 @@ export function Catalogue({ productId }: { productId?: string }) {
                 <div className="relative aspect-[4/3] bg-[#16283D] overflow-hidden flex items-center justify-center">
                   <img
                     src="/deities/shrinathji.jpg"
-                    alt="God's Devotional Collection"
+                    alt="Devotional Photos"
                     className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
-                    Pavitra Darshan
+                    Devotional Photos
                   </div>
                   <div className="absolute bottom-3 right-3 bg-amber-950/80 text-amber-200 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
                     <Flame size={11} /> 8 Sacred Deities
@@ -372,23 +371,23 @@ export function Catalogue({ productId }: { productId?: string }) {
                 </div>
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-display text-xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
-                      God's Devotional Collection
+                    <h3 className="font-display text-lg font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
+                      Devotional Photos
                     </h3>
-                    <p className="text-xs text-stone-600 mt-1.5 leading-relaxed">
-                      8 authentic Gujarati deities in Bitu Acrylic, Teak Frame & LED Translight including Shrinathji, Ganesha, Radha Krishna & Maa Umiya.
+                    <p className="text-xs text-stone-600 mt-1 leading-relaxed">
+                      Cherished images for home and devotion. 8 sacred Gujarati deities in acrylic, frame & LED translight.
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
                     <span className="text-stone-500 font-mono text-[11px]">Mandir & Living Room</span>
                     <span className="font-semibold text-amber-800 flex items-center gap-1">
-                      Open studio <ArrowRight size={13} />
+                      Explore deities <ArrowRight size={13} />
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Card 5: Couple Story Magazine */}
+              {/* Card 4: Albums & Magazines */}
               <div
                 onClick={() => setActiveStudio("magazines")}
                 className="group cursor-pointer rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
@@ -396,110 +395,45 @@ export function Catalogue({ productId }: { productId?: string }) {
                 <div className="relative aspect-[4/3] bg-[#1E1916] overflow-hidden flex items-center justify-center p-3">
                   <img
                     src="/products/magazine-cover.jpg"
-                    alt="Couple Story Magazine"
+                    alt="Albums & Magazines"
                     className="h-full max-h-[190px] aspect-[2/3] object-cover rounded shadow-2xl group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
-                    Editorial Keepsake
-                  </div>
-                </div>
-                <div className="p-5 flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="font-display text-xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
-                      Couple Story Magazine
-                    </h3>
-                    <p className="text-xs text-stone-600 mt-1.5 leading-relaxed">
-                      8–20 photo editorial flipbook with chapter spreads, custom dates, vows, and an interactive QR code linked to your song.
-                    </p>
-                  </div>
-                  <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
-                    <span className="text-stone-500 font-mono text-[11px]">8×11 to 12×12 Hardcover</span>
-                    <span className="font-semibold text-amber-800 flex items-center gap-1">
-                      Open studio <ArrowRight size={13} />
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 6: Custom Photo Covers */}
-              <div
-                onClick={() => setActiveStudio("covers")}
-                className="group cursor-pointer rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
-              >
-                <div className="relative aspect-[4/3] bg-stone-900 overflow-hidden flex items-center justify-center p-3">
-                  <div className="relative w-28 h-44 rounded-2xl border-2 border-stone-700 overflow-hidden shadow-2xl">
-                    <img
-                      src="/products/frame-sample-wedding.jpg"
-                      alt="Custom Photo Phone Cases"
-                      className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute top-2 left-2 size-6 rounded-lg bg-stone-950/90 border border-stone-700 p-0.5 flex flex-wrap gap-0.5">
-                      <div className="size-2 rounded-full bg-stone-800" />
-                      <div className="size-2 rounded-full bg-stone-800" />
-                    </div>
-                  </div>
-                  <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
-                    200+ Phone Models
+                    Albums & Magazines
                   </div>
                   <div className="absolute bottom-3 right-3 bg-amber-950/80 text-amber-200 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <Smartphone size={11} /> 3D Matte & 9H Glass
+                    <BookOpen size={11} /> Tactile Flip
                   </div>
                 </div>
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-display text-xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
-                      Custom Photo Phone Covers
+                    <h3 className="font-display text-lg font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
+                      Albums & Magazines
                     </h3>
-                    <p className="text-xs text-stone-600 mt-1.5 leading-relaxed">
-                      Precision camera cutout alignment for Apple, Samsung, OnePlus, Vivo, Oppo & Xiaomi. Personalize photo & monogram name.
+                    <p className="text-xs text-stone-600 mt-1 leading-relaxed">
+                      More than photos. A story to return to. Curated 8–20 photo magazines with dedication quotes & song QR.
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
-                    <span className="text-stone-500 font-mono text-[11px]">From ₹349</span>
+                    <span className="text-stone-500 font-mono text-[11px]">8–20 Curated Photos</span>
                     <span className="font-semibold text-amber-800 flex items-center gap-1">
-                      Open studio <ArrowRight size={13} />
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 7: Double-Sided Photo Keychains */}
-              <div
-                onClick={() => setActiveStudio("keychains")}
-                className="group cursor-pointer rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between"
-              >
-                <div className="relative aspect-[4/3] bg-stone-100 overflow-hidden flex items-center justify-center">
-                  <img
-                    src="/products/frame-sample-anniversary.jpg"
-                    alt="Custom Photo Keychain Studio"
-                    className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-3 left-3 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
-                    Double-Sided Keepsake
-                  </div>
-                  <div className="absolute bottom-3 right-3 bg-amber-950/80 text-amber-200 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <Sparkles size={11} /> Acrylic & Teak Wood
-                  </div>
-                </div>
-                <div className="p-5 flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="font-display text-xl font-bold text-stone-900 group-hover:text-amber-900 transition-colors">
-                      Double-Sided Photo Keychains
-                    </h3>
-                    <p className="text-xs text-stone-600 mt-1.5 leading-relaxed">
-                      Photo on front, custom anniversary date or second photo on reverse. Shapes in Square, Rectangle, Heart & Round.
-                    </p>
-                  </div>
-                  <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
-                    <span className="text-stone-500 font-mono text-[11px]">From ₹149</span>
-                    <span className="font-semibold text-amber-800 flex items-center gap-1">
-                      Open studio <ArrowRight size={13} />
+                      Flip preview <ArrowRight size={13} />
                     </span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+        </section>
+
+        {/* 3-Tap Gift Finder Section */}
+        <section id="gift-finder" className="ed-wrap my-8">
+          <GiftFinder onSelectProduct={open} onOpenStudio={setActiveStudio} />
+        </section>
+
+        {/* Wall Size Comparison Visualizer */}
+        <section className="ed-wrap my-8">
+          <WallSizeVisualizer onSelectSize={(sz) => update("size", sz)} />
         </section>
 
         <div className="ed-wrap">
@@ -517,11 +451,8 @@ export function Catalogue({ productId }: { productId?: string }) {
               <h2>Find your keepsake.</h2>
             </div>
             <div className="ed-actions">
-              <button className="ed-text-button" onClick={() => exportCatalogue(products)}>
-                <Download size={16} /> Master catalogue CSV
-              </button>
               <button className="ed-button outline" onClick={() => setShowQuote(true)}>
-                Your quote list <span className="count-pill">{quote.length}</span>
+                <ShoppingBag size={16} /> Your Bag <span className="count-pill">{quote.length}</span>
               </button>
             </div>
           </div>
@@ -735,13 +666,77 @@ export function Catalogue({ productId }: { productId?: string }) {
                 </label>
               </div>
               {matching.length === 0 ? (
-                <div className="ed-empty">
-                  <Search size={28} />
-                  <h3>No matching keepsakes yet.</h3>
-                  <p>Try a broader size, material or product family.</p>
-                  <button className="ed-button outline" onClick={reset}>
-                    Clear search & filters
-                  </button>
+                <div className="ed-empty p-8 sm:p-12 text-center bg-stone-50 rounded-3xl border border-stone-200">
+                  <Search size={36} className="mx-auto text-amber-800 mb-3" />
+                  <h3 className="font-display text-2xl font-bold text-stone-900">
+                    No matching keepsakes with these filters.
+                  </h3>
+                  <p className="text-sm text-stone-600 mt-1 max-w-md mx-auto leading-relaxed">
+                    Some filter combinations are mutually exclusive. Reset filters below to view our complete collection or explore popular choices.
+                  </p>
+                  <div className="mt-5 flex flex-wrap justify-center gap-3">
+                    <button className="ed-button" onClick={reset}>
+                      Reset All Filters
+                    </button>
+                    <a className="ed-button outline" href="#gift-finder">
+                      Use 3-Tap Gift Finder
+                    </a>
+                  </div>
+                  <div className="mt-8 pt-6 border-t border-stone-200 text-left">
+                    <p className="text-xs font-bold text-stone-700 uppercase tracking-wider mb-4">
+                      Popular Keepsakes to Explore
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div
+                        onClick={() => setActiveStudio("frames")}
+                        className="cursor-pointer bg-white rounded-xl border border-stone-200 p-3 hover:border-amber-700 hover:shadow-md transition-all"
+                      >
+                        <img
+                          src="/products/frame-sample-wedding.jpg"
+                          alt="Wedding Frame"
+                          className="w-full aspect-[4/3] object-cover rounded-lg mb-2"
+                        />
+                        <h4 className="font-bold text-xs text-stone-900">Royal Heritage Wedding Frame</h4>
+                        <span className="text-[11px] text-amber-800 font-semibold mt-1 block">Open Studio →</span>
+                      </div>
+                      <div
+                        onClick={() => setActiveStudio("mugs")}
+                        className="cursor-pointer bg-white rounded-xl border border-stone-200 p-3 hover:border-amber-700 hover:shadow-md transition-all"
+                      >
+                        <img
+                          src="/products/mug-sample-couple.jpg"
+                          alt="Magic Reveal Mug"
+                          className="w-full aspect-[4/3] object-cover rounded-lg mb-2"
+                        />
+                        <h4 className="font-bold text-xs text-stone-900">Thermochromic Magic Mug</h4>
+                        <span className="text-[11px] text-amber-800 font-semibold mt-1 block">Open Studio →</span>
+                      </div>
+                      <div
+                        onClick={() => setActiveStudio("devotional")}
+                        className="cursor-pointer bg-white rounded-xl border border-stone-200 p-3 hover:border-amber-700 hover:shadow-md transition-all"
+                      >
+                        <img
+                          src="/deities/shrinathji.jpg"
+                          alt="Shri Dwarkadhish & Shrinathji"
+                          className="w-full aspect-[4/3] object-cover rounded-lg mb-2"
+                        />
+                        <h4 className="font-bold text-xs text-stone-900">Pavitra Gujarati Mandir Murti</h4>
+                        <span className="text-[11px] text-amber-800 font-semibold mt-1 block">Explore Deities →</span>
+                      </div>
+                      <div
+                        onClick={() => setActiveStudio("magazines")}
+                        className="cursor-pointer bg-white rounded-xl border border-stone-200 p-3 hover:border-amber-700 hover:shadow-md transition-all"
+                      >
+                        <img
+                          src="/products/magazine-cover.jpg"
+                          alt="Couple Magazine"
+                          className="w-full aspect-[4/3] object-cover rounded-lg mb-2"
+                        />
+                        <h4 className="font-bold text-xs text-stone-900">Couple Keepsake Magazine</h4>
+                        <span className="text-[11px] text-amber-800 font-semibold mt-1 block">Flip Preview →</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="product-grid">
@@ -756,10 +751,18 @@ export function Catalogue({ productId }: { productId?: string }) {
                         {compare.includes(p.id) ? <Check size={15} /> : <Plus size={15} />}
                       </button>
                       <button className="product-card-main" onClick={() => open(p.id)}>
-                        <div className={"product-tile family-" + p.category}>
-                          <span>{categories.find((c) => c.id === p.category)?.code}</span>
-                          <span className="product-tile-code">{p.id}</span>
-                          <span className="product-tile-caption">Product photography pending</span>
+                        <div className={"product-tile relative overflow-hidden group/tile family-" + p.category}>
+                          <img
+                            src={getCategorySampleImage(p.category, p.id)}
+                            alt={p.name}
+                            className="size-full object-cover transition-transform duration-500 group-hover/tile:scale-105"
+                          />
+                          <div className="absolute top-2 left-2 bg-stone-900/80 backdrop-blur-xs text-amber-100 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            {categories.find((c) => c.id === p.category)?.code || p.category}
+                          </div>
+                          <div className="absolute bottom-2 right-2 bg-stone-900/75 text-stone-300 text-[9px] font-mono px-1.5 py-0.5 rounded">
+                            {p.id}
+                          </div>
                         </div>
                         <div className="product-card-copy">
                           <p className="ed-kicker">
@@ -978,22 +981,22 @@ export function Catalogue({ productId }: { productId?: string }) {
         </DialogContent>
       </Dialog>
 
-      {/* Floating Shortlist / Checkout Pill */}
+      {/* Floating Bag / Checkout Pill */}
       {quote.length > 0 && (
         <aside
-          aria-label="Order Shortlist Summary"
+          aria-label="Your Bag Summary"
           className="fixed bottom-5 right-5 z-40 bg-stone-900/95 backdrop-blur-md text-amber-100 rounded-full pl-5 pr-2 py-2 shadow-2xl border border-amber-900/40 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-4"
         >
           <div className="flex items-center gap-2 text-xs">
-            <Package size={16} className="text-amber-400" />
-            <span className="font-semibold">{quote.length} {quote.length === 1 ? "item" : "items"} in shortlist</span>
+            <ShoppingBag size={16} className="text-amber-400" />
+            <span className="font-semibold">{quote.length} {quote.length === 1 ? "item" : "items"} in your bag</span>
           </div>
           <button
             type="button"
             onClick={() => setShowQuote(true)}
             className="bg-amber-100 text-stone-950 font-bold text-xs px-4 py-2 rounded-full hover:bg-white transition-all shadow-xs flex items-center gap-1.5"
           >
-            <span>Checkout</span>
+            <span>Review Bag</span>
             <ArrowRight size={13} />
           </button>
         </aside>
@@ -1183,11 +1186,11 @@ Could you please confirm the exact pricing and delivery estimate? Thank you!`,
                   onCheckout(line);
                 } else {
                   onAdd(line);
-                  toast.success(`Added ${p.name} to your quotation shortlist.`);
+                  toast.success(`Added ${p.name} to your bag.`);
                 }
               }}
             >
-              <Package size={16} /> Instant Checkout · ₹{(calculateVariantPriceInr(p.id, v?.size, v?.finish) * qty).toFixed(2)}
+              <ShoppingBag size={16} /> Instant Checkout · ₹{(calculateVariantPriceInr(p.id, v?.size, v?.finish) * qty).toFixed(2)}
             </button>
 
             <a
@@ -1211,10 +1214,10 @@ Could you please confirm the exact pricing and delivery estimate? Thank you!`,
                   packaging,
                   orderType,
                 });
-                toast.success(`Added ${p.name} to your quotation shortlist.`);
+                toast.success(`Added ${p.name} to your bag.`);
               }}
             >
-              <Plus size={16} /> Add to Order Shortlist
+              <Plus size={16} /> Add to Bag
             </button>
           </div>
         </div>

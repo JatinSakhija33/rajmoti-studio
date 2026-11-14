@@ -7,7 +7,7 @@ import { useStyles } from "@/features/catalogue/store";
 const links = [
   { to: "/", label: "Home" },
   { to: "/portfolios", label: "Photography" },
-  { to: "/gifts", label: "Photo Gifts" },
+  { to: "/products", label: "Products" },
   { to: "/packages", label: "Collections" },
   { to: "/about", label: "Our Studio" },
   { to: "/contact", label: "Contact" },

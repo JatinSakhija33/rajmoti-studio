@@ -20,6 +20,7 @@ import { Route as DeskRouteImport } from './routes/desk'
 import { Route as GiftsRouteImport } from './routes/gifts'
 import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as PortfoliosRouteImport } from './routes/portfolios'
+import { Route as ProductsRouteImport } from './routes/products'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SameDayRouteImport } from './routes/same-day'
 import { Route as StoriesRouteImport } from './routes/stories'
@@ -102,6 +103,11 @@ const PackagesRoute = PackagesRouteImport.update({
 const PortfoliosRoute = PortfoliosRouteImport.update({
   id: '/portfolios',
   path: '/portfolios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductsRoute = ProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -258,6 +264,7 @@ export interface FileRoutesByFullPath {
   '/gifts': typeof GiftsRoute
   '/packages': typeof PackagesRoute
   '/portfolios': typeof PortfoliosRouteWithChildren
+  '/products': typeof ProductsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/same-day': typeof SameDayRoute
   '/stories': typeof StoriesRoute
@@ -297,6 +304,7 @@ export interface FileRoutesByTo {
   '/desk': typeof DeskRoute
   '/gifts': typeof GiftsRoute
   '/packages': typeof PackagesRoute
+  '/products': typeof ProductsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/same-day': typeof SameDayRoute
   '/stories': typeof StoriesRoute
@@ -339,6 +347,7 @@ export interface FileRoutesById {
   '/gifts': typeof GiftsRoute
   '/packages': typeof PackagesRoute
   '/portfolios': typeof PortfoliosRouteWithChildren
+  '/products': typeof ProductsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/same-day': typeof SameDayRoute
   '/stories': typeof StoriesRoute
@@ -382,6 +391,7 @@ export interface FileRouteTypes {
     | '/gifts'
     | '/packages'
     | '/portfolios'
+    | '/products'
     | '/reset-password'
     | '/same-day'
     | '/stories'
@@ -421,6 +431,7 @@ export interface FileRouteTypes {
     | '/desk'
     | '/gifts'
     | '/packages'
+    | '/products'
     | '/reset-password'
     | '/same-day'
     | '/stories'
@@ -462,6 +473,7 @@ export interface FileRouteTypes {
     | '/gifts'
     | '/packages'
     | '/portfolios'
+    | '/products'
     | '/reset-password'
     | '/same-day'
     | '/stories'
@@ -504,6 +516,7 @@ export interface RootRouteChildren {
   GiftsRoute: typeof GiftsRoute
   PackagesRoute: typeof PackagesRoute
   PortfoliosRoute: typeof PortfoliosRouteWithChildren
+  ProductsRoute: typeof ProductsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SameDayRoute: typeof SameDayRoute
   StoriesRoute: typeof StoriesRoute
@@ -591,6 +604,13 @@ declare module '@tanstack/react-router' {
       path: '/portfolios'
       fullPath: '/portfolios'
       preLoaderRoute: typeof PortfoliosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/products': {
+      id: '/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof ProductsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -862,6 +882,7 @@ const rootRouteChildren: RootRouteChildren = {
   GiftsRoute: GiftsRoute,
   PackagesRoute: PackagesRoute,
   PortfoliosRoute: PortfoliosRouteWithChildren,
+  ProductsRoute: ProductsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SameDayRoute: SameDayRoute,
   StoriesRoute: StoriesRoute,
