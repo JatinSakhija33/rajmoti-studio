@@ -22,14 +22,40 @@ try {
 }
 
 const routes = [
+  // Primary Hubs
   { path: "/", priority: "1.0", changefreq: "weekly" },
-  { path: "/portfolios", priority: "0.9", changefreq: "weekly" },
+  { path: "/products", priority: "0.95", changefreq: "daily" },
+  { path: "/products/gifts", priority: "0.9", changefreq: "weekly" },
+  { path: "/products/frames", priority: "0.9", changefreq: "weekly" },
+  { path: "/products/mugs", priority: "0.85", changefreq: "weekly" },
+  { path: "/products/devotional", priority: "0.9", changefreq: "weekly" },
+  { path: "/products/magazines", priority: "0.85", changefreq: "weekly" },
+  { path: "/products/phone-covers", priority: "0.8", changefreq: "weekly" },
+  { path: "/same-day", priority: "0.85", changefreq: "daily" },
+  { path: "/services/photo-restoration", priority: "0.8", changefreq: "monthly" },
+
+  // P0 Core Market Hyperlocal Pages (Jetpur & Jetpur-Navagadh)
+  { path: "/locations", priority: "0.8", changefreq: "weekly" },
+  { path: "/locations/jetpur", priority: "0.9", changefreq: "weekly" },
+  { path: "/locations/jetpur/personalized-gifts", priority: "0.95", changefreq: "weekly" },
+  { path: "/locations/jetpur/photo-frames", priority: "0.95", changefreq: "weekly" },
+  { path: "/locations/jetpur/photo-printing", priority: "0.9", changefreq: "weekly" },
+  { path: "/locations/jetpur/photography-studio", priority: "0.9", changefreq: "weekly" },
+
+  // P1 Nearby Expansion Pages (Virpur, Dhoraji, Gondal)
+  { path: "/locations/virpur/devotional-photo-gifts", priority: "0.8", changefreq: "monthly" },
+  { path: "/locations/dhoraji/personalized-gifts", priority: "0.8", changefreq: "monthly" },
+  { path: "/locations/gondal/personalized-gifts", priority: "0.8", changefreq: "monthly" },
+
+  // Studio Portfolios
+  { path: "/portfolios", priority: "0.85", changefreq: "weekly" },
   { path: "/portfolios/baby", priority: "0.8", changefreq: "weekly" },
   { path: "/portfolios/maternity", priority: "0.8", changefreq: "weekly" },
   { path: "/portfolios/family", priority: "0.8", changefreq: "weekly" },
   { path: "/portfolios/wedding", priority: "0.8", changefreq: "weekly" },
-  { path: "/gifts", priority: "0.9", changefreq: "daily" },
-  { path: "/packages", priority: "0.8", changefreq: "monthly" },
+
+  // Institutional Pages
+  { path: "/packages", priority: "0.75", changefreq: "monthly" },
   { path: "/stories", priority: "0.7", changefreq: "monthly" },
   { path: "/cinematic-reels", priority: "0.7", changefreq: "monthly" },
   { path: "/about", priority: "0.7", changefreq: "monthly" },

@@ -18,6 +18,7 @@ import { Route as CinematicReelsRouteImport } from './routes/cinematic-reels'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DeskRouteImport } from './routes/desk'
 import { Route as GiftsRouteImport } from './routes/gifts'
+import { Route as LocationsRouteImport } from './routes/locations'
 import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as PortfoliosRouteImport } from './routes/portfolios'
 import { Route as ProductsRouteImport } from './routes/products'
@@ -43,6 +44,7 @@ import { Route as AdminStorageRouteImport } from './routes/admin.storage'
 import { Route as AdminWorkflowRouteImport } from './routes/admin.workflow'
 import { Route as DeskCalendarRouteImport } from './routes/desk_.calendar'
 import { Route as DeskContactsRouteImport } from './routes/desk_.contacts'
+import { Route as LocationsIndexRouteImport } from './routes/locations.index'
 import { Route as PhotoShortIdRouteImport } from './routes/photo.$shortId'
 import { Route as PhotographyCategoryRouteImport } from './routes/photography.$category'
 import { Route as PortfoliosIndexRouteImport } from './routes/portfolios.index'
@@ -50,6 +52,8 @@ import { Route as ProductsIndexRouteImport } from './routes/products.index'
 import { Route as ReelShortIdRouteImport } from './routes/reel.$shortId'
 import { Route as ServicesPhotoRestorationRouteImport } from './routes/services.photo-restoration'
 import { Route as TrackIdRouteImport } from './routes/track.$id'
+import { Route as LocationsCityIndexRouteImport } from './routes/locations.$city.index'
+import { Route as LocationsCityServiceRouteImport } from './routes/locations.$city.$service'
 import { Route as PortfoliosCategoryIndexRouteImport } from './routes/portfolios.$category.index'
 import { Route as PortfoliosCategorySubcategoryRouteImport } from './routes/portfolios.$category.$subcategory'
 import { Route as ProductsCategoryIndexRouteImport } from './routes/products.$category.index'
@@ -98,6 +102,11 @@ const DeskRoute = DeskRouteImport.update({
 const GiftsRoute = GiftsRouteImport.update({
   id: '/gifts',
   path: '/gifts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LocationsRoute = LocationsRouteImport.update({
+  id: '/locations',
+  path: '/locations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PackagesRoute = PackagesRouteImport.update({
@@ -225,6 +234,11 @@ const DeskContactsRoute = DeskContactsRouteImport.update({
   path: '/desk/contacts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LocationsIndexRoute = LocationsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LocationsRoute,
+} as any)
 const PhotoShortIdRoute = PhotoShortIdRouteImport.update({
   id: '/photo/$shortId',
   path: '/photo/$shortId',
@@ -261,6 +275,16 @@ const TrackIdRoute = TrackIdRouteImport.update({
   path: '/track/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LocationsCityIndexRoute = LocationsCityIndexRouteImport.update({
+  id: '/$city/',
+  path: '/$city/',
+  getParentRoute: () => LocationsRoute,
+} as any)
+const LocationsCityServiceRoute = LocationsCityServiceRouteImport.update({
+  id: '/$city/$service',
+  path: '/$city/$service',
+  getParentRoute: () => LocationsRoute,
+} as any)
 const PortfoliosCategoryIndexRoute = PortfoliosCategoryIndexRouteImport.update({
   id: '/$category/',
   path: '/$category/',
@@ -293,6 +317,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/desk': typeof DeskRoute
   '/gifts': typeof GiftsRoute
+  '/locations': typeof LocationsRouteWithChildren
   '/packages': typeof PackagesRoute
   '/portfolios': typeof PortfoliosRouteWithChildren
   '/products': typeof ProductsRouteWithChildren
@@ -323,10 +348,13 @@ export interface FileRoutesByFullPath {
   '/services/photo-restoration': typeof ServicesPhotoRestorationRoute
   '/track/$id': typeof TrackIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/locations/': typeof LocationsIndexRoute
   '/portfolios/': typeof PortfoliosIndexRoute
   '/products/': typeof ProductsIndexRoute
+  '/locations/$city/$service': typeof LocationsCityServiceRoute
   '/portfolios/$category/$subcategory': typeof PortfoliosCategorySubcategoryRoute
   '/products/$category/$slug': typeof ProductsCategorySlugRoute
+  '/locations/$city/': typeof LocationsCityIndexRoute
   '/portfolios/$category/': typeof PortfoliosCategoryIndexRoute
   '/products/$category/': typeof ProductsCategoryIndexRoute
 }
@@ -367,10 +395,13 @@ export interface FileRoutesByTo {
   '/services/photo-restoration': typeof ServicesPhotoRestorationRoute
   '/track/$id': typeof TrackIdRoute
   '/admin': typeof AdminIndexRoute
+  '/locations': typeof LocationsIndexRoute
   '/portfolios': typeof PortfoliosIndexRoute
   '/products': typeof ProductsIndexRoute
+  '/locations/$city/$service': typeof LocationsCityServiceRoute
   '/portfolios/$category/$subcategory': typeof PortfoliosCategorySubcategoryRoute
   '/products/$category/$slug': typeof ProductsCategorySlugRoute
+  '/locations/$city': typeof LocationsCityIndexRoute
   '/portfolios/$category': typeof PortfoliosCategoryIndexRoute
   '/products/$category': typeof ProductsCategoryIndexRoute
 }
@@ -385,6 +416,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/desk': typeof DeskRoute
   '/gifts': typeof GiftsRoute
+  '/locations': typeof LocationsRouteWithChildren
   '/packages': typeof PackagesRoute
   '/portfolios': typeof PortfoliosRouteWithChildren
   '/products': typeof ProductsRouteWithChildren
@@ -415,10 +447,13 @@ export interface FileRoutesById {
   '/services/photo-restoration': typeof ServicesPhotoRestorationRoute
   '/track/$id': typeof TrackIdRoute
   '/admin/': typeof AdminIndexRoute
+  '/locations/': typeof LocationsIndexRoute
   '/portfolios/': typeof PortfoliosIndexRoute
   '/products/': typeof ProductsIndexRoute
+  '/locations/$city/$service': typeof LocationsCityServiceRoute
   '/portfolios/$category/$subcategory': typeof PortfoliosCategorySubcategoryRoute
   '/products/$category/$slug': typeof ProductsCategorySlugRoute
+  '/locations/$city/': typeof LocationsCityIndexRoute
   '/portfolios/$category/': typeof PortfoliosCategoryIndexRoute
   '/products/$category/': typeof ProductsCategoryIndexRoute
 }
@@ -434,6 +469,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/desk'
     | '/gifts'
+    | '/locations'
     | '/packages'
     | '/portfolios'
     | '/products'
@@ -464,10 +500,13 @@ export interface FileRouteTypes {
     | '/services/photo-restoration'
     | '/track/$id'
     | '/admin/'
+    | '/locations/'
     | '/portfolios/'
     | '/products/'
+    | '/locations/$city/$service'
     | '/portfolios/$category/$subcategory'
     | '/products/$category/$slug'
+    | '/locations/$city/'
     | '/portfolios/$category/'
     | '/products/$category/'
   fileRoutesByTo: FileRoutesByTo
@@ -508,10 +547,13 @@ export interface FileRouteTypes {
     | '/services/photo-restoration'
     | '/track/$id'
     | '/admin'
+    | '/locations'
     | '/portfolios'
     | '/products'
+    | '/locations/$city/$service'
     | '/portfolios/$category/$subcategory'
     | '/products/$category/$slug'
+    | '/locations/$city'
     | '/portfolios/$category'
     | '/products/$category'
   id:
@@ -525,6 +567,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/desk'
     | '/gifts'
+    | '/locations'
     | '/packages'
     | '/portfolios'
     | '/products'
@@ -555,10 +598,13 @@ export interface FileRouteTypes {
     | '/services/photo-restoration'
     | '/track/$id'
     | '/admin/'
+    | '/locations/'
     | '/portfolios/'
     | '/products/'
+    | '/locations/$city/$service'
     | '/portfolios/$category/$subcategory'
     | '/products/$category/$slug'
+    | '/locations/$city/'
     | '/portfolios/$category/'
     | '/products/$category/'
   fileRoutesById: FileRoutesById
@@ -573,6 +619,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   DeskRoute: typeof DeskRoute
   GiftsRoute: typeof GiftsRoute
+  LocationsRoute: typeof LocationsRouteWithChildren
   PackagesRoute: typeof PackagesRoute
   PortfoliosRoute: typeof PortfoliosRouteWithChildren
   ProductsRoute: typeof ProductsRouteWithChildren
@@ -651,6 +698,13 @@ declare module '@tanstack/react-router' {
       path: '/gifts'
       fullPath: '/gifts'
       preLoaderRoute: typeof GiftsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/locations': {
+      id: '/locations'
+      path: '/locations'
+      fullPath: '/locations'
+      preLoaderRoute: typeof LocationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/packages': {
@@ -828,6 +882,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DeskContactsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/locations/': {
+      id: '/locations/'
+      path: '/'
+      fullPath: '/locations/'
+      preLoaderRoute: typeof LocationsIndexRouteImport
+      parentRoute: typeof LocationsRoute
+    }
     '/photo/$shortId': {
       id: '/photo/$shortId'
       path: '/photo/$shortId'
@@ -876,6 +937,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/track/$id'
       preLoaderRoute: typeof TrackIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/locations/$city/': {
+      id: '/locations/$city/'
+      path: '/$city'
+      fullPath: '/locations/$city/'
+      preLoaderRoute: typeof LocationsCityIndexRouteImport
+      parentRoute: typeof LocationsRoute
+    }
+    '/locations/$city/$service': {
+      id: '/locations/$city/$service'
+      path: '/$city/$service'
+      fullPath: '/locations/$city/$service'
+      preLoaderRoute: typeof LocationsCityServiceRouteImport
+      parentRoute: typeof LocationsRoute
     }
     '/portfolios/$category/': {
       id: '/portfolios/$category/'
@@ -950,6 +1025,22 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface LocationsRouteChildren {
+  LocationsIndexRoute: typeof LocationsIndexRoute
+  LocationsCityServiceRoute: typeof LocationsCityServiceRoute
+  LocationsCityIndexRoute: typeof LocationsCityIndexRoute
+}
+
+const LocationsRouteChildren: LocationsRouteChildren = {
+  LocationsIndexRoute: LocationsIndexRoute,
+  LocationsCityServiceRoute: LocationsCityServiceRoute,
+  LocationsCityIndexRoute: LocationsCityIndexRoute,
+}
+
+const LocationsRouteWithChildren = LocationsRoute._addFileChildren(
+  LocationsRouteChildren,
+)
+
 interface PortfoliosRouteChildren {
   PortfoliosIndexRoute: typeof PortfoliosIndexRoute
   PortfoliosCategorySubcategoryRoute: typeof PortfoliosCategorySubcategoryRoute
@@ -992,6 +1083,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   DeskRoute: DeskRoute,
   GiftsRoute: GiftsRoute,
+  LocationsRoute: LocationsRouteWithChildren,
   PackagesRoute: PackagesRoute,
   PortfoliosRoute: PortfoliosRouteWithChildren,
   ProductsRoute: ProductsRouteWithChildren,

@@ -1060,6 +1060,39 @@ function Desk() {
                       </span>
                     </div>
                   </div>
+
+                  {/* Hyperlocal SEO Rollout (P0 Jetpur Core & P1 Expansion) */}
+                  <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/50">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                      <h4 className="text-xs font-bold text-stone-900 flex items-center gap-1.5 uppercase tracking-wide">
+                        <MapPin size={13} className="text-amber-800" /> Hyperlocal SEO Rollout (P0 Jetpur Core · P1 Expansion)
+                      </h4>
+                      <span className="text-[10px] font-mono text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded font-bold border border-emerald-300">
+                        Rajkot &amp; Junagadh Excluded (Local Market Priority)
+                      </span>
+                    </div>
+                    <p className="text-xs text-stone-600 mb-3">
+                      High-converting, crawlable landing pages with unique localized FAQs, LocalBusiness schema, and 2–4 hour counter pickup promises.
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      <a href="/locations/jetpur/personalized-gifts" target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-lg bg-white border border-stone-200 hover:border-amber-700 hover:shadow-2xs font-medium text-stone-900 flex items-center justify-between">
+                        <span>🎁 Gifts in Jetpur</span>
+                        <span className="text-stone-400 text-[10px]">↗</span>
+                      </a>
+                      <a href="/locations/jetpur/photo-frames" target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-lg bg-white border border-stone-200 hover:border-amber-700 hover:shadow-2xs font-medium text-stone-900 flex items-center justify-between">
+                        <span>🖼️ Frames in Jetpur</span>
+                        <span className="text-stone-400 text-[10px]">↗</span>
+                      </a>
+                      <a href="/locations/jetpur/photo-printing" target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-lg bg-white border border-stone-200 hover:border-amber-700 hover:shadow-2xs font-medium text-stone-900 flex items-center justify-between">
+                        <span>🖨️ Prints &amp; Passport</span>
+                        <span className="text-stone-400 text-[10px]">↗</span>
+                      </a>
+                      <a href="/locations/jetpur/photography-studio" target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-lg bg-white border border-stone-200 hover:border-amber-700 hover:shadow-2xs font-medium text-stone-900 flex items-center justify-between">
+                        <span>📸 Jetpur Studio Hub</span>
+                        <span className="text-stone-400 text-[10px]">↗</span>
+                      </a>
+                    </div>
+                  </div>
                 </div>
               );
             })()}

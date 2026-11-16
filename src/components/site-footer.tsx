@@ -25,6 +25,15 @@ export function SiteFooter() {
             <Link to="/products">Products & Gifts</Link>
             <Link to="/packages">Session collections</Link>
             <Link to="/stories">Our stories</Link>
+            <Link to="/same-day">Same-day Jetpur</Link>
+          </div>
+          <div>
+            <h3>Jetpur & Nearby</h3>
+            <Link to="/locations/jetpur/personalized-gifts">Gifts in Jetpur</Link>
+            <Link to="/locations/jetpur/photo-frames">Frames in Jetpur</Link>
+            <Link to="/locations/jetpur/photo-printing">Prints & Passport</Link>
+            <Link to="/locations/jetpur/photography-studio">Jetpur Studio</Link>
+            <Link to="/locations">All Locations & Coverage</Link>
           </div>
           <div>
             <h3>Visit & connect</h3>
