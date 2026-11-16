@@ -116,9 +116,9 @@ const DEFAULT_FRAME_SAMPLES = [
   "/products/frame-sample-wedding.jpg",
   "/products/frame-sample-anniversary.jpg",
   "/products/frame-sample-family.jpg",
-  "/portfolio/couple-prewedding.jpg",
+  "/products/frame-sample-engagement.jpg",
   "/products/frame-sample-baby.jpg",
-  "/portfolio/birthday-celebration.jpg",
+  "/products/mug-sample-couple.jpg",
 ];
 
 interface FrameCollageCanvasProps {

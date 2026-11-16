@@ -1,7 +1,20 @@
 import { useState, useMemo } from "react";
-import { Sparkles, ArrowRight, Heart, Gift, Users, Baby, Compass, CheckCircle } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import {
+  Sparkles,
+  ArrowRight,
+  Heart,
+  Gift,
+  Users,
+  Baby,
+  Compass,
+  Briefcase,
+  CheckCircle,
+  SlidersHorizontal,
+} from "lucide-react";
 import { seedProducts, type Product } from "./store";
 import { calculateVariantPriceInr } from "@/lib/pricing";
+import { trackEvent } from "@/lib/analytics";
 
 interface GiftFinderProps {
   onSelectProduct?: (productId: string) => void;
@@ -14,6 +27,7 @@ const RECIPIENTS = [
   { id: "baby", label: "Baby & Kids", icon: Baby },
   { id: "friends", label: "Friends & Siblings", icon: Gift },
   { id: "mandir", label: "Home Mandir", icon: Compass },
+  { id: "colleague", label: "Colleague / Corporate", icon: Briefcase },
 ] as const;
 
 const OCCASIONS = [
@@ -21,6 +35,7 @@ const OCCASIONS = [
   { id: "birthday", label: "Birthday" },
   { id: "wedding", label: "Wedding Keepsake" },
   { id: "pooja", label: "Pooja & Housewarming" },
+  { id: "appreciation", label: "Appreciation" },
   { id: "anytime", label: "Just Because" },
 ] as const;
 
@@ -30,12 +45,21 @@ const BUDGETS = [
   { id: "premium", label: "₹1,500+", max: 99999, min: 1500 },
 ] as const;
 
+const STYLES = [
+  { id: "romantic", label: "Romantic & Sentimental" },
+  { id: "heritage", label: "Handcrafted & Heritage" },
+  { id: "contemporary", label: "Sleek Modern Acrylic" },
+  { id: "devotional", label: "Sacred & Devotional" },
+  { id: "fun", label: "Fun & Cheerful" },
+] as const;
+
 function getSampleImageForProduct(prod: Product): string {
   const cat = prod.category;
   const pId = prod.id.toLowerCase();
   if (cat === "drinkware" || pId.includes("mug")) return "/products/mug-sample-couple.jpg";
   if (cat === "led" || pId.includes("translight")) return "/products/translight-sample.jpg";
-  if (cat === "gods-collection" || cat === "devotional" || pId.includes("deity")) return "/deities/shrinathji.jpg";
+  if (cat === "gods-collection" || cat === "devotional" || pId.includes("deity"))
+    return "/deities/shrinathji.jpg";
   if (cat === "magazines" || pId.includes("mag")) return "/products/magazine-cover.jpg";
   if (cat === "acrylic") return "/products/frame-sample-anniversary.jpg";
   if (cat === "canvas") return "/products/frame-sample-family.jpg";
@@ -43,14 +67,23 @@ function getSampleImageForProduct(prod: Product): string {
   return "/products/frame-sample-wedding.jpg";
 }
 
+function getProductRoute(prod: Product): string {
+  const pId = prod.id.toLowerCase();
+  if (pId.includes("mug")) return "/products/mugs/magic-photo-mug";
+  if (pId.includes("mag")) return "/products/magazines/couple-story";
+  if (pId.includes("deity") || prod.category === "devotional") return "/products/devotional/dwarkadhish";
+  return `/products/frames/${prod.id}`;
+}
+
 export function GiftFinder({ onSelectProduct, onOpenStudio }: GiftFinderProps) {
   const [recipient, setRecipient] = useState<string>("partner");
   const [occasion, setOccasion] = useState<string>("anniversary");
   const [budget, setBudget] = useState<string>("mid");
+  const [style, setStyle] = useState<string>("romantic");
 
   const recommendations = useMemo(() => {
     const selectedBudget = BUDGETS.find((b) => b.id === budget) || BUDGETS[1];
-    
+
     // Score products based on matching criteria
     const scored = seedProducts.map((prod) => {
       let score = 0;
@@ -59,41 +92,91 @@ export function GiftFinder({ onSelectProduct, onOpenStudio }: GiftFinderProps) {
         prod.variants[0]?.size,
         prod.variants[0]?.finish,
       );
-      
+
       // Recipient matches
-      if (recipient === "mandir" && (prod.category === "devotional" || prod.id.includes("deity") || prod.id.includes("translight"))) {
-        score += 10;
+      if (
+        recipient === "mandir" &&
+        (prod.category === "devotional" || prod.id.includes("deity") || prod.id.includes("translight"))
+      ) {
+        score += 12;
       }
-      if (recipient === "partner" && (prod.recipients?.includes("Partner") || prod.id.includes("mug") || prod.id.includes("mag") || prod.category === "acrylic")) {
+      if (
+        recipient === "partner" &&
+        (prod.recipients?.includes("Partner") ||
+          prod.id.includes("mug") ||
+          prod.id.includes("mag") ||
+          prod.category === "acrylic")
+      ) {
         score += 8;
       }
-      if (recipient === "family" && (prod.recipients?.includes("Family") || prod.category === "frames" || prod.category === "canvas")) {
+      if (
+        recipient === "family" &&
+        (prod.recipients?.includes("Family") ||
+          prod.category === "frames" ||
+          prod.category === "canvas")
+      ) {
         score += 8;
       }
-      if (recipient === "baby" && (prod.name.toLowerCase().includes("baby") || prod.category === "prints" || prod.category === "frames")) {
+      if (
+        recipient === "baby" &&
+        (prod.name.toLowerCase().includes("baby") ||
+          prod.category === "prints" ||
+          prod.category === "frames")
+      ) {
         score += 8;
       }
       if (recipient === "friends" && (prod.category === "keychains" || prod.category === "drinkware")) {
         score += 8;
       }
+      if (recipient === "colleague" && (prod.category === "drinkware" || prod.material === "Wood")) {
+        score += 8;
+      }
 
       // Occasion matches
-      if (occasion === "anniversary" && (prod.occasions?.includes("anniversary") || prod.category === "frames" || prod.id.includes("mag"))) {
+      if (
+        occasion === "anniversary" &&
+        (prod.occasions?.includes("anniversary") || prod.category === "frames" || prod.id.includes("mag"))
+      ) {
         score += 6;
       }
-      if (occasion === "birthday" && (prod.occasions?.includes("birthday") || prod.category === "drinkware" || prod.category === "keychains")) {
+      if (
+        occasion === "birthday" &&
+        (prod.occasions?.includes("birthday") ||
+          prod.category === "drinkware" ||
+          prod.category === "keychains")
+      ) {
         score += 6;
       }
-      if (occasion === "wedding" && (prod.occasions?.includes("wedding") || prod.category === "frames" || prod.id.includes("mag"))) {
+      if (
+        occasion === "wedding" &&
+        (prod.occasions?.includes("wedding") || prod.category === "frames" || prod.id.includes("mag"))
+      ) {
         score += 6;
       }
       if (occasion === "pooja" && (prod.category === "devotional" || prod.id.includes("translight"))) {
         score += 10;
       }
 
+      // Style matches
+      if (style === "romantic" && (prod.id.includes("mug") || prod.id.includes("mag") || prod.occasions?.includes("anniversary"))) {
+        score += 5;
+      }
+      if (style === "heritage" && (prod.material === "Wood" || prod.category === "frames")) {
+        score += 5;
+      }
+      if (style === "contemporary" && (prod.category === "acrylic" || prod.material === "Acrylic")) {
+        score += 5;
+      }
+      if (style === "devotional" && (prod.category === "devotional" || prod.id.includes("deity"))) {
+        score += 8;
+      }
+      if (style === "fun" && (prod.category === "keychains" || prod.category === "drinkware")) {
+        score += 5;
+      }
+
       // Budget matches
       if (prodPrice >= selectedBudget.min && prodPrice <= selectedBudget.max) {
-        score += 5;
+        score += 7;
       }
 
       return { product: prod, score, price: prodPrice };
@@ -101,28 +184,55 @@ export function GiftFinder({ onSelectProduct, onOpenStudio }: GiftFinderProps) {
 
     scored.sort((a, b) => b.score - a.score);
     return scored.slice(0, 3);
-  }, [recipient, occasion, budget]);
+  }, [recipient, occasion, budget, style]);
+
+  const handleStepChange = (
+    key: "recipient" | "occasion" | "budget" | "style",
+    val: string,
+  ) => {
+    if (key === "recipient") setRecipient(val);
+    if (key === "occasion") setOccasion(val);
+    if (key === "budget") setBudget(val);
+    if (key === "style") setStyle(val);
+
+    trackEvent("gift_finder_step", {
+      recipient: key === "recipient" ? val : recipient,
+      occasion: key === "occasion" ? val : occasion,
+      budget: key === "budget" ? val : budget,
+      style: key === "style" ? val : style,
+    });
+  };
 
   return (
-    <div className="bg-[#FAF7F1] border border-amber-900/15 rounded-3xl p-6 sm:p-8 shadow-sm">
-      <div className="max-w-2xl">
-        <p className="ed-kicker flex items-center gap-1.5 text-amber-900 font-semibold text-xs tracking-wider uppercase">
-          <Sparkles size={14} className="text-amber-700" /> 3-Tap Gift Finder
-        </p>
-        <h2 className="text-2xl sm:text-3xl font-display text-stone-900 mt-1">
-          Find the perfect personalized gift.
-        </h2>
-        <p className="text-xs sm:text-sm text-stone-600 mt-1 leading-relaxed">
-          Tell us who it is for and your occasion. We'll suggest our most cherished photo keepsakes.
-        </p>
+    <div id="gift-finder" className="bg-[#FAF7F1] border border-amber-900/15 rounded-3xl p-6 sm:p-8 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 max-w-4xl">
+        <div>
+          <p className="ed-kicker flex items-center gap-1.5 text-amber-900 font-semibold text-xs tracking-wider uppercase">
+            <Sparkles size={14} className="text-amber-700" /> Interactive Gift Finder
+          </p>
+          <h2 className="text-2xl sm:text-3xl font-display text-stone-900 mt-1">
+            Find the perfect personalized keepsake.
+          </h2>
+          <p className="text-xs sm:text-sm text-stone-600 mt-1 leading-relaxed">
+            Answer 4 quick questions. We'll suggest our most cherished photo gifts tailored to your recipient, occasion, and budget.
+          </p>
+        </div>
+
+        <a
+          href="#all-products"
+          className="text-xs font-semibold text-stone-600 hover:text-stone-950 flex items-center gap-1.5 border border-stone-300 rounded-xl px-3 py-2 bg-white self-start sm:self-auto hover:bg-stone-50 transition-colors shadow-2xs whitespace-nowrap"
+        >
+          <SlidersHorizontal size={13} />
+          <span>Skip quiz & browse all</span>
+        </a>
       </div>
 
-      {/* 3 Step Taps */}
-      <div className="mt-6 space-y-5">
+      {/* 4 Step Taps */}
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Step 1: Recipient */}
         <div>
           <span className="text-xs font-bold text-stone-700 uppercase tracking-wider block mb-2">
-            1. Who is this for?
+            1. Who are you buying for?
           </span>
           <div className="flex flex-wrap gap-2">
             {RECIPIENTS.map((r) => {
@@ -132,7 +242,7 @@ export function GiftFinder({ onSelectProduct, onOpenStudio }: GiftFinderProps) {
                 <button
                   key={r.id}
                   type="button"
-                  onClick={() => setRecipient(r.id)}
+                  onClick={() => handleStepChange("recipient", r.id)}
                   className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                     isSelected
                       ? "bg-[#29251F] text-amber-100 font-bold shadow-xs"
@@ -150,7 +260,7 @@ export function GiftFinder({ onSelectProduct, onOpenStudio }: GiftFinderProps) {
         {/* Step 2: Occasion */}
         <div>
           <span className="text-xs font-bold text-stone-700 uppercase tracking-wider block mb-2">
-            2. What is the occasion?
+            2. What's the occasion?
           </span>
           <div className="flex flex-wrap gap-2">
             {OCCASIONS.map((o) => {
@@ -159,7 +269,7 @@ export function GiftFinder({ onSelectProduct, onOpenStudio }: GiftFinderProps) {
                 <button
                   key={o.id}
                   type="button"
-                  onClick={() => setOccasion(o.id)}
+                  onClick={() => handleStepChange("occasion", o.id)}
                   className={`px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                     isSelected
                       ? "bg-[#29251F] text-amber-100 font-bold shadow-xs"
@@ -176,7 +286,7 @@ export function GiftFinder({ onSelectProduct, onOpenStudio }: GiftFinderProps) {
         {/* Step 3: Budget */}
         <div>
           <span className="text-xs font-bold text-stone-700 uppercase tracking-wider block mb-2">
-            3. Target budget
+            3. What is your budget?
           </span>
           <div className="flex flex-wrap gap-2">
             {BUDGETS.map((b) => {
@@ -185,7 +295,7 @@ export function GiftFinder({ onSelectProduct, onOpenStudio }: GiftFinderProps) {
                 <button
                   key={b.id}
                   type="button"
-                  onClick={() => setBudget(b.id)}
+                  onClick={() => handleStepChange("budget", b.id)}
                   className={`px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                     isSelected
                       ? "bg-[#29251F] text-amber-100 font-bold shadow-xs"
@@ -193,6 +303,32 @@ export function GiftFinder({ onSelectProduct, onOpenStudio }: GiftFinderProps) {
                   }`}
                 >
                   {b.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Step 4: Style Preference */}
+        <div>
+          <span className="text-xs font-bold text-stone-700 uppercase tracking-wider block mb-2">
+            4. What style do you prefer?
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {STYLES.map((s) => {
+              const isSelected = style === s.id;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => handleStepChange("style", s.id)}
+                  className={`px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                    isSelected
+                      ? "bg-[#29251F] text-amber-100 font-bold shadow-xs"
+                      : "bg-white text-stone-700 border border-stone-200 hover:border-amber-700 hover:bg-stone-50"
+                  }`}
+                >
+                  {s.label}
                 </button>
               );
             })}
@@ -206,7 +342,7 @@ export function GiftFinder({ onSelectProduct, onOpenStudio }: GiftFinderProps) {
           <p className="text-xs font-bold text-stone-800 flex items-center gap-1.5 uppercase tracking-wider">
             <CheckCircle size={14} className="text-emerald-600" /> Best matches for your selection:
           </p>
-          <span className="text-[11px] text-stone-500 font-medium">Ready to personalize</span>
+          <span className="text-[11px] text-stone-500 font-medium">Ready for in-browser personalization</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -241,20 +377,33 @@ export function GiftFinder({ onSelectProduct, onOpenStudio }: GiftFinderProps) {
                     ₹{price.toFixed(0)}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (prod.category === "drinkware" || prod.id.includes("mug")) onOpenStudio?.("mugs");
-                    else if (prod.category === "devotional" || prod.id.includes("deity")) onOpenStudio?.("devotional");
-                    else if (prod.id.includes("translight")) onOpenStudio?.("translight");
-                    else if (prod.id.includes("mag")) onOpenStudio?.("magazines");
-                    else if (onSelectProduct) onSelectProduct(prod.id);
-                    else onOpenStudio?.("frames");
-                  }}
-                  className="bg-[#29251F] text-amber-100 text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-stone-900 transition-colors flex items-center gap-1"
-                >
-                  Personalize <ArrowRight size={12} />
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      trackEvent("start_personalization", {
+                        itemId: prod.id,
+                        itemName: prod.name,
+                        price,
+                      });
+                      if (prod.category === "drinkware" || prod.id.includes("mug")) onOpenStudio?.("mugs");
+                      else if (prod.category === "devotional" || prod.id.includes("deity")) onOpenStudio?.("devotional");
+                      else if (prod.id.includes("translight")) onOpenStudio?.("translight");
+                      else if (prod.id.includes("mag")) onOpenStudio?.("magazines");
+                      else if (onSelectProduct) onSelectProduct(prod.id);
+                      else onOpenStudio?.("frames");
+                    }}
+                    className="bg-[#29251F] text-amber-100 text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-stone-900 transition-colors flex items-center gap-1"
+                  >
+                    Personalize <ArrowRight size={12} />
+                  </button>
+                  <Link
+                    to={getProductRoute(prod)}
+                    className="text-xs text-stone-600 hover:text-stone-950 font-medium px-2 py-1.5 border border-stone-200 rounded-lg hover:bg-stone-50"
+                  >
+                    Details
+                  </Link>
+                </div>
               </div>
             </div>
           ))}

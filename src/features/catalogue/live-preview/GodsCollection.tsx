@@ -28,7 +28,7 @@ export const REGIONAL_DEITIES: RegionalDeity[] = [
     dham: "જગત મંદિર · દ્વારકા ધામ",
     mantra: "ૐ ક્લીં કૃષ્ણાય નમઃ · જય દ્વારકાધીશ",
     description: "Revered King of Dwarka with jewel-studded Swaroop, sacred Shankha, Chakra, Gada and holy tulsi shringar.",
-    imageUrl: "/deities/shrinathji.jpg", // owner customizable
+    imageUrl: "/deities/dwarkadhish.jpg",
     availableFormats: ["acrylic", "frame", "translight"],
     sizes: {
       acrylic: ["8×12 in", "12×18 in"],
@@ -43,7 +43,7 @@ export const REGIONAL_DEITIES: RegionalDeity[] = [
     dham: "પ્રભાસ પાટણ · સૌરાષ્ટ્ર તીર્થ",
     mantra: "ૐ નમઃ શિવાય · હર હર મહાદેવ",
     description: "First among the twelve Jyotirlingas, overlooking the Arabian Sea in Saurashtra with silver serpent and sacred bilva shringar.",
-    imageUrl: "/deities/shiva-parvati.jpg",
+    imageUrl: "/deities/somnath.jpg",
     availableFormats: ["acrylic", "frame", "translight"],
     sizes: {
       acrylic: ["8×12 in", "12×18 in"],
@@ -73,7 +73,7 @@ export const REGIONAL_DEITIES: RegionalDeity[] = [
     dham: "વીરપુર ધામ (જેતપુર સમીપ)",
     mantra: "જય જલારામ · સબસે બડી સેવા",
     description: "Beloved Saint of Virpur (just 12 km from Jetpur) known for eternal sadavrat (annadaan), compassion, and selfless devotion.",
-    imageUrl: "/deities/shrinathji.jpg",
+    imageUrl: "/deities/jalaram-bapa.jpg",
     availableFormats: ["acrylic", "frame"],
     sizes: {
       acrylic: ["8×12 in", "12×18 in"],
@@ -88,7 +88,7 @@ export const REGIONAL_DEITIES: RegionalDeity[] = [
     dham: "ગઢડા / જેતપુર અક્ષર ભુવન / વડતાલ",
     mantra: "ૐ શ્રી સ્વામિનારાયણાય નમઃ",
     description: "Spiritual sanctuary of divine peace, Akshar Purushottam darshan, and holy presence revered across Gujarat and worldwide.",
-    imageUrl: "/deities/shrinathji.jpg",
+    imageUrl: "/deities/swaminarayan.jpg",
     availableFormats: ["acrylic", "frame", "translight"],
     sizes: {
       acrylic: ["8×12 in", "12×18 in"],
@@ -103,7 +103,7 @@ export const REGIONAL_DEITIES: RegionalDeity[] = [
     dham: "સાળંગપુર ધામ (બોટાદ, ગુજરાત)",
     mantra: "જય શ્રી કષ્ટભંજન દેવ · સાળંગપુર હનુમાન",
     description: "Dispeller of all obstacles and hardships, the miraculous golden Swaroop of Hanumanji at Sarangpur.",
-    imageUrl: "/deities/ram-darbar.jpg",
+    imageUrl: "/deities/kashtabhanjan-hanuman.jpg",
     availableFormats: ["acrylic", "frame", "translight"],
     sizes: {
       acrylic: ["8×12 in", "12×18 in"],

@@ -52,6 +52,7 @@ import { PhoneCoverCustomizer } from "./live-preview/PhoneCoverCustomizer";
 import { KeychainCustomizer } from "./live-preview/KeychainCustomizer";
 import { GiftFinder } from "./GiftFinder";
 import { WallSizeVisualizer } from "./WallSizeVisualizer";
+import { BundleShowcase } from "./BundleShowcase";
 import { CheckoutDialog } from "./CheckoutDialog";
 import { calculateVariantPriceInr } from "@/lib/pricing";
 import { toast } from "sonner";
@@ -862,6 +863,11 @@ export function Catalogue({
         {/* Wall Size Comparison Visualizer */}
         <section className="ed-wrap my-8">
           <WallSizeVisualizer onSelectSize={(sz) => update("size", sz)} />
+        </section>
+
+        {/* Curated Milestone Gift Bundles */}
+        <section id="curated-bundles" className="ed-wrap my-8">
+          <BundleShowcase />
         </section>
 
         <div className="ed-wrap">

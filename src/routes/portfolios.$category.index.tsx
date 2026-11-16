@@ -200,6 +200,75 @@ function CategoryPage() {
 
         <CategorySeoSections seo={seo} />
 
+        {/* Photography to E-Commerce Physical Keepsakes Bridge */}
+        <section className="mt-20 p-8 rounded-3xl bg-[#FAF7F1] border border-stone-200">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+            <div>
+              <p className="eyebrow text-gold mb-1">Tangible Keepsakes & Prints</p>
+              <h2 className="font-display text-2xl sm:text-3xl">Turn Your {cat.name} into Heirlooms</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                Complement your session with handcrafted wall frames, lay-flat albums, and living room displays.
+              </p>
+            </div>
+            <Link
+              to="/products"
+              className="text-xs font-semibold text-amber-900 hover:text-stone-950 flex items-center gap-1 shrink-0"
+            >
+              <span>Explore Products</span> →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Link
+              to="/products/frames"
+              className="p-4 bg-white rounded-2xl border border-stone-200 hover:border-amber-800 transition-all flex flex-col justify-between"
+            >
+              <div className="aspect-[4/3] rounded-xl overflow-hidden bg-stone-100 mb-3">
+                <img
+                  src="/products/frame-sample-wedding.jpg"
+                  alt="Handcrafted Frames"
+                  className="size-full object-cover"
+                />
+              </div>
+              <h4 className="font-display font-bold text-sm">Archival Wall Frames</h4>
+              <p className="text-xs text-stone-500 mt-1">Natural Teak & Charcoal matte borders (8×12 to 20×30 in)</p>
+              <span className="text-xs font-bold text-amber-900 mt-3 block">From ₹450 →</span>
+            </Link>
+
+            <Link
+              to="/products/magazines"
+              className="p-4 bg-white rounded-2xl border border-stone-200 hover:border-amber-800 transition-all flex flex-col justify-between"
+            >
+              <div className="aspect-[4/3] rounded-xl overflow-hidden bg-stone-100 mb-3">
+                <img
+                  src="/products/magazine-cover.jpg"
+                  alt="Editorial Photobooks"
+                  className="size-full object-cover"
+                />
+              </div>
+              <h4 className="font-display font-bold text-sm">Lay-Flat Keepsake Magazines</h4>
+              <p className="text-xs text-stone-500 mt-1">16–20 page editorial spreads on heavy velvet matte paper</p>
+              <span className="text-xs font-bold text-amber-900 mt-3 block">From ₹1,299 →</span>
+            </Link>
+
+            <Link
+              to="/products/acrylic"
+              className="p-4 bg-white rounded-2xl border border-stone-200 hover:border-amber-800 transition-all flex flex-col justify-between"
+            >
+              <div className="aspect-[4/3] rounded-xl overflow-hidden bg-stone-100 mb-3">
+                <img
+                  src="/products/frame-sample-anniversary.jpg"
+                  alt="Cast Acrylic Blocks"
+                  className="size-full object-cover"
+                />
+              </div>
+              <h4 className="font-display font-bold text-sm">Cast Optical Acrylic Blocks</h4>
+              <p className="text-xs text-stone-500 mt-1">Beveled edge floating standoff prints with crystal clarity</p>
+              <span className="text-xs font-bold text-amber-900 mt-3 block">From ₹699 →</span>
+            </Link>
+          </div>
+        </section>
+
         <ReelsCrossSell categoryId={cat.id} categoryName={cat.name} />
 
 

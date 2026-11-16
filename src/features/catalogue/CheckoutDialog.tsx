@@ -1,4 +1,4 @@
-import { useState, useMemo, type FormEvent } from "react";
+import { useState, useMemo, useEffect, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowRight,
@@ -26,6 +26,7 @@ import {
   STANDARD_DELIVERY_CHARGE_INR,
 } from "@/lib/pricing";
 import { UpiQrCode } from "@/components/UpiQrCode";
+import { trackEvent } from "@/lib/analytics";
 import { toast } from "sonner";
 
 interface CheckoutDialogProps {
@@ -77,6 +78,16 @@ export function CheckoutDialog({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<ConfirmedOrder | null>(null);
+
+  // Track checkout initiation
+  useEffect(() => {
+    if (open && quote.length > 0) {
+      trackEvent("begin_checkout", {
+        quantity: quote.reduce((acc, q) => acc + q.quantity, 0),
+        fulfillment,
+      });
+    }
+  }, [open, quote.length, fulfillment]);
 
   // UTR submission on confirmation screen
   const [utr, setUtr] = useState("");
@@ -200,6 +211,12 @@ export function CheckoutDialog({
         paymentChoice: fulfillment === "home_delivery" ? "pay_online" : paymentChoice,
       });
 
+      trackEvent("order_submitted", {
+        orderId: data.reference,
+        price: data.totalAmountPaise / 100,
+        fulfillment,
+      });
+
       toast.success("Order registered successfully!");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error placing order");
@@ -224,6 +241,10 @@ export function CheckoutDialog({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not record UTR");
       setUtrRecorded(true);
+      trackEvent("payment_verify_initiated", {
+        orderId: confirmed.reference,
+        amount: confirmed.totalAmountPaise / 100,
+      });
       toast.success("Transaction reference recorded! Our desk will reconcile with bank statement.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to record UTR");
