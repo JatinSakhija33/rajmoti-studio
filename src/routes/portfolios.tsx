@@ -8,9 +8,9 @@ export const Route = createFileRoute("/portfolios")({
   component: () => (
     <div className="bg-cream text-onyx min-h-dvh">
       <SiteNav />
-      <div className="pt-20">
+      <main id="main-content" tabIndex={-1}>
         <Outlet />
-      </div>
+      </main>
       <SiteFooter />
       <WhatsAppFloat />
       <MobileCtaBar />

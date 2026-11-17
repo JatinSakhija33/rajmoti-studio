@@ -3,6 +3,8 @@
   "exclude": [
     "src/start.ts",
     "src/server.ts",
+    "src/routes/api/**",
+    "src/routes/sitemap[.]xml.ts",
     "src/integrations/supabase/auth-attacher.ts",
     "src/integrations/supabase/auth-middleware.ts"
   ],

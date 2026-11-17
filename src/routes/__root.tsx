@@ -1,4 +1,4 @@
-import {liveBackend,backendConfigured} from "@/lib/backend-mode";
+import { liveBackend, backendConfigured } from "@/lib/backend-mode";
 import { DemoBar } from "@/demo/banner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -53,7 +53,10 @@ function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
-            onClick={() => { router.invalidate(); reset(); }}
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
             className="rounded-md bg-primary px-5 py-2.5 text-xs font-semibold uppercase tracking-widest text-primary-foreground hover:bg-primary/90"
           >
             Try again
@@ -75,19 +78,31 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Rajmoti Studio — Premium Photography" },
-      { name: "description", content: "Bespoke baby, family, maternity and wedding photography. Capturing life's most beautiful moments." },
+      { title: "Rajmoti Studio — Photography & Personalized Photo Gifts" },
+      {
+        name: "description",
+        content:
+          "Photography, personalized photo gifts, frames, prints and albums. Explore keepsakes and photography with Rajmoti Studio.",
+      },
       { name: "author", content: "Rajmoti Studio" },
-      { property: "og:title", content: "Rajmoti Studio — Premium Photography" },
-      { property: "og:description", content: "Bespoke baby, family, maternity and wedding photography. Capturing life's most beautiful moments." },
+      { property: "og:title", content: "Rajmoti Studio — Photography & Personalized Photo Gifts" },
+      {
+        property: "og:description",
+        content:
+          "Photography, personalized photo gifts, frames, prints and albums. Explore keepsakes and photography with Rajmoti Studio.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Rajmoti Studio — Premium Photography" },
-      { name: "twitter:description", content: "Bespoke baby, family, maternity and wedding photography. Capturing life's most beautiful moments." },
+      { name: "twitter:title", content: "Rajmoti Studio — Photography & Personalized Photo Gifts" },
+      {
+        name: "twitter:description",
+        content:
+          "Photography, personalized photo gifts, frames, prints and albums. Explore keepsakes and photography with Rajmoti Studio.",
+      },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
-  
+
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
@@ -96,7 +111,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <head><HeadContent /></head>
+      <head>
+        <HeadContent />
+      </head>
       <body>
         {children}
         <Scripts />
@@ -110,7 +127,7 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
-    if(liveBackend&&!backendConfigured)return;
+    if (liveBackend && !backendConfigured) return;
     const sub = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
         router.invalidate();
@@ -123,7 +140,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <HeadContent /><DemoBar /><Outlet />
+        <HeadContent />
+        <DemoBar />
+        <Outlet />
         <Toaster position="top-center" />
       </AuthProvider>
     </QueryClientProvider>

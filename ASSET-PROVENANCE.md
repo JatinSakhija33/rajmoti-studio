@@ -6,3 +6,5 @@ Two images were generated for this private concept using the built-in image gene
 - `public/editorial/gift-still-life.png`: illustrative styled frame, acrylic block, album, mug and packaging in a warm interior. It is not verified stock or a supplier product photograph.
 
 Both are labeled illustrative in the interface. Existing SVG gallery placeholders remain explicitly labeled. No reference-site photographs were copied. Actual product cards show photography-pending placeholders.
+
+The storefront uses content-preserving WebP copies of `gift-still-life.png` at 480, 960 and 1280 pixels wide for responsive loading. The original file remains unchanged. Product cards use abstract CSS design illustrations, explicitly labeled as illustrations, because verified product photographs are not included in this repository.

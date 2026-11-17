@@ -289,6 +289,14 @@ function Contact() {
                               {line.personalisation} · {line.packaging}
                             </small>
                             <small>{line.variantId} · Price to confirm</small>
+                            {line.design?.text && <small>Text: {line.design.text}</small>}
+                            {line.design?.note && <small>Note: {line.design.note}</small>}
+                            {line.design && (
+                              <small>
+                                {line.design.orientation} · {line.design.photoCount} photo
+                                reference(s) to supply separately
+                              </small>
+                            )}
                           </div>
                           <button
                             aria-label={`Remove gift ${p?.name}`}
@@ -307,8 +315,8 @@ function Contact() {
                   </Link>
                 </div>
                 <p className="ed-footnote">
-                  No file uploads, payments or external submissions. Your demonstration details
-                  remain in this browser.
+                  Preview photos are not attached. No payments or external submissions. Your
+                  demonstration details remain in this browser.
                 </p>
               </aside>
             </div>
