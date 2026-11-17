@@ -29,6 +29,8 @@ The existing Vite app is a client SPA. Its intended server-route ignore pattern 
 
 Use Node 22.12 or later:
 
+`.node-version` pins the tested Node 22 runtime for compatible hosted builders. Both npm and Bun lockfiles are synchronized with the current package manifest. The old Bun lockfile referenced a Lovable build dependency that had already been removed from the manifest and failed a frozen install; it was regenerated from the tested npm resolutions.
+
 ```sh
 npm ci
 npm run dev
