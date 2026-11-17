@@ -22,7 +22,13 @@ export function SiteFooter() {
           <div>
             <h3>Explore</h3>
             <Link to="/portfolios">Photography</Link>
-            <Link to="/gifts">Photo gifting directory</Link>
+            <Link to="/gifts">Shop photo gifts</Link>
+            <Link to="/gifts" search={{ collection: "frames" }}>
+              Photo frames & prints
+            </Link>
+            <Link to="/gifts" search={{ occasion: "Birthday" }}>
+              Birthday & personalized gifts
+            </Link>
             <Link to="/packages">Session collections</Link>
             <Link to="/stories">Our stories</Link>
           </div>
@@ -40,7 +46,7 @@ export function SiteFooter() {
         </div>
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} Rajmoti Studio</span>
-          <span>Private demonstration · no live orders, uploads or payments</span>
+          <span>Private preview · quotes & enquiries saved on this device</span>
           <Link to="/contact">ગુજરાતીમાં મદદ ઉપલબ્ધ છે</Link>
         </div>
       </div>

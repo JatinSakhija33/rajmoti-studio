@@ -1,6 +1,9 @@
 import seed from "./seed.json";
 import { useSyncExternalStore } from "react";
-export type Product = (typeof seed.products)[number];
+type SeedProduct = (typeof seed.products)[number];
+export type Product = Omit<SeedProduct, "variants"> & {
+  variants: (Omit<SeedProduct["variants"][number], "price"> & { price: number | null })[];
+};
 export type Variant = Product["variants"][number];
 export type QuoteLine = {
   productId: string;
@@ -9,6 +12,16 @@ export type QuoteLine = {
   personalisation: string;
   packaging: string;
   orderType: string;
+  design?: {
+    text: string;
+    note: string;
+    orientation: string;
+    photoCount: number;
+    zoom: number;
+    x: number;
+    y: number;
+    referenceId?: string;
+  };
 };
 export type SavedStyle = { id: string; title: string; image: string };
 export const categories = seed.categories;
@@ -16,6 +29,7 @@ export const keys = {
   catalogue: "rajmoti:editorial:catalogue:v2",
   quote: "rajmoti:editorial:quote:v2",
   styles: "rajmoti:editorial:styles:v2",
+  favourites: "rajmoti:store:favourites:v1",
 };
 export function read<T>(key: string, fallback: T): T {
   try {
@@ -39,7 +53,13 @@ const subscribe = (listener: () => void) => {
 export function useLocal<T>(key: string, fallback: T): [T, (data: T) => void] {
   const raw = useSyncExternalStore(
     subscribe,
-    () => localStorage.getItem(key),
+    () => {
+      try {
+        return localStorage.getItem(key);
+      } catch {
+        return null;
+      }
+    },
     () => null,
   );
   let value = fallback;
@@ -60,6 +80,9 @@ export function useQuote() {
 }
 export function useStyles() {
   return useLocal<SavedStyle[]>(keys.styles, []);
+}
+export function useFavourites() {
+  return useLocal<string[]>(keys.favourites, []);
 }
 export function exportCatalogue(products: Product[]) {
   const fields = [

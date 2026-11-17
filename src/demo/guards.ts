@@ -31,6 +31,7 @@ export function installDemoGuards() {
   const disableFiles = () =>
     document.querySelectorAll<HTMLInputElement>('input[type="file"]').forEach((el) => {
       if (el.closest('[data-owner-uploads="enabled"]')) return;
+      if (el.closest('[data-local-preview="true"]')) return;
       el.disabled = true;
       el.title = "Customer uploads are disabled in this preview";
     });

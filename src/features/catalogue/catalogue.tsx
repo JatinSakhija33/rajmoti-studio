@@ -1,37 +1,48 @@
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
-  ArrowUpRight,
   ArrowRight,
+  Check,
+  Download,
+  Heart,
+  Plus,
+  Scale,
   Search,
+  ShoppingBag,
   SlidersHorizontal,
   X,
-  Check,
-  Plus,
-  Minus,
-  Download,
-  Layers,
-  Heart,
-  Package,
-  Scale,
 } from "lucide-react";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import {
   categories,
+  exportCatalogue,
+  useFavourites,
   useProducts,
   useQuote,
-  exportCatalogue,
   type Product,
   type QuoteLine,
 } from "./store";
+import {
+  collections,
+  inCollection,
+  matchesDiscovery,
+  sameQuoteLine,
+  type BrowseSearch,
+} from "./discovery";
+import { ProductArt } from "./product-art";
+import { ProductDetail } from "./personalizer";
+import { QuoteDrawer } from "./quote-drawer";
+import { Compare } from "./compare";
+import { formatPrice } from "@/lib/site";
 import { toast } from "sonner";
 
 const initial = {
@@ -43,53 +54,65 @@ const initial = {
   capacity: "",
   usage: "",
   personalisation: "",
-  occasion: "",
-  recipient: "",
   availability: "",
 };
 type Filters = typeof initial;
-function normal(s: string) {
-  return s
-    .toLowerCase()
-    .replace(/[×x]/g, "x")
-    .replace(/\s+/g, "")
-    .replace(/inches|inch/g, "in");
+function priceLabel(p: Product) {
+  const prices = p.variants.flatMap((v) =>
+    v.price != null && Number.isFinite(v.price) ? [v.price] : [],
+  );
+  return prices.length ? `From ${formatPrice(Math.min(...prices))}` : "Price on request";
 }
-export function Catalogue({ productId }: { productId?: string }) {
+export function Catalogue({
+  productId,
+  search = {},
+}: {
+  productId?: string;
+  search?: BrowseSearch;
+}) {
   const [products] = useProducts();
   const [quote, setQuote] = useQuote();
-  const navigate = useNavigate();
-  const [q, setQ] = useState("");
+  const [favourites, setFavourites] = useFavourites();
   const [filters, setFilters] = useState<Filters>(initial);
-  const [sort, setSort] = useState("featured");
   const [showFilters, setShowFilters] = useState(false);
+  const [sort, setSort] = useState("featured");
   const [shown, setShown] = useState(12);
   const [compare, setCompare] = useState<string[]>([]);
   const [comparing, setComparing] = useState(false);
   const [showQuote, setShowQuote] = useState(false);
-  const activeProduct = products.find((p) => p.id === productId);
-  const lastProduct = useRef<Product | undefined>(undefined);
-  if (activeProduct) lastProduct.current = activeProduct;
-  const product = productId ? activeProduct : lastProduct.current;
+  const navigate = useNavigate();
+  const product = products.find((p) => p.id === productId);
+  const currentCollection = collections.find((c) => c.id === search.collection);
+  const title = search.saved
+    ? "Your saved gifts."
+    : currentCollection?.name ||
+      (search.occasion
+        ? `${search.occasion} gifts`
+        : search.recipient
+          ? `Gifts ${search.recipient === "Couples" ? "for couples" : search.recipient.toLowerCase()}`
+          : "A little more personal.");
+  function browse(next: Partial<BrowseSearch>, replace = false) {
+    setShown(12);
+    navigate({
+      to: "/gifts",
+      search: { ...search, ...next, product: undefined },
+      replace,
+      resetScroll: false,
+    });
+  }
+  const open = (id?: string) =>
+    navigate({ to: "/gifts", search: { ...search, product: id }, resetScroll: false });
+  const update = (key: keyof Filters, value: string) => {
+    setFilters((f) => ({ ...f, [key]: value }));
+    setShown(12);
+  };
   const matching = useMemo(
     () =>
       products
-        .filter((p) => {
-          const term = normal(q);
-          const hay = normal(
-            [
-              p.name,
-              p.id,
-              p.material,
-              p.shape,
-              p.type,
-              categories.find((c) => c.id === p.category)?.name,
-              p.printing,
-              ...p.variants.flatMap((v) => [v.size, v.metric || "", v.thickness, v.id]),
-            ].join(" "),
-          );
-          return (
-            (!q || hay.includes(term)) &&
+        .filter(
+          (p) =>
+            matchesDiscovery(p, search) &&
+            (!search.saved || favourites.includes(p.id)) &&
             (!filters.category || p.category === filters.category) &&
             (!filters.material || p.material === filters.material) &&
             (!filters.shape || p.shape === filters.shape) &&
@@ -98,11 +121,8 @@ export function Catalogue({ productId }: { productId?: string }) {
             (!filters.capacity || p.photoCapacity === filters.capacity) &&
             (!filters.usage || p.usage === filters.usage) &&
             (!filters.personalisation || p.personalisation.includes(filters.personalisation)) &&
-            (!filters.occasion || p.occasions.includes(filters.occasion)) &&
-            (!filters.recipient || p.recipients.includes(filters.recipient)) &&
-            (!filters.availability || p.availability === filters.availability)
-          );
-        })
+            (!filters.availability || p.availability === filters.availability),
+        )
         .sort((a, b) =>
           sort === "az"
             ? a.name.localeCompare(b.name)
@@ -110,181 +130,202 @@ export function Catalogue({ productId }: { productId?: string }) {
               ? b.variants.length - a.variants.length
               : 0,
         ),
-    [products, q, filters, sort],
+    [products, search, filters, sort, favourites],
   );
-  const update = (key: keyof Filters, value: string) => {
-    setFilters((f) => ({ ...f, [key]: value }));
-    setShown(12);
-  };
-  const open = (id?: string) =>
-    navigate({ to: "/gifts", search: { product: id }, resetScroll: false });
-  function toggleCompare(id: string) {
-    setCompare((list) => {
-      if (list.includes(id)) return list.filter((x) => x !== id);
-      if (list.length === 3) {
-        toast.info("Compare up to three products at a time.");
-        return list;
-      }
-      return [...list, id];
+  const active = Object.entries(filters).filter(([, value]) => value);
+  const anyFilters =
+    active.length > 0 ||
+    !!(search.collection || search.occasion || search.recipient || search.q || search.saved);
+  function reset() {
+    setFilters(initial);
+    browse({
+      collection: undefined,
+      occasion: undefined,
+      recipient: undefined,
+      q: undefined,
+      saved: undefined,
     });
   }
-  function add(line: QuoteLine) {
-    const existing = quote.findIndex(
-      (x) =>
-        x.productId === line.productId &&
-        x.variantId === line.variantId &&
-        x.personalisation === line.personalisation &&
-        x.packaging === line.packaging &&
-        x.orderType === line.orderType,
-    );
-    const next = [...quote];
-    if (existing >= 0)
-      next[existing] = {
-        ...line,
-        quantity: Math.min(9999, quote[existing].quantity + line.quantity),
-      };
-    else next.push(line);
-    setQuote(next);
-    toast.success("Added to your demo quotation list");
-    open(undefined);
+  function toggleCompare(id: string) {
+    if (compare.includes(id)) setCompare(compare.filter((v) => v !== id));
+    else if (compare.length < 3) setCompare([...compare, id]);
+    else toast.info("Compare up to three products at a time.");
   }
-  const active = Object.entries(filters).filter(([, v]) => v);
-  const reset = () => {
-    setFilters(initial);
-    setQ("");
-    setShown(12);
-  };
+  function add(line: QuoteLine) {
+    const existing = quote.findIndex((item) => sameQuoteLine(item, line));
+    try {
+      setQuote(
+        existing >= 0
+          ? quote.map((item, i) =>
+              i === existing
+                ? { ...item, quantity: Math.min(9999, item.quantity + line.quantity) }
+                : item,
+            )
+          : [...quote, line],
+      );
+      toast.success("Saved to your quote list. Preview photos are not saved.");
+      open(undefined).then(() => setShowQuote(true));
+    } catch {
+      toast.error(
+        "Your browser could not save this selection. Please allow local storage and try again.",
+      );
+    }
+  }
+  function toggleFavourite(id: string) {
+    try {
+      setFavourites(
+        favourites.includes(id) ? favourites.filter((v) => v !== id) : [...favourites, id],
+      );
+    } catch {
+      toast.error("Your browser could not save this gift. Please check local storage.");
+    }
+  }
   return (
-    <div className="editorial">
+    <div className="editorial rs-store">
       <SiteNav />
-      <main>
-        <section className="gift-intro ed-wrap">
-          <div>
-            <p className="ed-kicker">The Rajmoti gift collection</p>
-            <h1>
-              Keep a little
-              <br />
-              <em>of what matters.</em>
-            </h1>
-            <p className="ed-copy">
-              From a favourite photograph to something you can hold. Find the right material, size
-              and finish for your story.
-            </p>
-            <a className="ed-button" href="#directory">
-              Explore the directory <ArrowRight size={16} />
-            </a>
-            <div className="ed-inline-facts">
-              <span>18 product families</span>
-              <span>{products.length} product concepts</span>
-              <span>Made personal</span>
-            </div>
-          </div>
-          <figure className="gift-intro-image">
-            <img
-              src="/editorial/gift-still-life.png"
-              width="1536"
-              height="1024"
-              alt="Illustrative photo frame, acrylic block, album and gift packaging"
-            />
-            <figcaption>
-              Illustrative concept photography · actual products to be confirmed
-            </figcaption>
-          </figure>
-        </section>
-        <div className="ed-wrap">
-          <div className="ed-notice">
-            <Layers size={18} />
-            <p>
-              <strong>A catalogue to explore.</strong> All records and variant specifications below
-              are demonstrations. Stock, materials, prices and preparation times require studio
-              confirmation. No orders or payments are placed here.
-            </p>
-          </div>
+      <main id="main-content" tabIndex={-1}>
+        <div className="rs-wrap rs-breadcrumb">
+          <Link to="/">Home</Link>
+          <span>/</span>
+          <Link to="/gifts">Photo gifts</Link>
+          {search.collection && (
+            <>
+              <span>/</span>
+              <span>{currentCollection?.name || search.collection}</span>
+            </>
+          )}
         </div>
-        <section id="directory" className="ed-wrap directory-section">
-          <div className="ed-section-heading">
-            <div>
-              <p className="ed-kicker">A thoughtful choice, down to the detail</p>
-              <h2>Find your keepsake.</h2>
-            </div>
-            <div className="ed-actions">
-              <button className="ed-text-button" onClick={() => exportCatalogue(products)}>
-                <Download size={16} /> Master catalogue CSV
-              </button>
-              <button className="ed-button outline" onClick={() => setShowQuote(true)}>
-                Your quote list <span className="count-pill">{quote.length}</span>
-              </button>
-            </div>
+        <section className="rs-catalogue-intro rs-wrap">
+          <div>
+            <p className="rs-eyebrow">THE RAJMOTI GIFT COLLECTION</p>
+            <h1>{title}</h1>
+            <p>
+              {search.saved
+                ? "The keepsakes you have your eye on, saved on this browser."
+                : "Your favourite memories, with a place in everyday life. Find a keepsake, choose your details and make it yours."}
+            </p>
           </div>
-          <div className="catalogue-layout">
-            <aside className="category-sidebar">
-              <h3>Browse by family</h3>
+          <div className="rs-catalogue-intro-note">
+            <ShoppingBag size={25} strokeWidth={1.25} />
+            <span>
+              Explore. Personalize. Enquire.
+              <br />
+              <small>Demonstration catalogue · prices & availability to confirm</small>
+            </span>
+          </div>
+        </section>
+        <section className="rs-wrap rs-catalogue-section" aria-label="Gift catalogue">
+          <div className="rs-browse-pills" aria-label="Gift inspiration">
+            {["Birthday", "Anniversary"].map((occasion) => (
               <button
-                className={!filters.category ? "active" : ""}
-                onClick={() => update("category", "")}
+                key={occasion}
+                aria-pressed={search.occasion === occasion}
+                className={search.occasion === occasion ? "active" : ""}
+                onClick={() =>
+                  browse({ occasion: search.occasion === occasion ? undefined : occasion })
+                }
               >
-                All products <span>{products.length}</span>
+                {occasion}
               </button>
-              {categories.map((c, i) => (
+            ))}
+            {["For him", "For her", "Couples", "Parents"].map((recipient) => (
+              <button
+                key={recipient}
+                aria-pressed={search.recipient === recipient}
+                className={search.recipient === recipient ? "active" : ""}
+                onClick={() =>
+                  browse({ recipient: search.recipient === recipient ? undefined : recipient })
+                }
+              >
+                {recipient === "Couples" ? "For couples" : recipient}
+              </button>
+            ))}
+            <Link to="/portfolios">
+              Photography services <ArrowRight size={14} />
+            </Link>
+          </div>
+          <div className="rs-catalogue-layout">
+            <aside className="rs-sidebar">
+              <h2>Find your keepsake</h2>
+              <button
+                className={!search.collection ? "active" : ""}
+                onClick={() => browse({ collection: undefined })}
+              >
+                All photo gifts <span>{products.length}</span>
+              </button>
+              {collections.map((c) => (
                 <button
                   key={c.id}
-                  className={filters.category === c.id ? "active" : ""}
-                  onClick={() => update("category", c.id)}
+                  className={search.collection === c.id ? "active" : ""}
+                  onClick={() => {
+                    setFilters(initial);
+                    browse({ collection: c.id });
+                  }}
                 >
-                  <span className="category-index">{String(i + 1).padStart(2, "0")}</span>
-                  <span>{c.name}</span>
-                  <span>{products.filter((p) => p.category === c.id).length}</span>
+                  {c.name}
+                  <span>{products.filter((p) => inCollection(p, c.id)).length}</span>
                 </button>
               ))}
+              <div className="rs-sidebar-help">
+                <span>Not sure where to start?</span>
+                <p>A little guidance can make choosing easier.</p>
+                <Link to="/contact" className="rs-text-link">
+                  Ask the studio <ArrowRight size={14} />
+                </Link>
+              </div>
+              <button className="rs-download" onClick={() => exportCatalogue(products)}>
+                <Download size={14} />
+                Download catalogue CSV
+              </button>
             </aside>
-            <div className="catalogue-results">
-              <div className="catalogue-toolbar">
-                <label className="ed-search">
-                  <Search size={18} />
+            <div className="rs-catalogue-results">
+              <div className="rs-catalogue-toolbar">
+                <label className="rs-search">
+                  <Search size={19} />
                   <input
                     aria-label="Search product directory"
-                    placeholder="Search products, codes, materials or sizes…"
-                    value={q}
-                    onChange={(e) => {
-                      setQ(e.target.value);
-                      setShown(12);
-                    }}
+                    placeholder="Find a frame, a finish, a favourite…"
+                    value={search.q || ""}
+                    onChange={(e) => browse({ q: e.target.value || undefined }, true)}
                   />
-                  {q && (
-                    <button aria-label="Clear search" onClick={() => setQ("")}>
+                  {search.q && (
+                    <button aria-label="Clear search" onClick={() => browse({ q: undefined })}>
                       <X size={16} />
                     </button>
                   )}
                 </label>
                 <button
-                  className="ed-button outline"
+                  className={`rs-filter-button ${showFilters ? "active" : ""}`}
                   aria-expanded={showFilters}
-                  onClick={() => setShowFilters((v) => !v)}
+                  aria-controls="catalogue-filters"
+                  onClick={() => setShowFilters(!showFilters)}
                 >
-                  <SlidersHorizontal size={17} /> Filters{" "}
-                  {active.length > 0 && `(${active.length})`}
+                  <SlidersHorizontal size={17} />
+                  Filters {active.length > 0 && `(${active.length})`}
                 </button>
               </div>
-              <div className="mobile-category">
-                <label>
-                  Product family
-                  <select
-                    value={filters.category}
-                    onChange={(e) => update("category", e.target.value)}
-                  >
-                    <option value="">All product families</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
+              <label className="rs-mobile-collection">
+                Collection
+                <select
+                  value={search.collection || ""}
+                  onChange={(e) => {
+                    setFilters(initial);
+                    browse({ collection: e.target.value || undefined });
+                  }}
+                >
+                  <option value="">All photo gifts</option>
+                  {collections.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
               {showFilters && (
-                <div className="filter-panel">
+                <div className="rs-filter-panel" id="catalogue-filters">
                   {(
                     [
+                      ["category", "Product family", categories.map((c) => c.id)],
                       ["material", "Material", products.map((p) => p.material)],
                       ["shape", "Shape", products.map((p) => p.shape)],
                       [
@@ -297,492 +338,226 @@ export function Catalogue({ productId }: { productId?: string }) {
                       ["usage", "Usage", products.map((p) => p.usage)],
                       [
                         "personalisation",
-                        "Personalisation",
+                        "Personalization",
                         products.flatMap((p) => p.personalisation),
                       ],
-                      ["occasion", "Occasion", products.flatMap((p) => p.occasions)],
-                      ["recipient", "Recipient", products.flatMap((p) => p.recipients)],
                       ["availability", "Availability", products.map((p) => p.availability)],
                     ] as [keyof Filters, string, string[]][]
                   ).map(([key, label, options]) => (
                     <label key={key}>
                       {label}
-                      <select value={filters[key]} onChange={(e) => update(key, e.target.value)}>
-                        <option value="">All</option>
+                      <select
+                        aria-label={label}
+                        value={filters[key]}
+                        onChange={(e) => update(key, e.target.value)}
+                      >
+                        <option value="">All options</option>
                         {[...new Set(options)].sort().map((o) => (
-                          <option key={o}>{o}</option>
+                          <option key={o} value={o}>
+                            {key === "category" ? categories.find((c) => c.id === o)?.name : o}
+                          </option>
                         ))}
                       </select>
                     </label>
                   ))}
-                  <button className="ed-text-button" onClick={reset}>
-                    Reset all filters
+                  <button className="rs-text-link" onClick={() => setFilters(initial)}>
+                    Reset detailed filters
                   </button>
                 </div>
               )}
-              {active.length > 0 && (
-                <div className="filter-chips">
-                  {active.map(([k, v]) => (
-                    <button key={k} onClick={() => update(k as keyof Filters, "")}>
-                      {k === "category" ? categories.find((c) => c.id === v)?.name : v}
-                      <X size={12} />
+              {anyFilters && (
+                <div className="rs-active-filters">
+                  {(["collection", "occasion", "recipient", "saved"] as const)
+                    .filter((key) => search[key])
+                    .map((key) => (
+                      <button key={key} onClick={() => browse({ [key]: undefined })}>
+                        {key === "collection"
+                          ? currentCollection?.name || search[key]
+                          : key === "saved"
+                            ? "Saved gifts"
+                            : search[key]}
+                        <X size={13} />
+                      </button>
+                    ))}
+                  {active.map(([key, value]) => (
+                    <button key={key} onClick={() => update(key as keyof Filters, "")}>
+                      {key === "category" ? categories.find((c) => c.id === value)?.name : value}
+                      <X size={13} />
                     </button>
                   ))}
+                  <button onClick={reset}>Clear all</button>
                 </div>
               )}
-              <div className="results-meta">
-                <span aria-live="polite">
-                  {matching.length} product{matching.length !== 1 ? "s" : ""} ·{" "}
-                  {matching.reduce((n, p) => n + p.variants.length, 0)} proposed variants
+              <div className="rs-results-meta">
+                <span role="status">
+                  {matching.length} product{matching.length !== 1 ? "s" : ""}
+                  {search.q && ` matching “${search.q}”`}
                 </span>
                 <label>
-                  Sort{" "}
+                  Sort by
                   <select
                     aria-label="Sort products"
                     value={sort}
-                    onChange={(e) => setSort(e.target.value)}
+                    onChange={(e) => {
+                      setSort(e.target.value);
+                      setShown(12);
+                    }}
                   >
-                    <option value="featured">Directory order</option>
+                    <option value="featured">Collection order</option>
                     <option value="az">Name A–Z</option>
                     <option value="variants">Most size options</option>
                   </select>
                 </label>
               </div>
               {matching.length === 0 ? (
-                <div className="ed-empty">
-                  <Search size={28} />
-                  <h3>No matching keepsakes yet.</h3>
-                  <p>Try a broader size, material or product family.</p>
-                  <button className="ed-button outline" onClick={reset}>
-                    Clear search & filters
+                <div className="rs-empty">
+                  <Search size={30} strokeWidth={1.2} />
+                  <h2>
+                    {search.saved
+                      ? "Your favourites will feel at home here."
+                      : "Let’s find another little possibility."}
+                  </h2>
+                  <p>
+                    {search.collection === "devotional"
+                      ? "There are no devotional products listed in the existing catalogue. Ask the studio about a custom request."
+                      : search.saved
+                        ? "Tap the heart on a gift to save it here, or clear filters to see more."
+                        : "Try a different search, collection or material."}
+                  </p>
+                  <button className="rs-button secondary" onClick={reset}>
+                    Explore all photo gifts <ArrowRight size={16} />
                   </button>
                 </div>
               ) : (
-                <div className="product-grid">
-                  {matching.slice(0, shown).map((p, i) => (
-                    <article className="product-card" key={p.id}>
+                <div className="rs-product-grid">
+                  {matching.slice(0, shown).map((p) => (
+                    <article className="rs-product-card" key={p.id}>
                       <button
-                        className={"compare-toggle " + (compare.includes(p.id) ? "selected" : "")}
-                        onClick={() => toggleCompare(p.id)}
-                        aria-label={`Compare ${p.name}`}
-                        aria-pressed={compare.includes(p.id)}
+                        className={`rs-favourite rs-icon ${favourites.includes(p.id) ? "selected" : ""}`}
+                        aria-label={`${favourites.includes(p.id) ? "Unsave" : "Save"} ${p.name}`}
+                        aria-pressed={favourites.includes(p.id)}
+                        onClick={() => toggleFavourite(p.id)}
                       >
-                        {compare.includes(p.id) ? <Check size={15} /> : <Plus size={15} />}
+                        <Heart
+                          size={18}
+                          fill={favourites.includes(p.id) ? "currentColor" : "none"}
+                        />
                       </button>
-                      <button className="product-card-main" onClick={() => open(p.id)}>
-                        <div className={"product-tile family-" + p.category}>
-                          <span>{categories.find((c) => c.id === p.category)?.code}</span>
-                          <span className="product-tile-code">{p.id}</span>
-                          <span className="product-tile-caption">Product photography pending</span>
-                        </div>
-                        <div className="product-card-copy">
-                          <p className="ed-kicker">
+                      <Link
+                        to="/gifts"
+                        search={{ ...search, product: p.id }}
+                        className="rs-product-link"
+                      >
+                        <ProductArt category={p.category} shape={p.shape} label />
+                        <div className="rs-product-card-copy">
+                          <p className="rs-eyebrow">
                             {p.material} · {p.shape}
                           </p>
-                          <h3>{p.name}</h3>
-                          <p className="product-size-list">
+                          <h2>{p.name}</h2>
+                          <p>
                             {p.variants
-                              .slice(0, 3)
+                              .slice(0, 2)
                               .map((v) => v.size)
                               .join(" / ")}
-                            {p.variants.length > 3 ? ` +${p.variants.length - 3} more` : ""}
+                            {p.variants.length > 2 ? ` +${p.variants.length - 2} more` : ""}
                           </p>
-                          <div className="product-card-bottom">
-                            <span>Price on request</span>
-                            <ArrowUpRight size={18} />
+                          <div className="rs-card-price">
+                            <strong>{priceLabel(p)}</strong>
+                            <ArrowRight size={17} />
                           </div>
                         </div>
+                      </Link>
+                      <button
+                        className="rs-compare-toggle"
+                        aria-pressed={compare.includes(p.id)}
+                        onClick={() => toggleCompare(p.id)}
+                      >
+                        {compare.includes(p.id) ? <Check size={14} /> : <Plus size={14} />}Compare
+                        <span className="sr-only"> {p.name}</span>
                       </button>
                     </article>
                   ))}
                 </div>
               )}
               {shown < matching.length && (
-                <div className="load-more">
-                  <button className="ed-button outline" onClick={() => setShown((n) => n + 12)}>
-                    Show more products <Plus size={16} />
+                <div className="rs-load-more">
+                  <p>
+                    Showing {Math.min(shown, matching.length)} of {matching.length} products
+                  </p>
+                  <button className="rs-button secondary" onClick={() => setShown(shown + 12)}>
+                    Discover more <Plus size={16} />
                   </button>
-                  <span>
-                    Showing {Math.min(shown, matching.length)} of {matching.length}
-                  </span>
                 </div>
               )}
+              <p className="rs-catalogue-disclosure">
+                The existing catalogue contains proposed product records and specifications.
+                Illustrations are visual guides. Stock, materials, prices and preparation times
+                require studio confirmation.
+              </p>
             </div>
           </div>
-        </section>
-        <section className="ed-wrap ed-material-section">
-          <p className="ed-kicker">Details make the difference</p>
-          <h2>Choose how your memory feels.</h2>
-          <div className="material-grid">
-            {[
-              {
-                name: "Acrylic",
-                body: "Explore clear surfaces, depth and polished edges. Confirm the thickness and mounting before production.",
-              },
-              {
-                name: "Wood",
-                body: "Warm grain and a tactile finish. Ask to see a sample of the proposed frame or engraved surface.",
-              },
-              {
-                name: "Paper & linen",
-                body: "Compare paper finish, binding and cover texture in person before choosing your album.",
-              },
-            ].map((m) => (
-              <article key={m.name}>
-                <h3>{m.name}</h3>
-                <p>{m.body}</p>
-              </article>
-            ))}
-          </div>
-          <p className="ed-footnote">
-            Material descriptions guide your selection; no supplier or durability claims are
-            verified in this demo.
-          </p>
         </section>
       </main>
       <SiteFooter />
       {compare.length > 0 && (
-        <div className="compare-bar">
+        <div className="rs-compare-bar">
           <span>
-            <Scale size={18} /> {compare.length} of 3 selected
+            <Scale size={18} />
+            {compare.length} of 3 selected
           </span>
           <button onClick={() => setCompare([])}>Clear</button>
           <button
-            className="ed-button"
+            className="rs-button"
             disabled={compare.length < 2}
             onClick={() => setComparing(true)}
           >
-            Compare variants <ArrowRight size={16} />
+            Compare <ArrowRight size={16} />
           </button>
         </div>
       )}
-      <Dialog open={!!productId} onOpenChange={(v) => !v && open(undefined)}>
-        <DialogContent className="ed-modal product-modal">
-          <DialogHeader>
+      <Dialog
+        open={!!productId}
+        onOpenChange={(value) => {
+          if (!value) open(undefined);
+        }}
+      >
+        <DialogContent className="rs-modal rs-product-modal">
+          <DialogHeader className="rs-dialog-heading">
             <DialogTitle>{product?.name || "Product not found"}</DialogTitle>
             <DialogDescription>
-              Demonstration specification · no purchase or upload
+              {product
+                ? "Make it yours · choose a size, try a photo, save your selection."
+                : "This product is no longer in the catalogue."}
             </DialogDescription>
+            <DialogClose className="rs-detail-close rs-icon" aria-label="Close product">
+              <X size={18} />
+            </DialogClose>
           </DialogHeader>
           {product ? (
             <ProductDetail key={product.id} product={product} onAdd={add} />
           ) : (
-            <p>This product code is not in the directory. Close this panel to continue browsing.</p>
+            <div className="rs-empty">
+              <p>Close this panel to continue browsing the collection.</p>
+              <button className="rs-button" onClick={() => open(undefined)}>
+                Back to gifts
+              </button>
+            </div>
           )}
         </DialogContent>
       </Dialog>
       <Dialog open={comparing} onOpenChange={setComparing}>
-        <DialogContent className="ed-modal compare-modal">
+        <DialogContent className="rs-modal rs-compare-modal">
           <DialogHeader>
-            <DialogTitle>Compare the details.</DialogTitle>
+            <DialogTitle>A closer look, side by side.</DialogTitle>
             <DialogDescription>
-              Select a variant in each column. Every specification is proposed, not confirmed
-              inventory.
+              Compare existing sizes and finishes. Specifications and availability require studio
+              confirmation.
             </DialogDescription>
           </DialogHeader>
           <Compare products={products.filter((p) => compare.includes(p.id))} />
         </DialogContent>
       </Dialog>
-      <Dialog open={showQuote} onOpenChange={setShowQuote}>
-        <DialogContent className="ed-modal">
-          <DialogHeader>
-            <DialogTitle>Your quotation shortlist</DialogTitle>
-            <DialogDescription>Saved on this browser. No order has been placed.</DialogDescription>
-          </DialogHeader>
-          {quote.length === 0 ? (
-            <div className="ed-empty">
-              <Package />
-              <p>Open a product, choose a variant and add it here.</p>
-            </div>
-          ) : (
-            <>
-              <div className="quote-lines">
-                {quote.map((line, i) => {
-                  const p = products.find((p) => p.id === line.productId);
-                  const v = p?.variants.find((v) => v.id === line.variantId);
-                  return (
-                    <article key={i}>
-                      <div>
-                        <strong>{p?.name || line.productId}</strong>
-                        <p>
-                          {v?.size} · Qty {line.quantity} · {line.personalisation}
-                        </p>
-                        <small>
-                          {line.packaging} · {line.orderType} · Price to confirm
-                        </small>
-                      </div>
-                      <button
-                        aria-label={`Remove ${p?.name}`}
-                        onClick={() => setQuote(quote.filter((_, j) => j !== i))}
-                      >
-                        <X size={18} />
-                      </button>
-                    </article>
-                  );
-                })}
-              </div>
-              <Link to="/contact" className="ed-button" onClick={() => setShowQuote(false)}>
-                Prepare demo enquiry <ArrowRight size={16} />
-              </Link>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-function ProductDetail({
-  product: p,
-  onAdd,
-}: {
-  product: Product;
-  onAdd: (line: QuoteLine) => void;
-}) {
-  const [variantId, setVariant] = useState(p.variants[0]?.id || "");
-  const [qty, setQty] = useState(1);
-  const [personalisation, setPersonalisation] = useState(p.personalisation[0]);
-  const [packaging, setPackaging] = useState(p.packaging[0]);
-  const [orderType, setOrderType] = useState(p.orderTypes[0]);
-  const v = p.variants.find((v) => v.id === variantId)!;
-  const dims = (v?.size || "").match(/^(\d+)×(\d+) in$/);
-  const w = dims ? Number(dims[1]) : 0;
-  const h = dims ? Number(dims[2]) : 0;
-  return (
-    <>
-      <div className="product-detail-grid">
-        <div>
-          <div className="size-stage">
-            <div className="size-guide">
-              <span>8×12 in reference</span>
-            </div>
-            {dims ? (
-              <div
-                className="selected-size"
-                style={{
-                  width: Math.min((w / 30) * 100, 95) + "%",
-                  height: Math.min((h / 30) * 100, 95) + "%",
-                }}
-              >
-                <span>{v.size}</span>
-              </div>
-            ) : (
-              <div className="nondimensional">
-                <Layers size={36} />
-                <span>{v.size}</span>
-              </div>
-            )}
-          </div>
-          <p className="ed-footnote">
-            {dims
-              ? "Relative dimensions only — not actual screen size."
-              : "Visual size comparison is available for rectangular inch sizes."}{" "}
-            Product photo pending.
-          </p>
-          <div className="product-info-note">
-            <strong>Before we make it</strong>
-            <p>
-              We confirm the material, size, finish, artwork, price and delivery with you. The
-              listed options are proposed catalogue records.
-            </p>
-          </div>
-        </div>
-        <div className="product-config">
-          <p className="ed-kicker">
-            {p.id} · {categories.find((c) => c.id === p.category)?.name}
-          </p>
-          <p>{p.description}</p>
-          <label>
-            Proposed size / variant
-            <select value={variantId} onChange={(e) => setVariant(e.target.value)}>
-              {p.variants.map((v) => (
-                <option value={v.id} key={v.id}>
-                  {v.size}
-                  {v.thickness !== "Not specified" ? ` · ${v.thickness}` : ""} · {v.finish}
-                </option>
-              ))}
-            </select>
-          </label>
-          {v.metric && <span className="ed-footnote">{v.metric}</span>}
-          <div className="config-two">
-            <label>
-              Quantity
-              <input
-                type="number"
-                min="1"
-                max="9999"
-                step="1"
-                value={qty}
-                onChange={(e) => setQty(Number(e.target.value))}
-              />
-            </label>
-            <label>
-              Order type
-              <select value={orderType} onChange={(e) => setOrderType(e.target.value)}>
-                {p.orderTypes.map((t) => (
-                  <option key={t}>{t}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <label>
-            Personalisation
-            <select value={personalisation} onChange={(e) => setPersonalisation(e.target.value)}>
-              {p.personalisation.map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Packaging
-            <select value={packaging} onChange={(e) => setPackaging(e.target.value)}>
-              {p.packaging.map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
-          </label>
-          <div className="detail-price">
-            <strong>Price on request</strong>
-            <span>No unverified prices or delivery promises.</span>
-          </div>
-          <button
-            className="ed-button"
-            disabled={
-              !Number.isInteger(qty) || qty < 1 || qty > 9999 || p.availability === "Discontinued"
-            }
-            onClick={() =>
-              onAdd({
-                productId: p.id,
-                variantId,
-                quantity: qty,
-                personalisation,
-                packaging,
-                orderType,
-              })
-            }
-          >
-            Add to quote list <Plus size={16} />
-          </button>
-          <small>Uploads and payments are disabled.</small>
-        </div>
-      </div>
-      <h3 className="spec-heading">The specification directory</h3>
-      <dl className="spec-grid">
-        {Object.entries({
-          "Product code": p.id,
-          "Variant code": v.id,
-          Material: p.material,
-          Thickness: v.thickness,
-          Shape: p.shape,
-          Size: v.size,
-          Metric: v.metric || "Not applicable / to confirm",
-          "Photo capacity": p.photoCapacity,
-          "Printing method": p.printing,
-          Orientation: p.orientation.join(" / "),
-          Finish: v.finish,
-          Usage: p.usage,
-          Availability: p.availability,
-          Preparation: p.production,
-          "Collection / delivery": p.delivery.join(" / "),
-          Status: v.status,
-        }).map(([k, val]) => (
-          <div key={k}>
-            <dt>{k}</dt>
-            <dd>{val}</dd>
-          </div>
-        ))}
-      </dl>
-      <details className="variant-directory">
-        <summary>All proposed variants ({p.variants.length})</summary>
-        <table>
-          <thead>
-            <tr>
-              <th>Code</th>
-              <th>Size</th>
-              <th>Metric</th>
-              <th>Thickness</th>
-              <th>Finish</th>
-            </tr>
-          </thead>
-          <tbody>
-            {p.variants.map((v) => (
-              <tr key={v.id}>
-                <td>{v.id}</td>
-                <td>{v.size}</td>
-                <td>{v.metric || "—"}</td>
-                <td>{v.thickness}</td>
-                <td>{v.finish}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </details>
-    </>
-  );
-}
-function Compare({ products }: { products: Product[] }) {
-  const [selected, setSelected] = useState<Record<string, string>>({});
-  const rows = [
-    "Material",
-    "Shape",
-    "Size",
-    "Thickness",
-    "Finish",
-    "Printing",
-    "Photo capacity",
-    "Personalisation",
-    "Packaging",
-    "Availability",
-    "Price",
-  ];
-  return (
-    <div className="comparison-scroll">
-      <table className="comparison-table">
-        <thead>
-          <tr>
-            <th>Detail</th>
-            {products.map((p) => (
-              <th key={p.id}>
-                {p.name}
-                <select
-                  aria-label={`Variant for ${p.name}`}
-                  value={selected[p.id] || p.variants[0].id}
-                  onChange={(e) => setSelected({ ...selected, [p.id]: e.target.value })}
-                >
-                  {p.variants.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.size} · {v.finish}
-                    </option>
-                  ))}
-                </select>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((key) => (
-            <tr key={key}>
-              <th>{key}</th>
-              {products.map((p) => {
-                const v = p.variants.find((v) => v.id === (selected[p.id] || p.variants[0].id))!;
-                const data: Record<string, string> = {
-                  Material: p.material,
-                  Shape: p.shape,
-                  Size: v.size,
-                  Thickness: v.thickness,
-                  Finish: v.finish,
-                  Printing: p.printing,
-                  "Photo capacity": p.photoCapacity,
-                  Personalisation: p.personalisation.join(", "),
-                  Packaging: p.packaging.join(", "),
-                  Availability: p.availability,
-                  Price: "To be quoted",
-                };
-                return <td key={p.id}>{data[key]}</td>;
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <QuoteDrawer open={showQuote} onOpenChange={setShowQuote} />
     </div>
   );
 }
