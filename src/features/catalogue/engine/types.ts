@@ -69,7 +69,23 @@ export interface SavedProductDesign {
   highResExportReady: boolean;
 }
 
-// Standard Rajmoti Sizes for Frames and Prints
+export interface PrintExportBundle {
+  designId: string;
+  productId: string;
+  widthPx: number;
+  heightPx: number;
+  dpi: number;
+  bleedMm: number;
+  dataUrl: string;
+  paperFinish: PaperFinishType;
+  instructions: {
+    cuttingSize: string;
+    visibleSize: string;
+    notes: string;
+  };
+}
+
+// Standard Rajmoti Sizes for Frames and Prints (All 8 Standard Studio Formats)
 export const RAJMOTI_FRAME_SIZES: PhysicalSizeSpec[] = [
   { id: "8x12", label: "8×12 in", metric: "20×30 cm", widthInches: 8, heightInches: 12, aspectRatio: "2 / 3", aspectRatioValue: 8 / 12 },
   { id: "10x10", label: "10×10 in", metric: "25×25 cm", widthInches: 10, heightInches: 10, aspectRatio: "1 / 1", aspectRatioValue: 1, popular: true },
@@ -85,9 +101,26 @@ export const RAJMOTI_ACRYLIC_SIZES: PhysicalSizeSpec[] = [
   { id: "8x12", label: "8×12 in", metric: "20×30 cm", widthInches: 8, heightInches: 12, aspectRatio: "2 / 3", aspectRatioValue: 8 / 12 },
   { id: "12x18", label: "12×18 in", metric: "30×45 cm", widthInches: 12, heightInches: 18, aspectRatio: "2 / 3", aspectRatioValue: 12 / 18, popular: true },
   { id: "16x24", label: "16×24 in", metric: "40×60 cm", widthInches: 16, heightInches: 24, aspectRatio: "2 / 3", aspectRatioValue: 16 / 24 },
+  { id: "20x30", label: "20×30 in", metric: "50×75 cm", widthInches: 20, heightInches: 30, aspectRatio: "2 / 3", aspectRatioValue: 20 / 30 },
 ];
 
 export const RAJMOTI_TRANSLIGHT_SIZES: PhysicalSizeSpec[] = [
   { id: "12x18", label: "12×18 in", metric: "30×45 cm", widthInches: 12, heightInches: 18, aspectRatio: "2 / 3", aspectRatioValue: 12 / 18, popular: true },
   { id: "16x24", label: "16×24 in", metric: "40×60 cm", widthInches: 16, heightInches: 24, aspectRatio: "2 / 3", aspectRatioValue: 16 / 24 },
 ];
+
+export const RAJMOTI_ALBUM_SIZES: PhysicalSizeSpec[] = [
+  { id: "8x8", label: "8×8 in (Square)", metric: "20×20 cm", widthInches: 8, heightInches: 8, aspectRatio: "1 / 1", aspectRatioValue: 1 },
+  { id: "8.5x11", label: "8.5×11 in (Editorial)", metric: "21×28 cm", widthInches: 8.5, heightInches: 11, aspectRatio: "8.5 / 11", aspectRatioValue: 8.5 / 11 },
+  { id: "10x10", label: "10×10 in (Hardcover)", metric: "25×25 cm", widthInches: 10, heightInches: 10, aspectRatio: "1 / 1", aspectRatioValue: 1, popular: true },
+  { id: "12x18", label: "12×18 in (Royal Flushmount)", metric: "30×45 cm", widthInches: 12, heightInches: 18, aspectRatio: "2 / 3", aspectRatioValue: 12 / 18, popular: true },
+];
+
+export const RAJMOTI_NOVELTY_SPECS: Record<string, PhysicalSizeSpec> = {
+  clock: { id: "clock-10x10", label: "10×10 in Square", metric: "25×25 cm", widthInches: 10, heightInches: 10, aspectRatio: "1 / 1", aspectRatioValue: 1 },
+  cushion: { id: "cushion-16x16", label: "16×16 in Velvet", metric: "40×40 cm", widthInches: 16, heightInches: 16, aspectRatio: "1 / 1", aspectRatioValue: 1 },
+  plaque: { id: "plaque-8x6", label: "8×6 in Desk Plaque", metric: "20×15 cm", widthInches: 8, heightInches: 6, aspectRatio: "4 / 3", aspectRatioValue: 4 / 3 },
+  puzzle: { id: "puzzle-a4", label: "8×12 in Puzzle (120 pcs)", metric: "20×30 cm", widthInches: 8, heightInches: 12, aspectRatio: "2 / 3", aspectRatioValue: 8 / 12 },
+  keychain: { id: "keychain-2x2", label: "2×2 in Double Sided", metric: "5×5 cm", widthInches: 2, heightInches: 2, aspectRatio: "1 / 1", aspectRatioValue: 1 },
+  mug: { id: "mug-11oz", label: "11 oz Wraparound", metric: "325 ml", widthInches: 8.5, heightInches: 3.5, aspectRatio: "17 / 7", aspectRatioValue: 8.5 / 3.5 },
+};
