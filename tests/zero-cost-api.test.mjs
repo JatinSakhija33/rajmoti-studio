@@ -16,7 +16,8 @@ import {
   STANDARD_DELIVERY_CHARGE_PAISE,
 } from "../functions/_lib/security.js";
 
-const secret="d5c64a28942d159134a2d7c783afb14184fbd784a19557f35a930132019b83af";
+// Ephemeral signing material for this test process; never a deployed credential.
+const secret=Array.from(crypto.getRandomValues(new Uint8Array(32)),byte=>byte.toString(16).padStart(2,"0")).join("");
 
 test("phone normalization rejects invalid numbers",()=>{
  assert.equal(phoneNumber("+91 98765 43210"),"9876543210");
