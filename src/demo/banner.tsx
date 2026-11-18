@@ -1,19 +1,21 @@
 import { clearDemoMedia } from "./media-storage";
 import { liveBackend, backendConfigured } from "@/lib/backend-mode";
 import { Link } from "@tanstack/react-router";
+import {useGiftCheckoutReady} from "@/features/catalogue/gift-checkout-status";
 export function DemoBar() {
+  const giftReady=useGiftCheckoutReady();
   return (
     <>
       <div className="demo-bar">
         <strong>
-          {liveBackend
+          {giftReady ? "GIFT ORDERING CONNECTED" : liveBackend
             ? backendConfigured
               ? "SUPABASE MODE"
               : "SUPABASE SETUP REQUIRED"
             : "PRIVATE PREVIEW"}
         </strong>
         <span>
-          {liveBackend
+          {giftReady ? "Private gift uploads · Direct UPI · Manual bank verification" : liveBackend
             ? "Owner photos use Supabase · Catalogue & checkout remain demonstrations"
             : "Owner photo uploads stay in this browser · No live orders"}
         </span>

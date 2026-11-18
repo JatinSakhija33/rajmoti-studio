@@ -19,6 +19,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as GiftsRouteImport } from './routes/gifts'
 import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as PortfoliosRouteImport } from './routes/portfolios'
+import { Route as ProductsRouteImport } from './routes/products'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as StoriesRouteImport } from './routes/stories'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -30,6 +31,7 @@ import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminContactsRouteImport } from './routes/admin.contacts'
 import { Route as AdminContentRouteImport } from './routes/admin.content'
 import { Route as AdminCrmRouteImport } from './routes/admin.crm'
+import { Route as AdminGiftOrdersRouteImport } from './routes/admin.gift-orders'
 import { Route as AdminGiftsRouteImport } from './routes/admin.gifts'
 import { Route as AdminImagesRouteImport } from './routes/admin.images'
 import { Route as AdminInquiriesRouteImport } from './routes/admin.inquiries'
@@ -41,6 +43,7 @@ import { Route as AdminWorkflowRouteImport } from './routes/admin.workflow'
 import { Route as PhotoShortIdRouteImport } from './routes/photo.$shortId'
 import { Route as PortfoliosIndexRouteImport } from './routes/portfolios.index'
 import { Route as ReelShortIdRouteImport } from './routes/reel.$shortId'
+import { Route as TrackIdRouteImport } from './routes/track.$id'
 import { Route as PortfoliosCategoryIndexRouteImport } from './routes/portfolios.$category.index'
 import { Route as PortfoliosCategorySubcategoryRouteImport } from './routes/portfolios.$category.$subcategory'
 
@@ -92,6 +95,11 @@ const PackagesRoute = PackagesRouteImport.update({
 const PortfoliosRoute = PortfoliosRouteImport.update({
   id: '/portfolios',
   path: '/portfolios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductsRoute = ProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -149,6 +157,11 @@ const AdminCrmRoute = AdminCrmRouteImport.update({
   path: '/crm',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminGiftOrdersRoute = AdminGiftOrdersRouteImport.update({
+  id: '/gift-orders',
+  path: '/gift-orders',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminGiftsRoute = AdminGiftsRouteImport.update({
   id: '/gifts',
   path: '/gifts',
@@ -204,6 +217,11 @@ const ReelShortIdRoute = ReelShortIdRouteImport.update({
   path: '/reel/$shortId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrackIdRoute = TrackIdRouteImport.update({
+  id: '/track/$id',
+  path: '/track/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortfoliosCategoryIndexRoute = PortfoliosCategoryIndexRouteImport.update({
   id: '/$category/',
   path: '/$category/',
@@ -227,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/gifts': typeof GiftsRoute
   '/packages': typeof PackagesRoute
   '/portfolios': typeof PortfoliosRouteWithChildren
+  '/products': typeof ProductsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/stories': typeof StoriesRoute
   '/admin/booking': typeof AdminBookingRoute
@@ -237,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
+  '/admin/gift-orders': typeof AdminGiftOrdersRoute
   '/admin/gifts': typeof AdminGiftsRoute
   '/admin/images': typeof AdminImagesRoute
   '/admin/inquiries': typeof AdminInquiriesRoute
@@ -247,6 +267,7 @@ export interface FileRoutesByFullPath {
   '/admin/workflow': typeof AdminWorkflowRoute
   '/photo/$shortId': typeof PhotoShortIdRoute
   '/reel/$shortId': typeof ReelShortIdRoute
+  '/track/$id': typeof TrackIdRoute
   '/admin/': typeof AdminIndexRoute
   '/portfolios/': typeof PortfoliosIndexRoute
   '/portfolios/$category/$subcategory': typeof PortfoliosCategorySubcategoryRoute
@@ -261,6 +282,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/gifts': typeof GiftsRoute
   '/packages': typeof PackagesRoute
+  '/products': typeof ProductsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/stories': typeof StoriesRoute
   '/admin/booking': typeof AdminBookingRoute
@@ -271,6 +293,7 @@ export interface FileRoutesByTo {
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
+  '/admin/gift-orders': typeof AdminGiftOrdersRoute
   '/admin/gifts': typeof AdminGiftsRoute
   '/admin/images': typeof AdminImagesRoute
   '/admin/inquiries': typeof AdminInquiriesRoute
@@ -281,6 +304,7 @@ export interface FileRoutesByTo {
   '/admin/workflow': typeof AdminWorkflowRoute
   '/photo/$shortId': typeof PhotoShortIdRoute
   '/reel/$shortId': typeof ReelShortIdRoute
+  '/track/$id': typeof TrackIdRoute
   '/admin': typeof AdminIndexRoute
   '/portfolios': typeof PortfoliosIndexRoute
   '/portfolios/$category/$subcategory': typeof PortfoliosCategorySubcategoryRoute
@@ -298,6 +322,7 @@ export interface FileRoutesById {
   '/gifts': typeof GiftsRoute
   '/packages': typeof PackagesRoute
   '/portfolios': typeof PortfoliosRouteWithChildren
+  '/products': typeof ProductsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/stories': typeof StoriesRoute
   '/admin/booking': typeof AdminBookingRoute
@@ -308,6 +333,7 @@ export interface FileRoutesById {
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
+  '/admin/gift-orders': typeof AdminGiftOrdersRoute
   '/admin/gifts': typeof AdminGiftsRoute
   '/admin/images': typeof AdminImagesRoute
   '/admin/inquiries': typeof AdminInquiriesRoute
@@ -318,6 +344,7 @@ export interface FileRoutesById {
   '/admin/workflow': typeof AdminWorkflowRoute
   '/photo/$shortId': typeof PhotoShortIdRoute
   '/reel/$shortId': typeof ReelShortIdRoute
+  '/track/$id': typeof TrackIdRoute
   '/admin/': typeof AdminIndexRoute
   '/portfolios/': typeof PortfoliosIndexRoute
   '/portfolios/$category/$subcategory': typeof PortfoliosCategorySubcategoryRoute
@@ -336,6 +363,7 @@ export interface FileRouteTypes {
     | '/gifts'
     | '/packages'
     | '/portfolios'
+    | '/products'
     | '/reset-password'
     | '/stories'
     | '/admin/booking'
@@ -346,6 +374,7 @@ export interface FileRouteTypes {
     | '/admin/contacts'
     | '/admin/content'
     | '/admin/crm'
+    | '/admin/gift-orders'
     | '/admin/gifts'
     | '/admin/images'
     | '/admin/inquiries'
@@ -356,6 +385,7 @@ export interface FileRouteTypes {
     | '/admin/workflow'
     | '/photo/$shortId'
     | '/reel/$shortId'
+    | '/track/$id'
     | '/admin/'
     | '/portfolios/'
     | '/portfolios/$category/$subcategory'
@@ -370,6 +400,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/gifts'
     | '/packages'
+    | '/products'
     | '/reset-password'
     | '/stories'
     | '/admin/booking'
@@ -380,6 +411,7 @@ export interface FileRouteTypes {
     | '/admin/contacts'
     | '/admin/content'
     | '/admin/crm'
+    | '/admin/gift-orders'
     | '/admin/gifts'
     | '/admin/images'
     | '/admin/inquiries'
@@ -390,6 +422,7 @@ export interface FileRouteTypes {
     | '/admin/workflow'
     | '/photo/$shortId'
     | '/reel/$shortId'
+    | '/track/$id'
     | '/admin'
     | '/portfolios'
     | '/portfolios/$category/$subcategory'
@@ -406,6 +439,7 @@ export interface FileRouteTypes {
     | '/gifts'
     | '/packages'
     | '/portfolios'
+    | '/products'
     | '/reset-password'
     | '/stories'
     | '/admin/booking'
@@ -416,6 +450,7 @@ export interface FileRouteTypes {
     | '/admin/contacts'
     | '/admin/content'
     | '/admin/crm'
+    | '/admin/gift-orders'
     | '/admin/gifts'
     | '/admin/images'
     | '/admin/inquiries'
@@ -426,6 +461,7 @@ export interface FileRouteTypes {
     | '/admin/workflow'
     | '/photo/$shortId'
     | '/reel/$shortId'
+    | '/track/$id'
     | '/admin/'
     | '/portfolios/'
     | '/portfolios/$category/$subcategory'
@@ -443,10 +479,12 @@ export interface RootRouteChildren {
   GiftsRoute: typeof GiftsRoute
   PackagesRoute: typeof PackagesRoute
   PortfoliosRoute: typeof PortfoliosRouteWithChildren
+  ProductsRoute: typeof ProductsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   StoriesRoute: typeof StoriesRoute
   PhotoShortIdRoute: typeof PhotoShortIdRoute
   ReelShortIdRoute: typeof ReelShortIdRoute
+  TrackIdRoute: typeof TrackIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -519,6 +557,13 @@ declare module '@tanstack/react-router' {
       path: '/portfolios'
       fullPath: '/portfolios'
       preLoaderRoute: typeof PortfoliosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/products': {
+      id: '/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof ProductsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -598,6 +643,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCrmRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/gift-orders': {
+      id: '/admin/gift-orders'
+      path: '/gift-orders'
+      fullPath: '/admin/gift-orders'
+      preLoaderRoute: typeof AdminGiftOrdersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/gifts': {
       id: '/admin/gifts'
       path: '/gifts'
@@ -675,6 +727,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReelShortIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/track/$id': {
+      id: '/track/$id'
+      path: '/track/$id'
+      fullPath: '/track/$id'
+      preLoaderRoute: typeof TrackIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/portfolios/$category/': {
       id: '/portfolios/$category/'
       path: '/$category'
@@ -701,6 +760,7 @@ interface AdminRouteChildren {
   AdminContactsRoute: typeof AdminContactsRoute
   AdminContentRoute: typeof AdminContentRoute
   AdminCrmRoute: typeof AdminCrmRoute
+  AdminGiftOrdersRoute: typeof AdminGiftOrdersRoute
   AdminGiftsRoute: typeof AdminGiftsRoute
   AdminImagesRoute: typeof AdminImagesRoute
   AdminInquiriesRoute: typeof AdminInquiriesRoute
@@ -721,6 +781,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminContactsRoute: AdminContactsRoute,
   AdminContentRoute: AdminContentRoute,
   AdminCrmRoute: AdminCrmRoute,
+  AdminGiftOrdersRoute: AdminGiftOrdersRoute,
   AdminGiftsRoute: AdminGiftsRoute,
   AdminImagesRoute: AdminImagesRoute,
   AdminInquiriesRoute: AdminInquiriesRoute,
@@ -761,10 +822,12 @@ const rootRouteChildren: RootRouteChildren = {
   GiftsRoute: GiftsRoute,
   PackagesRoute: PackagesRoute,
   PortfoliosRoute: PortfoliosRouteWithChildren,
+  ProductsRoute: ProductsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   StoriesRoute: StoriesRoute,
   PhotoShortIdRoute: PhotoShortIdRoute,
   ReelShortIdRoute: ReelShortIdRoute,
+  TrackIdRoute: TrackIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
