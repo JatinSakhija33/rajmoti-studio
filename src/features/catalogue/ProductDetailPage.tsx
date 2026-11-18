@@ -78,6 +78,7 @@ interface GiftAddon {
   label: string;
   desc: string;
   price: number;
+  thumbnail?: string;
 }
 
 const GIFT_ADDONS: GiftAddon[] = [
@@ -86,18 +87,21 @@ const GIFT_ADDONS: GiftAddon[] = [
     label: "Handcrafted Studio Gift Box & Satin Ribbon",
     desc: "Rigid keepsake box, protective tissue, and gold-foiled seal",
     price: 49,
+    thumbnail: "/products/visuals/gift-box-signature-hamper.jpg",
   },
   {
     id: "message_card",
     label: "Personalized Wax-Sealed Message Card",
     desc: "Heavy 300 GSM textured card with your printed handwritten-style note",
     price: 29,
+    thumbnail: "/products/visuals/gift-box-signature-hamper.jpg",
   },
   {
     id: "matching_keychain",
     label: "Matching Double-Sided Pocket Keychain",
     desc: "Miniature keepsake crafted from the same chosen photograph",
     price: 149,
+    thumbnail: "/products/visuals/flatlay-keepsakes-novelty.jpg",
   },
 ];
 
@@ -492,6 +496,13 @@ export function ProductDetailPage({
                         >
                           {isChecked && <Check size={11} />}
                         </div>
+                        {addon.thumbnail && (
+                          <img
+                            src={addon.thumbnail}
+                            alt={addon.label}
+                            className="size-9 rounded-lg object-cover border border-stone-200 shrink-0"
+                          />
+                        )}
                         <div>
                           <span className="text-xs font-bold text-stone-900 block">{addon.label}</span>
                           <span className="text-[10px] text-stone-500 block">{addon.desc}</span>

@@ -54,6 +54,9 @@ import { GiftFinder } from "./GiftFinder";
 import { WallSizeVisualizer } from "./WallSizeVisualizer";
 import { BundleShowcase } from "./BundleShowcase";
 import { CheckoutDialog } from "./CheckoutDialog";
+import { StorytellingSteps } from "./engine/StorytellingSteps";
+import { PackagingExperience } from "./engine/PackagingExperience";
+import { BudgetTiersShowcase } from "./engine/BudgetTiersShowcase";
 import { calculateVariantPriceInr } from "@/lib/pricing";
 import { toast } from "sonner";
 
@@ -80,14 +83,14 @@ function normal(s: string) {
 }
 function getCategorySampleImage(cat: string, prodId: string): string {
   const pId = prodId.toLowerCase();
-  if (cat === "drinkware" || pId.includes("mug")) return "/products/mug-sample-couple.jpg";
-  if (cat === "led" || pId.includes("translight")) return "/products/translight-sample.jpg";
-  if (cat === "gods-collection" || cat === "devotional" || pId.includes("deity")) return "/deities/shrinathji.jpg";
-  if (cat === "magazines" || pId.includes("mag")) return "/products/magazine-cover.jpg";
-  if (cat === "acrylic") return "/products/frame-sample-anniversary.jpg";
-  if (cat === "canvas") return "/products/frame-sample-family.jpg";
-  if (cat === "prints") return "/products/frame-sample-baby.jpg";
-  return "/products/frame-sample-wedding.jpg";
+  if (cat === "drinkware" || pId.includes("mug")) return "/products/visuals/mug-couple-morning.jpg";
+  if (cat === "led" || pId.includes("translight")) return "/products/visuals/translight-dwarkadhish-lit.jpg";
+  if (cat === "gods-collection" || cat === "devotional" || pId.includes("deity")) return "/deities/dwarkadhish.jpg";
+  if (cat === "magazines" || pId.includes("mag") || pId.includes("album")) return "/products/visuals/album-flushmount-wedding.jpg";
+  if (cat === "acrylic") return "/products/visuals/acrylic-wall-art-family.jpg";
+  if (cat === "canvas") return "/products/visuals/royal-wedding-portrait.jpg";
+  if (cat === "prints") return "/products/visuals/baby-milestone-portrait.jpg";
+  return "/products/visuals/frame-teak-living-room.jpg";
 }
 
 export function Catalogue({
@@ -270,14 +273,14 @@ export function Catalogue({
           </div>
           <figure className="gift-intro-image">
             <img
-              src="/products/frame-sample-wedding.jpg"
+              src="/products/visuals/frame-teak-living-room.jpg"
               width="1536"
               height="1024"
-              alt="Handcrafted archival frames, acrylic blocks and keepsakes"
+              alt="Handcrafted archival teak frames and keepsakes in authentic Indian interior"
               className="object-cover rounded-2xl shadow-xl"
             />
             <figcaption>
-              Authentic keepsake photography handcrafted at Rajmoti Studio Jetpur
+              Natural Teak Frame in Indian Living Room · Handcrafted at Rajmoti Studio Jetpur
             </figcaption>
           </figure>
         </section>
@@ -301,7 +304,7 @@ export function Catalogue({
             <div className="group rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between">
               <Link to="/products/gifts" className="block relative aspect-[4/3] bg-stone-900 overflow-hidden">
                 <img
-                  src="/products/mug-sample-couple.jpg"
+                  src="/products/visuals/mug-couple-morning.jpg"
                   alt="Personalized Gifts"
                   className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
@@ -373,7 +376,7 @@ export function Catalogue({
             <div className="group rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between">
               <Link to="/products/frames" className="block relative aspect-[4/3] bg-stone-100 overflow-hidden">
                 <img
-                  src="/products/frame-sample-wedding.jpg"
+                  src="/products/visuals/frame-teak-living-room.jpg"
                   alt="Frames & Prints"
                   className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
@@ -409,9 +412,9 @@ export function Catalogue({
             <div className="group rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between">
               <Link to="/products/magazines" className="block relative aspect-[4/3] bg-[#1E1916] overflow-hidden flex items-center justify-center p-2">
                 <img
-                  src="/products/magazine-cover.jpg"
+                  src="/products/visuals/album-flushmount-wedding.jpg"
                   alt="Magazines & Albums"
-                  className="h-full aspect-[2/3] object-cover rounded shadow-lg group-hover:scale-105 transition-transform duration-500"
+                  className="h-full aspect-[3/2] object-cover rounded shadow-lg group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute top-2.5 left-2.5 bg-stone-900/80 backdrop-blur-md text-amber-100 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
                   Magazines & Albums
@@ -445,7 +448,7 @@ export function Catalogue({
             <div className="group rounded-2xl bg-white border border-stone-200 hover:border-amber-700 hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between">
               <Link to="/products/phone-covers" className="block relative aspect-[4/3] bg-stone-100 overflow-hidden flex items-center justify-center">
                 <img
-                  src="/products/frame-sample-family.jpg"
+                  src="/products/visuals/flatlay-keepsakes-novelty.jpg"
                   alt="Customized Accessories"
                   className="size-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
@@ -865,10 +868,19 @@ export function Catalogue({
           <WallSizeVisualizer onSelectSize={(sz) => update("size", sz)} />
         </section>
 
+        {/* 5-Step Storytelling Micro-Journey */}
+        <StorytellingSteps />
+
+        {/* Curated Budget Tiers */}
+        <BudgetTiersShowcase onSelectCategory={(cat) => update("category", cat)} />
+
         {/* Curated Milestone Gift Bundles */}
         <section id="curated-bundles" className="ed-wrap my-8">
           <BundleShowcase />
         </section>
+
+        {/* Packaging & Unboxing Experience */}
+        <PackagingExperience />
 
         <div className="ed-wrap">
           <div className="ed-notice">

@@ -73,10 +73,10 @@ function SlugPage() {
           description="A pure black ceramic mug at room temperature that magically reveals your photograph and caption when hot chai, coffee, or milk is poured."
           longDescription="Crafted from heavyweight grade-A gloss ceramic with an archival thermochromic crystalline coating. High-temperature sublimation ensures vibrant photographic clarity that will not peel, flake, or fade over time. Microwave-safe and crafted locally in our Jetpur studio."
           images={{
-            primary: "/products/mug-sample-couple.jpg",
+            primary: "/products/visuals/mug-couple-morning.jpg",
             angle: "/products/mug-sample-couple.jpg",
-            room: "/products/frame-sample-wedding.jpg",
-            detail: "/products/mug-sample-couple.jpg",
+            room: "/products/visuals/frame-teak-living-room.jpg",
+            detail: "/products/visuals/flatlay-keepsakes-novelty.jpg",
           }}
           sizes={[
             { id: "325ml", label: "325 ml (Standard)", metric: "11 oz", widthInches: 3.2, heightInches: 3.8, popular: true },
@@ -94,8 +94,8 @@ function SlugPage() {
             origin: "Handcrafted in Jetpur, Gujarat",
           }}
           complementaryProducts={[
-            { id: "FRM-001", name: "Royal Heritage Wedding Frame", price: 1499, image: "/products/frame-sample-wedding.jpg", link: "/products/frames/royal-heritage" },
-            { id: "MAG-001", name: "Couple Story Keepsake Magazine", price: 1299, image: "/products/magazine-cover.jpg", link: "/products/magazines/couple-story" },
+            { id: "FRM-001", name: "Royal Heritage Wedding Frame", price: 1499, image: "/products/visuals/frame-teak-living-room.jpg", link: "/products/frames/royal-heritage" },
+            { id: "MAG-001", name: "Couple Story Keepsake Magazine", price: 1299, image: "/products/visuals/album-flushmount-wedding.jpg", link: "/products/magazines/couple-story" },
           ]}
           onOpenStudio={() => setActiveStudio("mugs")}
         />
@@ -131,10 +131,10 @@ function SlugPage() {
           description="A romantic editorial magazine featuring 8 to 20 curated photographs with custom chapter spreads, vows, meaningful dates, and a scannable song QR."
           longDescription="Printed on heavy 250 GSM velvet-matte imported art paper that feels like a luxury coffee-table publication. Saddle-stitched or hardbound with scuff-resistant soft-touch lamination on the cover. Each spread is typeset with your personal vows and milestones."
           images={{
-            primary: "/products/magazine-cover.jpg",
+            primary: "/products/visuals/album-flushmount-wedding.jpg",
             angle: "/products/magazine-cover.jpg",
-            room: "/products/frame-sample-family.jpg",
-            detail: "/products/frame-sample-wedding.jpg",
+            room: "/products/visuals/frame-teak-living-room.jpg",
+            detail: "/products/visuals/gift-box-signature-hamper.jpg",
           }}
           sizes={[
             { id: "8x8", label: "8×8 in (Square)", metric: "20×20 cm", widthInches: 8, heightInches: 8, popular: true },
@@ -152,8 +152,8 @@ function SlugPage() {
             origin: "Handcrafted in Jetpur, Gujarat",
           }}
           complementaryProducts={[
-            { id: "FRM-001", name: "Royal Heritage Teak Frame", price: 1499, image: "/products/frame-sample-wedding.jpg", link: "/products/frames/royal-heritage" },
-            { id: "MUG-001", name: "Magic Reveal Couple Mug", price: 349, image: "/products/mug-sample-couple.jpg", link: "/products/mugs/magic-photo-mug" },
+            { id: "FRM-001", name: "Royal Heritage Teak Frame", price: 1499, image: "/products/visuals/frame-teak-living-room.jpg", link: "/products/frames/royal-heritage" },
+            { id: "MUG-001", name: "Magic Reveal Couple Mug", price: 349, image: "/products/visuals/mug-couple-morning.jpg", link: "/products/mugs/magic-photo-mug" },
           ]}
           onOpenStudio={() => setActiveStudio("magazines")}
         />
@@ -188,10 +188,10 @@ function SlugPage() {
         description="Crafted with genuine seasoned wood moulding, anti-reflective optical acrylic, and archival acid-free matting. Designed to outlast time."
         longDescription="Each frame is hand-mitred, assembled, and inspected in our Jetpur workshop. We use premium moisture-resistant backboards, heavy-duty D-ring hangers, and archival pigment inks that preserve skin tones and shadow details without yellowing."
         images={{
-          primary: "/products/frame-sample-wedding.jpg",
-          angle: "/products/frame-sample-wedding.jpg",
-          room: "/products/frame-sample-family.jpg",
-          detail: "/products/frame-sample-baby.jpg",
+          primary: "/products/visuals/frame-teak-living-room.jpg",
+          angle: "/products/visuals/acrylic-wall-art-family.jpg",
+          room: "/products/visuals/frame-teak-living-room.jpg",
+          detail: "/products/visuals/gift-box-signature-hamper.jpg",
         }}
         sizes={[
           { id: "8x12", label: "8×12 in", metric: "20×30 cm", widthInches: 8, heightInches: 12 },
