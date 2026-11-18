@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { giftBody, giftLine } from './helpers/gift-fixture.mjs';
 import {
   cleanOrder,
   phoneNumber,
@@ -15,7 +16,8 @@ import {
   STANDARD_DELIVERY_CHARGE_PAISE,
 } from "../functions/_lib/security.js";
 
-const secret="d5c64a28942d159134a2d7c783afb14184fbd784a19557f35a930132019b83af";
+// Ephemeral signing material for this test process; never a deployed credential.
+const secret=Array.from(crypto.getRandomValues(new Uint8Array(32)),byte=>byte.toString(16).padStart(2,"0")).join("");
 
 test("phone normalization rejects invalid numbers",()=>{
  assert.equal(phoneNumber("+91 98765 43210"),"9876543210");
@@ -24,7 +26,7 @@ test("phone normalization rejects invalid numbers",()=>{
  assert.equal(phoneNumber("98345"),null);
 });
 test("order intake sanitizes and bounds personal fields",()=>{
- const v=cleanOrder({name:"  Test Person  ",phone:"+91 9876543210",type:"Photo gifting",notes:"X".repeat(2000),clientRequestId:"request_abcdef1234567890"});
+ const v=cleanOrder(giftBody({name:"  Test Person  ",phone:"+91 9876543210",type:"Photo gifting",notes:"X".repeat(2000),clientRequestId:"request_abcdef1234567890"}));
  assert.equal(v.name,"Test Person");assert.equal(v.phone,"9876543210");assert.equal(v.notes.length,1000);
  assert.equal(v.clientRequestId,"request_abcdef1234567890");
  assert.throws(()=>cleanOrder({name:"X",phone:"123",type:"Baby"}));
@@ -96,14 +98,14 @@ test("Home Delivery requires 100% online prepayment and delivery address", () =>
     type: "Photo gifting",
     fulfillment: "home_delivery",
     paymentChoice: "pay_at_studio", // Attempted to choose pay on collection for delivery
-    address: { line1: "Station Road", pincode: "360370", city: "Jetpur" },
-    quote: [{ productId: "FRM-001", size: "12×18 in", quantity: 1 }],
+    address: { line1: "Station Road", pincode: "360370", city: "Jetpur", state: "Gujarat" },
+    quote: [giftLine('FRM-001',false)],
   });
 
   assert.equal(deliveryOrder.fulfillment, "home_delivery");
   assert.equal(deliveryOrder.paymentChoice, "pay_online"); // Forced full online payment
   assert.equal(deliveryOrder.deliveryChargePaise, STANDARD_DELIVERY_CHARGE_PAISE);
-  assert.equal(deliveryOrder.totalAmountPaise, 85000 + 10000); // Frame ₹850 + Delivery ₹100 = ₹950
+  assert.equal(deliveryOrder.totalAmountPaise, 25000 + 10000);
 });
 
 test("Studio Collection allows Pay Online or Pay at Studio", () => {
@@ -113,7 +115,7 @@ test("Studio Collection allows Pay Online or Pay at Studio", () => {
     type: "Photo gifting",
     fulfillment: "studio_collection",
     paymentChoice: "pay_at_studio",
-    quote: [{ productId: "MUG-001", size: "Standard", finish: "magic", quantity: 2 }],
+    quote: [{...giftLine('MUG-002',false), quantity:2}],
   });
 
   assert.equal(shopOrder.fulfillment, "studio_collection");

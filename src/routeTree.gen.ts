@@ -34,6 +34,7 @@ import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as AdminContactsRouteImport } from './routes/admin.contacts'
 import { Route as AdminContentRouteImport } from './routes/admin.content'
 import { Route as AdminCrmRouteImport } from './routes/admin.crm'
+import { Route as AdminGiftOrdersRouteImport } from './routes/admin.gift-orders'
 import { Route as AdminGiftsRouteImport } from './routes/admin.gifts'
 import { Route as AdminImagesRouteImport } from './routes/admin.images'
 import { Route as AdminInquiriesRouteImport } from './routes/admin.inquiries'
@@ -184,6 +185,11 @@ const AdminCrmRoute = AdminCrmRouteImport.update({
   path: '/crm',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminGiftOrdersRoute = AdminGiftOrdersRouteImport.update({
+  id: '/gift-orders',
+  path: '/gift-orders',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminGiftsRoute = AdminGiftsRouteImport.update({
   id: '/gifts',
   path: '/gifts',
@@ -332,6 +338,7 @@ export interface FileRoutesByFullPath {
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
+  '/admin/gift-orders': typeof AdminGiftOrdersRoute
   '/admin/gifts': typeof AdminGiftsRoute
   '/admin/images': typeof AdminImagesRoute
   '/admin/inquiries': typeof AdminInquiriesRoute
@@ -379,6 +386,7 @@ export interface FileRoutesByTo {
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
+  '/admin/gift-orders': typeof AdminGiftOrdersRoute
   '/admin/gifts': typeof AdminGiftsRoute
   '/admin/images': typeof AdminImagesRoute
   '/admin/inquiries': typeof AdminInquiriesRoute
@@ -431,6 +439,7 @@ export interface FileRoutesById {
   '/admin/contacts': typeof AdminContactsRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/crm': typeof AdminCrmRoute
+  '/admin/gift-orders': typeof AdminGiftOrdersRoute
   '/admin/gifts': typeof AdminGiftsRoute
   '/admin/images': typeof AdminImagesRoute
   '/admin/inquiries': typeof AdminInquiriesRoute
@@ -484,6 +493,7 @@ export interface FileRouteTypes {
     | '/admin/contacts'
     | '/admin/content'
     | '/admin/crm'
+    | '/admin/gift-orders'
     | '/admin/gifts'
     | '/admin/images'
     | '/admin/inquiries'
@@ -531,6 +541,7 @@ export interface FileRouteTypes {
     | '/admin/contacts'
     | '/admin/content'
     | '/admin/crm'
+    | '/admin/gift-orders'
     | '/admin/gifts'
     | '/admin/images'
     | '/admin/inquiries'
@@ -582,6 +593,7 @@ export interface FileRouteTypes {
     | '/admin/contacts'
     | '/admin/content'
     | '/admin/crm'
+    | '/admin/gift-orders'
     | '/admin/gifts'
     | '/admin/images'
     | '/admin/inquiries'
@@ -812,6 +824,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCrmRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/gift-orders': {
+      id: '/admin/gift-orders'
+      path: '/gift-orders'
+      fullPath: '/admin/gift-orders'
+      preLoaderRoute: typeof AdminGiftOrdersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/gifts': {
       id: '/admin/gifts'
       path: '/gifts'
@@ -992,6 +1011,7 @@ interface AdminRouteChildren {
   AdminContactsRoute: typeof AdminContactsRoute
   AdminContentRoute: typeof AdminContentRoute
   AdminCrmRoute: typeof AdminCrmRoute
+  AdminGiftOrdersRoute: typeof AdminGiftOrdersRoute
   AdminGiftsRoute: typeof AdminGiftsRoute
   AdminImagesRoute: typeof AdminImagesRoute
   AdminInquiriesRoute: typeof AdminInquiriesRoute
@@ -1012,6 +1032,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminContactsRoute: AdminContactsRoute,
   AdminContentRoute: AdminContentRoute,
   AdminCrmRoute: AdminCrmRoute,
+  AdminGiftOrdersRoute: AdminGiftOrdersRoute,
   AdminGiftsRoute: AdminGiftsRoute,
   AdminImagesRoute: AdminImagesRoute,
   AdminInquiriesRoute: AdminInquiriesRoute,

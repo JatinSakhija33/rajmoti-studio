@@ -8,6 +8,7 @@
     "build": "node scripts/generate-seo.mjs && vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
+    "test": "node --import ./tests/json-imports.mjs --test tests/*.test.mjs",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

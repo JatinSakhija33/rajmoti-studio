@@ -62,6 +62,16 @@ export function PhotoPersonalizer({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const objectUrlRef = useRef<string | null>(null);
+
+  // Clean up object URLs on unmount to prevent browser memory leaks
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+      }
+    };
+  }, []);
 
   // Load natural dimensions of current image
   useEffect(() => {
@@ -115,8 +125,12 @@ export function PhotoPersonalizer({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Zero-upload privacy: Create local object URL
+    // Zero-upload privacy: Create local object URL with clean lifecycle
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+    }
     const localUrl = URL.createObjectURL(file);
+    objectUrlRef.current = localUrl;
     setPhotoUrl(localUrl);
 
     const img = new Image();

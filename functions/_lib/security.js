@@ -1,3 +1,5 @@
+import seed from "../../src/features/catalogue/seed.json";
+import extras from "../../src/features/catalogue/gift-extras.json";
 const MIME = {"image/jpeg":".jpg","image/png":".png","image/webp":".webp"};
 export const STAGES = ["received","editing","review","printing","framing","ready","delivered","cancelled"];
 
@@ -117,38 +119,48 @@ export function cleanOrder(raw={}) {
    address = {
      line1: clean(a.line1, 150),
      line2: clean(a.line2, 150),
-     city: clean(a.city, 80) || "Jetpur",
+     city: clean(a.city, 80),
      pincode: clean(a.pincode, 10),
-     state: clean(a.state, 50) || "Gujarat",
+     state: clean(a.state, 50),
    };
-   if (!address.line1 || !address.pincode) {
+   if (!address.line1 || !address.city || !address.state || !/^[1-9]\d{5}$/.test(address.pincode)) {
      throw Error("Full delivery address and pin code are required for Home Delivery");
    }
  }
 
  if(Array.isArray(raw.quote) && raw.quote.length>12)throw Error("Too many selected gifts");
- const quote=(Array.isArray(raw.quote)?raw.quote:[]).map(v=>({
-  productId:clean(v?.productId,80),variantId:clean(v?.variantId,80),
-  quantity:Math.min(50,Math.max(1,Number(v?.quantity)||1)),
-  personalisation:clean(v?.personalisation,200),packaging:clean(v?.packaging,80),
-  orderType:clean(v?.orderType,80),
-  size:clean(v?.size,50),
-  finish:clean(v?.finish,50)
- }));
-
- // Integer paise calculations
- let itemsPaise = 0;
- if (quote.length > 0) {
-   for (const item of quote) {
-     const unitPaise = calculateVariantPricePaise(item.productId, item.size, item.finish);
-     itemsPaise += unitPaise * item.quantity;
+ const catalogue=[...seed.products,...extras.products];
+ const quote=(Array.isArray(raw.quote)?raw.quote:[]).map(item=>{
+   const p=catalogue.find(p=>p.id===item?.productId);
+   const v=p?.variants.find(v=>v.id===item?.variantId);
+   if(!p || !v || p.availability==='Discontinued')throw Error('A selected product or variant is unavailable');
+   const quantity=Number(item.quantity);
+   if(!Number.isSafeInteger(quantity) || quantity<1 || quantity>50)throw Error('Choose a whole quantity from 1 to 50');
+   if(!p.personalisation.includes(item.personalisation) || !p.packaging.includes(item.packaging) || !p.orderTypes.includes(item.orderType))throw Error('Invalid product options');
+   let unitPaise;
+   if(v.price!=null)unitPaise=Math.round(Number(v.price)*100);
+   else if(['frames','acrylic','led','drinkware','canvas','gods-collection','magazines'].includes(p.category))unitPaise=calculateVariantPricePaise(p.id,v.size,v.finish);
+   else throw Error('This item requires a studio quotation before payment');
+   if(!Number.isSafeInteger(unitPaise) || unitPaise<=0)throw Error('A price must be confirmed before payment');
+   let design;
+   if(item.design){
+     const value=item.design;
+     if(!/^[a-f0-9-]{36}$/i.test(value.id)||typeof value.kind!=='string')throw Error('Invalid saved design');
+     if(!Number.isInteger(value.photoCount)||value.photoCount<0||value.photoCount>20)throw Error('Invalid design photo count');
+     const settings=JSON.parse(JSON.stringify(value.settings||{}));
+     if(JSON.stringify(settings).length>16000)throw Error('Design instructions are too long');
+     const photoSlots=(Array.isArray(value.photoSlots)?value.photoSlots:[]).slice(0,40).map(slot=>slot.source==='upload'?{source:'upload',index:Number(slot.index)}:{source:'sample',path:clean(slot.path,160)});
+     if(photoSlots.some(slot=>slot.source==='upload' && (!Number.isInteger(slot.index)||slot.index<0||slot.index>=value.photoCount)))throw Error('Invalid photo slot');
+     design={id:value.id,kind:clean(value.kind,50),settings,photoSlots,photoCount:value.photoCount};
    }
- } else {
-   itemsPaise = Math.max(0, Number(raw.quotedAmountPaise) || 0);
- }
-
- const deliveryChargePaise = fulfillment === "home_delivery" ? STANDARD_DELIVERY_CHARGE_PAISE : 0;
- const totalAmountPaise = itemsPaise + deliveryChargePaise;
+   return {productId:p.id,productName:p.name,variantId:v.id,quantity,personalisation:item.personalisation,packaging:item.packaging,orderType:item.orderType,size:v.size,finish:v.finish,unitPricePaise:unitPaise,...(design?{design}:{})};
+ });
+ if(!quote.length)throw Error('Add at least one gift to your cart');
+ if(quote.reduce((n,item)=>n+(item.design?.photoCount||0),0)>20)throw Error('An order can contain up to 20 uploaded photographs');
+ const itemsPaise=quote.reduce((sum,item)=>sum+item.unitPricePaise*item.quantity,0);
+ const deliveryChargePaise=fulfillment==='home_delivery'?STANDARD_DELIVERY_CHARGE_PAISE:0;
+ const totalAmountPaise=itemsPaise+deliveryChargePaise;
+ if(!Number.isSafeInteger(totalAmountPaise)||totalAmountPaise>100000000)throw Error('Order amount is outside the supported range');
 
  const styles=(Array.isArray(raw.styles)?raw.styles:[]).slice(0,12).map(v=>({id:clean(v?.id,80),title:clean(v?.title,120)}));
  const date=clean(raw.date,10);
@@ -203,6 +215,25 @@ export async function validUpload(token,orderId,secret) {
 }
 let certCache={at:0,keys:[]};
 export async function requireOwner(request,env) {
+ const bearer=request.headers.get('Authorization');
+ if(bearer?.startsWith('Bearer ')){
+  const url=(env.SUPABASE_URL||env.VITE_SUPABASE_URL||'').replace(/\/$/,'');
+  const key=env.SUPABASE_PUBLISHABLE_KEY||env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if(!/^https:\/\/[^/]+$/.test(url)||!key)throw Object.assign(Error('Supabase owner verification is not configured'),{status:503});
+  const headers={Authorization:bearer,apikey:key};
+  const userResponse=await fetch(url+'/auth/v1/user',{headers});
+  if(!userResponse.ok)throw Object.assign(Error('Please sign in again as the studio owner'),{status:userResponse.status>=500?503:401});
+  const user=await userResponse.json();
+  if(!user.id)throw Object.assign(Error('Owner identity could not be verified'),{status:401});
+  const rolesResponse=await fetch(url+'/rest/v1/user_roles?select=role&user_id=eq.'+encodeURIComponent(user.id)+'&role=eq.admin',{headers});
+  if(!rolesResponse.ok)throw Object.assign(Error('Could not verify the studio admin role'),{status:503});
+  const roles=await rolesResponse.json();
+  if(!Array.isArray(roles)||!roles.some(row=>row.role==='admin'))throw Object.assign(Error('Studio admin access is required'),{status:403});
+  return user.email||user.id;
+ }
+ try{return await requireAccessOwner(request,env);}catch(error){error.status=403;throw error;}
+}
+async function requireAccessOwner(request,env) {
  const issuer=clean(env.CF_ACCESS_ISSUER,200).replace(/\/$/,"");
  const audiences=String(env.CF_ACCESS_AUD||"").split(",").map(x=>x.trim()).filter(Boolean);
  const allowed=String(env.OWNER_EMAILS||"").toLowerCase().split(",").map(x=>x.trim()).filter(Boolean);

@@ -13,6 +13,7 @@ export const Route = createFileRoute("/admin")({
 const NAV = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/catalogue", label: "Product Catalogue", icon: Package },
+  { to: "/admin/gift-orders", label: "Gift Orders & Payments", icon: Gift },
   { to: "/admin/workflow", label: "Studio Workflow", icon: ClipboardList },
   { to: "/admin/gifts", label: "Gift Requests", icon: Gift },
   { to: "/admin/calendar", label: "Calendar", icon: CalendarDays },

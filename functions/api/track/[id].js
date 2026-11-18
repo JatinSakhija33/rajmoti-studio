@@ -1,4 +1,4 @@
-import { json, failure, validTracking, buildUpiUri, UPI_CONFIG } from "../../_lib/security.js";
+import { json, failure, validTracking, signUpload, buildUpiUri, UPI_CONFIG } from "../../_lib/security.js";
 
 export async function onRequestGet({ request, env, params }) {
   try {
@@ -23,15 +23,18 @@ export async function onRequestGet({ request, env, params }) {
     const verifiedPaise = Number(order.verified_paid_paise) || Number(order.paid_amount) * 100 || 0;
 
     const upiUri =
-      totalPaise > 0
+      totalPaise - verifiedPaise > 0
         ? buildUpiUri({
-            amountPaise: totalPaise,
+            amountPaise: Math.max(0, totalPaise - verifiedPaise),
             publicRef,
             note: `Order ${publicRef} - Rajmoti Studio`,
           })
         : "";
 
+    const photos = await env.ORDER_DB.prepare("SELECT COUNT(*) n FROM order_photos WHERE order_id=? AND deleted_at IS NULL").bind(id).first();
     return json({
+      photoCount: Number(photos?.n || 0),
+      uploadToken: ['cancelled','delivered'].includes(order.status) ? null : await signUpload(id,env.ORDER_UPLOAD_SECRET),
       reference: publicRef,
       status: order.status,
       fulfillmentType: order.fulfillment_type || "studio_collection",
@@ -47,10 +50,11 @@ export async function onRequestGet({ request, env, params }) {
       upiUri,
       payeeVpa: UPI_CONFIG.payeeVpa,
       beneficiaryName: UPI_CONFIG.payeeName,
-      itemsJson: order.items_json,
-      customizationJson: order.customization_json,
+      items: JSON.parse(order.items_json || "[]"),
+      customization: JSON.parse(order.customization_json || "[]"),
     });
   } catch {
     return failure("Unable to check order", 500);
   }
 }
+
