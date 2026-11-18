@@ -1,5 +1,5 @@
-import seed from "../../src/features/catalogue/seed.json" with { type: "json" };
-import extras from "../../src/features/catalogue/gift-extras.json" with { type: "json" };
+import seed from "../../src/features/catalogue/seed.json";
+import extras from "../../src/features/catalogue/gift-extras.json";
 const MIME = {"image/jpeg":".jpg","image/png":".png","image/webp":".webp"};
 export const STAGES = ["received","editing","review","printing","framing","ready","delivered","cancelled"];
 
