@@ -25,6 +25,37 @@ function loadImage(src: string): Promise<HTMLImageElement> {
  */
 export class ProductionExportEngine {
   /**
+   * Calculates exact print pixel dimensions and bleed geometry
+   */
+  static calculateDimensions(
+    size: PhysicalSizeSpec,
+    dpi = 300,
+    bleedMm = 3,
+  ) {
+    const bleedInches = bleedMm / 25.4;
+    const widthInchesWithBleed = size.widthInches + bleedInches * 2;
+    const heightInchesWithBleed = size.heightInches + bleedInches * 2;
+    const targetWidthPx = Math.round(widthInchesWithBleed * dpi);
+    const targetHeightPx = Math.round(heightInchesWithBleed * dpi);
+    const visibleWidthPx = Math.round(size.widthInches * dpi);
+    const visibleHeightPx = Math.round(size.heightInches * dpi);
+    const bleedPx = Math.round(bleedInches * dpi);
+
+    return {
+      dpi,
+      bleedMm,
+      bleedInches,
+      bleedPx,
+      widthInchesWithBleed,
+      heightInchesWithBleed,
+      targetWidthPx,
+      targetHeightPx,
+      visibleWidthPx,
+      visibleHeightPx,
+    };
+  }
+
+  /**
    * Generates a 300 DPI print-ready export bundle from a SavedProductDesign
    */
   static async renderPrintReadyExport(
@@ -33,16 +64,17 @@ export class ProductionExportEngine {
   ): Promise<PrintExportBundle> {
     const dpi = options.dpi || 300;
     const bleedMm = options.bleedMm || 3;
-    const bleedInches = bleedMm / 25.4;
+    const dims = ProductionExportEngine.calculateDimensions(design.size, dpi, bleedMm);
 
-    // Calculate physical dimensions with bleed
-    const widthInchesWithBleed = design.size.widthInches + bleedInches * 2;
-    const heightInchesWithBleed = design.size.heightInches + bleedInches * 2;
-
-    const targetWidthPx = Math.round(widthInchesWithBleed * dpi);
-    const targetHeightPx = Math.round(heightInchesWithBleed * dpi);
-
-    const bleedPx = Math.round(bleedInches * dpi);
+    const {
+      targetWidthPx,
+      targetHeightPx,
+      visibleWidthPx,
+      visibleHeightPx,
+      bleedPx,
+      widthInchesWithBleed,
+      heightInchesWithBleed,
+    } = dims;
 
     // Create high-resolution rendering canvas
     const canvas = document.createElement("canvas");
