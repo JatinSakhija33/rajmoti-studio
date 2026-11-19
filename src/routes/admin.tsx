@@ -15,6 +15,7 @@ const NAV = [
   { to: "/admin/catalogue", label: "Product Catalogue", icon: Package },
   { to: "/admin/workflow", label: "Studio Workflow", icon: ClipboardList },
   { to: "/admin/gifts", label: "Gift Requests", icon: Gift },
+  { to: "/admin/gift-orders", label: "Gift Orders & Payments", icon: Gift },
   { to: "/admin/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/admin/bookings", label: "Bookings", icon: CalendarDays },
   { to: "/admin/booking", label: "Booking CMS", icon: Sparkles, exact: true },

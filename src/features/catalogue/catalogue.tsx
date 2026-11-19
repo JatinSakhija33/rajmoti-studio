@@ -1,3 +1,8 @@
+import { GiftCustomizer } from "./GiftCustomizer";
+import { GiftDiscovery, giftSample } from "./GiftDiscovery";
+import { giftPrice, minimumGiftPrice } from "./gift-pricing";
+import { rememberCartPhotos, type GiftDraft } from "./gift-design";
+import { GiftCart } from "./GiftCart";
 import { useMemo, useState, useRef } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -14,6 +19,7 @@ import {
   Heart,
   Package,
   Scale,
+  ShoppingBag,
 } from "lucide-react";
 import {
   Dialog,
@@ -61,6 +67,7 @@ export function Catalogue({ productId }: { productId?: string }) {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [filters, setFilters] = useState<Filters>(initial);
+  const [budget, setBudget] = useState<number | null>(null);
   const [sort, setSort] = useState("featured");
   const [showFilters, setShowFilters] = useState(false);
   const [shown, setShown] = useState(12);
@@ -90,7 +97,8 @@ export function Catalogue({ productId }: { productId?: string }) {
           );
           return (
             (!q || hay.includes(term)) &&
-            (!filters.category || p.category === filters.category) &&
+            (budget == null || (minimumGiftPrice(p) != null && minimumGiftPrice(p)! <= budget)) &&
+            (!filters.category || p.category === filters.category || (filters.category === "magazines" && p.category === "albums")) &&
             (!filters.material || p.material === filters.material) &&
             (!filters.shape || p.shape === filters.shape) &&
             (!filters.size || p.variants.some((v) => v.size === filters.size)) &&
@@ -110,7 +118,7 @@ export function Catalogue({ productId }: { productId?: string }) {
               ? b.variants.length - a.variants.length
               : 0,
         ),
-    [products, q, filters, sort],
+    [products, q, filters, sort, budget],
   );
   const update = (key: keyof Filters, value: string) => {
     setFilters((f) => ({ ...f, [key]: value }));
@@ -135,7 +143,7 @@ export function Catalogue({ productId }: { productId?: string }) {
         x.variantId === line.variantId &&
         x.personalisation === line.personalisation &&
         x.packaging === line.packaging &&
-        x.orderType === line.orderType,
+        x.orderType === line.orderType && JSON.stringify(x.design || null) === JSON.stringify(line.design || null),
     );
     const next = [...quote];
     if (existing >= 0)
@@ -145,17 +153,18 @@ export function Catalogue({ productId }: { productId?: string }) {
       };
     else next.push(line);
     setQuote(next);
-    toast.success("Added to your demo quotation list");
+    toast.success("Your gift design was saved to the cart.");
     open(undefined);
   }
   const active = Object.entries(filters).filter(([, v]) => v);
   const reset = () => {
     setFilters(initial);
     setQ("");
+    setBudget(null);
     setShown(12);
   };
   return (
-    <div className="editorial">
+    <div className="editorial gift-store">
       <SiteNav />
       <main>
         <section className="gift-intro ed-wrap">
@@ -195,12 +204,13 @@ export function Catalogue({ productId }: { productId?: string }) {
           <div className="ed-notice">
             <Layers size={18} />
             <p>
-              <strong>A catalogue to explore.</strong> All records and variant specifications below
-              are demonstrations. Stock, materials, prices and preparation times require studio
-              confirmation. No orders or payments are placed here.
+              <strong>Make it personal.</strong> Upload a photograph to explore your design. Sample
+              artwork illustrates the possibilities; materials and preparation times need studio
+              confirmation. Items without a confirmed price are available by quotation.
             </p>
           </div>
         </div>
+        <GiftDiscovery onCategory={value => { update("category", value); document.getElementById("directory")?.scrollIntoView({ behavior: "smooth" }); }} onOccasion={value => update("occasion", value)} onRecipient={value => update("recipient", value)} onBudget={value => { setBudget(value); setShown(12); }} onProduct={id => open(id)} />
         <section id="directory" className="ed-wrap directory-section">
           <div className="ed-section-heading">
             <div>
@@ -212,7 +222,7 @@ export function Catalogue({ productId }: { productId?: string }) {
                 <Download size={16} /> Master catalogue CSV
               </button>
               <button className="ed-button outline" onClick={() => setShowQuote(true)}>
-                Your quote list <span className="count-pill">{quote.length}</span>
+                Your cart <span className="count-pill">{quote.length}</span>
               </button>
             </div>
           </div>
@@ -233,7 +243,7 @@ export function Catalogue({ productId }: { productId?: string }) {
                 >
                   <span className="category-index">{String(i + 1).padStart(2, "0")}</span>
                   <span>{c.name}</span>
-                  <span>{products.filter((p) => p.category === c.id).length}</span>
+                  <span>{products.filter((p) => p.category === c.id || (c.id === "magazines" && p.category === "albums")).length}</span>
                 </button>
               ))}
             </aside>
@@ -370,11 +380,7 @@ export function Catalogue({ productId }: { productId?: string }) {
                         {compare.includes(p.id) ? <Check size={15} /> : <Plus size={15} />}
                       </button>
                       <button className="product-card-main" onClick={() => open(p.id)}>
-                        <div className={"product-tile family-" + p.category}>
-                          <span>{categories.find((c) => c.id === p.category)?.code}</span>
-                          <span className="product-tile-code">{p.id}</span>
-                          <span className="product-tile-caption">Product photography pending</span>
-                        </div>
+                        <div className={"gift-product-photograph gift-family-"+p.category}><img src={giftSample(p.category,p.id)} alt={p.name+" sample photo artwork"} loading="lazy"/><span>Interactive preview</span><small>Sample artwork</small></div>
                         <div className="product-card-copy">
                           <p className="ed-kicker">
                             {p.material} · {p.shape}
@@ -388,7 +394,7 @@ export function Catalogue({ productId }: { productId?: string }) {
                             {p.variants.length > 3 ? ` +${p.variants.length - 3} more` : ""}
                           </p>
                           <div className="product-card-bottom">
-                            <span>Price on request</span>
+                            <span>{minimumGiftPrice(p) == null ? "Price on request" : `From ₹${minimumGiftPrice(p)}`}</span>
                             <ArrowUpRight size={18} />
                           </div>
                         </div>
@@ -457,11 +463,11 @@ export function Catalogue({ productId }: { productId?: string }) {
         </div>
       )}
       <Dialog open={!!productId} onOpenChange={(v) => !v && open(undefined)}>
-        <DialogContent className="ed-modal product-modal">
+        <DialogContent className="ed-modal product-modal gift-product-modal">
           <DialogHeader>
             <DialogTitle>{product?.name || "Product not found"}</DialogTitle>
             <DialogDescription>
-              Demonstration specification · no purchase or upload
+              Choose your original variant and personalize it with the interactive preview.
             </DialogDescription>
           </DialogHeader>
           {product ? (
@@ -483,51 +489,8 @@ export function Catalogue({ productId }: { productId?: string }) {
           <Compare products={products.filter((p) => compare.includes(p.id))} />
         </DialogContent>
       </Dialog>
-      <Dialog open={showQuote} onOpenChange={setShowQuote}>
-        <DialogContent className="ed-modal">
-          <DialogHeader>
-            <DialogTitle>Your quotation shortlist</DialogTitle>
-            <DialogDescription>Saved on this browser. No order has been placed.</DialogDescription>
-          </DialogHeader>
-          {quote.length === 0 ? (
-            <div className="ed-empty">
-              <Package />
-              <p>Open a product, choose a variant and add it here.</p>
-            </div>
-          ) : (
-            <>
-              <div className="quote-lines">
-                {quote.map((line, i) => {
-                  const p = products.find((p) => p.id === line.productId);
-                  const v = p?.variants.find((v) => v.id === line.variantId);
-                  return (
-                    <article key={i}>
-                      <div>
-                        <strong>{p?.name || line.productId}</strong>
-                        <p>
-                          {v?.size} · Qty {line.quantity} · {line.personalisation}
-                        </p>
-                        <small>
-                          {line.packaging} · {line.orderType} · Price to confirm
-                        </small>
-                      </div>
-                      <button
-                        aria-label={`Remove ${p?.name}`}
-                        onClick={() => setQuote(quote.filter((_, j) => j !== i))}
-                      >
-                        <X size={18} />
-                      </button>
-                    </article>
-                  );
-                })}
-              </div>
-              <Link to="/contact" className="ed-button" onClick={() => setShowQuote(false)}>
-                Prepare demo enquiry <ArrowRight size={16} />
-              </Link>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      {quote.length > 0 && <div className="gift-cart-pill"><button className="ed-button" onClick={() => setShowQuote(true)}><ShoppingBag size={17}/>Your cart <span>{quote.length}</span></button></div>}
+      <GiftCart open={showQuote} onOpenChange={setShowQuote} />
     </div>
   );
 }
@@ -540,6 +503,7 @@ function ProductDetail({
 }) {
   const [variantId, setVariant] = useState(p.variants[0]?.id || "");
   const [qty, setQty] = useState(1);
+  const [draft, setDraft] = useState<GiftDraft | undefined>();
   const [personalisation, setPersonalisation] = useState(p.personalisation[0]);
   const [packaging, setPackaging] = useState(p.packaging[0]);
   const [orderType, setOrderType] = useState(p.orderTypes[0]);
@@ -551,33 +515,7 @@ function ProductDetail({
     <>
       <div className="product-detail-grid">
         <div>
-          <div className="size-stage">
-            <div className="size-guide">
-              <span>8×12 in reference</span>
-            </div>
-            {dims ? (
-              <div
-                className="selected-size"
-                style={{
-                  width: Math.min((w / 30) * 100, 95) + "%",
-                  height: Math.min((h / 30) * 100, 95) + "%",
-                }}
-              >
-                <span>{v.size}</span>
-              </div>
-            ) : (
-              <div className="nondimensional">
-                <Layers size={36} />
-                <span>{v.size}</span>
-              </div>
-            )}
-          </div>
-          <p className="ed-footnote">
-            {dims
-              ? "Relative dimensions only — not actual screen size."
-              : "Visual size comparison is available for rectangular inch sizes."}{" "}
-            Product photo pending.
-          </p>
+          <GiftCustomizer product={p} variant={v} onChange={setDraft} />
           <div className="product-info-note">
             <strong>Before we make it</strong>
             <p>
@@ -641,15 +579,17 @@ function ProductDetail({
             </select>
           </label>
           <div className="detail-price">
-            <strong>Price on request</strong>
-            <span>No unverified prices or delivery promises.</span>
+            <strong>{giftPrice(p,v) == null ? "Price on request" : `₹${giftPrice(p,v)}`}</strong>
+            <span>Existing variant pricing is confirmed again by the order server.</span>
           </div>
           <button
             className="ed-button"
             disabled={
               !Number.isInteger(qty) || qty < 1 || qty > 9999 || p.availability === "Discontinued"
             }
-            onClick={() =>
+            onClick={() => {
+              if (!draft || (draft.design.kind !== "devotional" && (!draft.files.length || draft.design.photoSlots.some(slot=>slot.source!=="upload")))) { toast.error("Upload your own photograph for every design slot before saving. Sample artwork is for preview only."); return; }
+              rememberCartPhotos(draft);
               onAdd({
                 productId: p.id,
                 variantId,
@@ -657,12 +597,13 @@ function ProductDetail({
                 personalisation,
                 packaging,
                 orderType,
-              })
-            }
+                design: draft?.design,
+              });
+            }}
           >
-            Add to quote list <Plus size={16} />
+            Save design & add to cart <Plus size={16} />
           </button>
-          <small>Uploads and payments are disabled.</small>
+          <small>Photos stay on this device until you submit your order. UPI payments are verified manually by the studio.</small>
         </div>
       </div>
       <h3 className="spec-heading">The specification directory</h3>
