@@ -1,7 +1,9 @@
 import { liveBackend, backendUrl } from "@/lib/backend-mode";
 import { toast } from "sonner";
 import { giftRequestsEnabled } from "@/features/catalogue/gift-network";
+import { telLink, waMessage, whatsappLink } from "@/lib/site";
 export function installDemoGuards() {
+  const headerContacts = new Set([telLink(), whatsappLink(waMessage.booking())].map(href => new URL(href, location.href).href));
   const originalFetch = window.fetch.bind(window);
   window.fetch = ((input: any, init?: RequestInit) => {
     const u = new URL(
@@ -24,6 +26,7 @@ export function installDemoGuards() {
       const el = (e.target as Element).closest("a");
       if (!el) return;
       const url = new URL(el.href, location.href);
+      if (el.closest('.studio-nav') && el.hasAttribute('data-studio-contact') && headerContacts.has(el.href)) return;
       if (giftRequestsEnabled() && url.protocol === "upi:" && el.closest('[data-gift-payment="enabled"]')) return;
       if (url.origin !== location.origin && !url.href.startsWith("blob:")) {
         e.preventDefault();
