@@ -6,6 +6,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -108,6 +109,9 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const isAdminRoute = useRouterState({
+    select: (state) => state.location.pathname === "/admin" || state.location.pathname.startsWith("/admin/"),
+  });
 
   useEffect(() => {
     if(liveBackend&&!backendConfigured)return;
@@ -123,7 +127,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <HeadContent /><DemoBar /><Outlet />
+        <HeadContent />{isAdminRoute && <DemoBar />}<Outlet />
         <Toaster position="top-center" />
       </AuthProvider>
     </QueryClientProvider>
