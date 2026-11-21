@@ -22,7 +22,7 @@ export function SiteFooter() {
           <div>
             <h3>Explore</h3>
             <Link to="/portfolios">Photography</Link>
-            <Link to="/gifts">Photo gifting directory</Link>
+            <Link to="/gifts">Products & gifts</Link>
             <Link to="/packages">Session collections</Link>
             <Link to="/stories">Our stories</Link>
           </div>
