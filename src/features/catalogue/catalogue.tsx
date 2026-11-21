@@ -9,7 +9,6 @@ import {
   Check,
   Plus,
   Minus,
-  Download,
   Layers,
   Heart,
   Package,
@@ -28,7 +27,6 @@ import {
   categories,
   useProducts,
   useQuote,
-  exportCatalogue,
   type Product,
   type QuoteLine,
 } from "./store";
@@ -208,9 +206,6 @@ export function Catalogue({ productId }: { productId?: string }) {
               <h2>Find your keepsake.</h2>
             </div>
             <div className="ed-actions">
-              <button className="ed-text-button" onClick={() => exportCatalogue(products)}>
-                <Download size={16} /> Master catalogue CSV
-              </button>
               <button className="ed-button outline" onClick={() => setShowQuote(true)}>
                 Your quote list <span className="count-pill">{quote.length}</span>
               </button>
