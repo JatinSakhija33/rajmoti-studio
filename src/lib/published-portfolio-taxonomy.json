@@ -1,0 +1,134 @@
+[
+  {
+    "slug": "baby",
+    "name": "Baby & milestones",
+    "count": 301,
+    "cover": "/portfolio/baby/dac390d7fe8c318b8b42-medium-1318af2147a1.webp",
+    "subcategories": [
+      {
+        "slug": "newborn-portraits",
+        "name": "Newborn Portraits",
+        "count": 45,
+        "cover": "/portfolio/baby/65f7241adf402c114b90-medium-a8cd7d676dcf.webp"
+      },
+      {
+        "slug": "birthday-portraits",
+        "name": "Birthday Portraits",
+        "count": 80,
+        "cover": "/portfolio/baby/fe074abe9cf9c4a7937f-medium-cde0100abed5.webp"
+      },
+      {
+        "slug": "creative-sets",
+        "name": "Creative Sets",
+        "count": 70,
+        "cover": "/portfolio/baby/9fe70fc2384d5b306ce4-medium-4ae69613274a.webp"
+      },
+      {
+        "slug": "princess-theme",
+        "name": "Princess Theme",
+        "count": 9,
+        "cover": "/portfolio/baby/dac390d7fe8c318b8b42-medium-1318af2147a1.webp"
+      },
+      {
+        "slug": "krishna-theme",
+        "name": "Krishna Theme",
+        "count": 22,
+        "cover": "/portfolio/baby/f539e908d6b8d45de2e1-medium-f1cea78cebbb.webp"
+      },
+      {
+        "slug": "traditional-theme",
+        "name": "Traditional Theme",
+        "count": 29,
+        "cover": "/portfolio/baby/8e70540bd66911ab1163-medium-609fb68e1d07.webp"
+      },
+      {
+        "slug": "boss-baby",
+        "name": "Boss Baby",
+        "count": 7,
+        "cover": "/portfolio/baby/06482d13d24b28b6e488-medium-bf9421038c7d.webp"
+      },
+      {
+        "slug": "studio-portraits",
+        "name": "Studio Portraits",
+        "count": 29,
+        "cover": "/portfolio/baby/6007f7a5d72b1b05f1c1-medium-7eea765fdd4e.webp"
+      },
+      {
+        "slug": "seasonal-portraits",
+        "name": "Seasonal Portraits",
+        "count": 7,
+        "cover": "/portfolio/baby/0cef04f06d1143cf8475-medium-23e4caa4c15b.webp"
+      },
+      {
+        "slug": "twins",
+        "name": "Twins",
+        "count": 3,
+        "cover": "/portfolio/baby/1ea08fdf331935e36abd-medium-c32e399fab85.webp"
+      }
+    ]
+  },
+  {
+    "slug": "maternity",
+    "name": "Maternity",
+    "count": 44,
+    "cover": "/portfolio/maternity/985da6394e166b385fb5-medium-218cee58b2eb.webp",
+    "subcategories": [
+      {
+        "slug": "indoor-maternity",
+        "name": "Studio Maternity",
+        "count": 23,
+        "cover": "/portfolio/maternity/985da6394e166b385fb5-medium-218cee58b2eb.webp"
+      },
+      {
+        "slug": "couple-maternity",
+        "name": "Couple Maternity",
+        "count": 14,
+        "cover": "/portfolio/maternity/b8150e4ecb996dd94bc5-medium-38d9b5e35786.webp"
+      },
+      {
+        "slug": "outdoor-maternity",
+        "name": "Outdoor Maternity",
+        "count": 6,
+        "cover": "/portfolio/maternity/198fba06955028a04643-medium-aa1bac3600d2.webp"
+      },
+      {
+        "slug": "family-maternity",
+        "name": "Family Maternity",
+        "count": 1,
+        "cover": "/portfolio/maternity/578585fb8228fe0857f0-medium-455c2d3a4d14.webp"
+      }
+    ]
+  },
+  {
+    "slug": "family",
+    "name": "Family",
+    "count": 40,
+    "cover": "/portfolio/family/a9c03d4682cf0ea51fcf-medium-88b8452f3558.webp",
+    "subcategories": [
+      {
+        "slug": "studio-family-portrait",
+        "name": "Studio Family Portraits",
+        "count": 12,
+        "cover": "/portfolio/family/a9c03d4682cf0ea51fcf-medium-88b8452f3558.webp"
+      },
+      {
+        "slug": "outdoor-family-portraits",
+        "name": "Outdoor Family Portraits",
+        "count": 3,
+        "cover": "/portfolio/family/49629b88e397352b10dd-medium-b57d30385e62.webp"
+      },
+      {
+        "slug": "family-with-baby",
+        "name": "Family with Baby",
+        "count": 23,
+        "cover": "/portfolio/family/c2774446a46018834c94-medium-a542af5b8d8c.webp"
+      },
+      {
+        "slug": "three-generation-portrait",
+        "name": "Three-Generation Portraits",
+        "count": 2,
+        "cover": "/portfolio/family/e7cdfae606f1d6ac329f-medium-b314d4c57a74.webp"
+      }
+    ]
+  }
+]

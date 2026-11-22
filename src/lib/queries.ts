@@ -1,7 +1,7 @@
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { studioConnected } from "@/lib/backend-mode";
-import { publishedCategories, publishedCounts, publishedPhotos } from "@/lib/published-portfolio";
+import { loadPublishedPhotos, publishedCategories, publishedCounts } from "@/lib/published-portfolio";
 
 /** Public taxonomy: only published, non-archived categories. */
 export const categoriesQuery = queryOptions({
@@ -145,8 +145,10 @@ export const photoByShortIdQuery = (shortId: string) =>
   queryOptions({
     queryKey: ["photo", shortId],
     queryFn: async () => {
-      const publishedPhoto = publishedPhotos.find((photo) => photo.short_id === shortId);
-      if (publishedPhoto) return publishedPhoto;
+      if (/^[a-f0-9]{20}$/.test(shortId)) {
+        const publishedPhoto = (await loadPublishedPhotos()).find((photo) => photo.short_id === shortId);
+        if (publishedPhoto) return publishedPhoto;
+      }
       const { data, error } = await supabase
         .from("images")
         .select(`${GALLERY_FIELDS}, categories(name,slug), subcategories(name,slug)`)
@@ -194,7 +196,7 @@ export const imagesByCategoryInfiniteQuery = (categoryId: string, subcategoryId?
     queryFn: async ({ pageParam }) => {
       const from = (pageParam as number) * GALLERY_PAGE_SIZE;
       if (!studioConnected) {
-        return publishedPhotos
+        return (await loadPublishedPhotos())
           .filter((photo) => photo.category_id === categoryId && (!subcategoryId || photo.subcategory_id === subcategoryId))
           .slice(from, from + GALLERY_PAGE_SIZE);
       }
