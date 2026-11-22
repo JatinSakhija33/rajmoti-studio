@@ -5,8 +5,9 @@ import { ArrowRight, ArrowUpRight, Heart, Check, MessageCircle } from "lucide-re
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { PhotographyChapters } from "@/components/photography-chapters";
+import { StudioMap } from "@/components/studio-map";
 import { useStyles } from "@/features/catalogue/store";
-import { whatsappLink } from "@/lib/site";
+import { directionsLink, SITE, whatsappLink } from "@/lib/site";
 import { canonicalFor } from "@/lib/seo";
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,6 +19,8 @@ export const Route = createFileRoute("/")({
 function Home() {
   const { data: content = {} } = useQuery(siteContentQuery);
   const { data: galleries = [] } = useQuery(categoriesQuery);
+  const contact = (content.contact ?? {}) as { address?: string; hours?: string };
+  const address = contact.address?.trim() || SITE.location;
   const familyCover = galleries.find((gallery) =>
     ["baby", "family"].includes(gallery.slug) && gallery.cover_image_url &&
       !gallery.cover_image_url.startsWith("/demo/"),
@@ -226,6 +229,19 @@ function Home() {
             Plan your session <ArrowUpRight size={16} />
           </Link>
           <p className="ed-footnote">ગુજરાતીમાં વાત કરવી છે? અમે મદદ કરીશું.</p>
+        </section>
+        <section className="ed-wrap pb-16 sm:pb-24">
+          <div className="flex flex-wrap items-end justify-between gap-4 border-t border-onyx/10 pt-10">
+            <div>
+              <h2>Visit the studio</h2>
+              <p className="ed-copy mt-3">{address}</p>
+              {contact.hours?.trim() && <p className="mt-2 text-sm">{contact.hours}</p>}
+            </div>
+            <a className="ed-text-button" href={directionsLink(`${SITE.name}, ${address}`)}>
+              Get directions <ArrowUpRight size={16} aria-hidden="true" />
+            </a>
+          </div>
+          <StudioMap />
         </section>
       </main>
       <SiteFooter />

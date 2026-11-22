@@ -196,7 +196,7 @@ function GeneralSection() {
         <SaveBar dirty={dirty} state={saver.state} onSave={save} label="Save studio details" />
       </SectionCard>
 
-      <SectionCard title="Google Maps embed" hint="Google Maps → search your studio → Share → Embed a map → paste the URL or the full iframe. Shown on the Contact and About pages.">
+      <SectionCard title="Google Maps embed" hint="Google Maps → search your studio → Share → Embed a map → paste the URL or the full iframe. Shown on the Home, Contact and About pages.">
         <textarea
           value={maps} onChange={(e) => setMaps(e.target.value)} rows={4}
           placeholder='https://www.google.com/maps/embed?pb=…'
