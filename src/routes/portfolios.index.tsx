@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { categoriesQuery, siteContentQuery, taxonomyCountsQuery } from "@/lib/queries";
 import { PortfolioHero } from "@/components/portfolio-hero";
+import { PhotographyChapters } from "@/components/photography-chapters";
 import { SectionCta } from "@/components/section-cta";
 import { absUrl, breadcrumbJsonLd } from "@/lib/seo";
 import { photographySessions } from "@/lib/photography-sessions";
@@ -41,17 +42,14 @@ export const Route = createFileRoute("/portfolios/")({
 function PortfoliosIndex() {
   const { data: categories = [] } = useQuery(categoriesQuery);
   const { data: siteContent } = useQuery(siteContentQuery);
-  const { data: counts } = useQuery(taxonomyCountsQuery);
   const defaults = (siteContent?.category_defaults ?? {}) as Record<string, string>;
-  const cards = [
-    ...categories.map((category) => ({
+  const cards = categories
+    .filter((category) => !photographySessions.some((session) => category.slug === session.slug))
+    .map((category) => ({
       ...category,
       cover: category.cover_image_url || defaults[category.slug],
-    })),
-    ...photographySessions
-      .filter((session) => !categories.some((category) => category.slug === session.slug))
-      .map((session) => ({ ...session, id: null, cover: undefined })),
-  ];
+    }));
+  const { data: counts } = useQuery({ ...taxonomyCountsQuery, enabled: cards.length > 0 });
 
   return (
     <div>
@@ -63,8 +61,11 @@ function PortfoliosIndex() {
         whatsappMessage="Hello Rajmoti Studio, I've been looking through your portfolios and would like to plan a session."
       />
 
-      <div className="container-page py-7 md:py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+      <div className="editorial">
+        <PhotographyChapters />
+      </div>
+      <div className="container-page pb-7 md:pb-12">
+        {cards.length > 0 && <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
           {cards.map((card, index) => {
             const photoCount = card.id ? counts?.byCategory[card.id] : undefined;
             return (
@@ -98,7 +99,7 @@ function PortfoliosIndex() {
               </Link>
             );
           })}
-        </div>
+        </div>}
 
         <SectionCta
           title="Not sure which session fits your family?"

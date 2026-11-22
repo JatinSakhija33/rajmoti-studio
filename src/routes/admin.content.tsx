@@ -223,6 +223,7 @@ function CategoryDefaultsEditor({ initial, onSave }: { initial: Record<string, s
                 url={v[c.slug] ?? ""}
                 onChange={(url) => setV({ ...v, [c.slug]: url })}
                 folder={`site/category-defaults/${c.slug}`}
+                size="medium"
               />
             </div>
           ))}
@@ -420,13 +421,13 @@ function Repeater<T>({ label, items, onChange, render, empty }: { label: string;
   );
 }
 
-function SingleImage({ label, url, onChange, folder }: { label: string; url: string; onChange: (v: string) => void; folder: string }) {
+function SingleImage({ label, url, onChange, folder, size }: { label: string; url: string; onChange: (v: string) => void; folder: string; size?: "medium" }) {
   const [busy, setBusy] = useState(false);
   async function upload(f: File | undefined) {
     if (!f) return;
     setBusy(true);
     try {
-      onChange(await optimizeSiteImage(f, folder));
+      onChange(await optimizeSiteImage(f, folder, size));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     }

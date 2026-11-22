@@ -4,10 +4,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, ArrowUpRight, Heart, Check, MessageCircle } from "lucide-react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
+import { PhotographyChapters } from "@/components/photography-chapters";
 import { useStyles } from "@/features/catalogue/store";
 import { whatsappLink } from "@/lib/site";
 import { canonicalFor } from "@/lib/seo";
-import { photographySessions } from "@/lib/photography-sessions";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [{ title: "Rajmoti Studio — Little moments. Lasting stories. | Jetpur" }, canonicalFor("/").ogUrl],
@@ -89,54 +89,7 @@ function Home() {
           <span>Personal guidance, from session to print</span>
           <span>A studio in the heart of Jetpur</span>
         </div>
-        <section className="ed-wrap ed-section">
-          <div className="ed-section-heading">
-            <div>
-              <p className="ed-kicker">What brings you here?</p>
-              <h2>Every chapter deserves a place.</h2>
-            </div>
-            <Link to="/portfolios" className="ed-text-button">
-              See the collections <ArrowUpRight size={17} />
-            </Link>
-          </div>
-          <div className="chapter-grid">
-            {photographySessions.map((session, index) => {
-              const gallery = galleries.find((item) => item.slug === session.slug);
-              const publishedCover = gallery?.cover_image_url;
-              const familyConcept = session.slug === "family";
-              const fallbackCover = familyConcept
-                ? "/editorial/family-hero.webp"
-                : `/demo/${session.slug}-1.svg`;
-              return (
-                <Link
-                  to="/portfolios/$category"
-                  params={{ category: session.slug }}
-                  className="chapter-card"
-                  key={session.slug}
-                >
-                  <div className="chapter-image">
-                    <img
-                      src={publishedCover || fallbackCover}
-                      alt=""
-                      width="1200"
-                      height="1500"
-                      loading="lazy"
-                    />
-                    {!publishedCover && (
-                      <span>{familyConcept ? "Concept image" : "Photography pending"}</span>
-                    )}
-                  </div>
-                  <div className="chapter-label">
-                    <span>{String(index + 1).padStart(2, "0")} / {session.name}</span>
-                    <ArrowUpRight size={17} aria-hidden="true" />
-                  </div>
-                  <h3>{session.title}</h3>
-                  <p>{session.caption}</p>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
+        <PhotographyChapters showCollectionsLink />
         <section className="story-feature">
           <div className="ed-wrap story-feature-inner">
             <figure>

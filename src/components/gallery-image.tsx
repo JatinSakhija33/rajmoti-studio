@@ -19,7 +19,7 @@ type Props = {
 export function GalleryImage({ image, size = "medium", sizes, alt, className, priority = false, onClick }: Props) {
   const [loaded, setLoaded] = useState(false);
   const src = variantUrl(image, size);
-  const srcSet = variantSrcSet(image);
+  const srcSet = variantSrcSet(image, ["thumbnail", "medium"]);
   const bg = image.dominant_color ?? "#e8e2d4";
   const ratio = image.width && image.height ? `${image.width} / ${image.height}` : undefined;
 

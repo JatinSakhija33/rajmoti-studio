@@ -1,5 +1,4 @@
 import { ReplacePhoto } from "@/features/media/replace-photo";
-import { liveBackend } from "@/lib/backend-mode";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
@@ -225,9 +224,9 @@ function AdminImages() {
       <section className="bg-white border border-onyx/10 p-6 mb-8">
         <h2 className="eyebrow text-muted-foreground mb-4">Upload new photographs</h2>
         <p className="text-xs text-muted-foreground mb-4">
-          {liveBackend
-            ? "Owner uploads go to your configured Supabase gallery. Add only photographs approved for your public portfolio."
-            : "Uploads are enabled locally in this browser. Photos are stored on this device, not uploaded to a server. Reset demo also removes them."}
+          JPG, PNG or WebP up to 25 MB. New gallery previews are converted to WebP up to
+          50 KB for thumbnails and 100 KB for browsing. Larger WebP versions are kept for full-screen viewing.
+          Add only photographs approved for your public portfolio.
         </p>
         <div className="grid sm:grid-cols-4 gap-4 mb-4">
           <select

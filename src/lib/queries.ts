@@ -115,6 +115,27 @@ export const GALLERY_FIELDS =
 
 export const GALLERY_PAGE_SIZE = 24;
 
+/** A cover from the published portfolio when a category has no selected cover. */
+export const photographyCoverQuery = (categoryId: string) =>
+  queryOptions({
+    queryKey: ["images", "cover", categoryId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("images")
+        .select("image_url,thumbnail_url,variants")
+        .eq("hidden", false)
+        .eq("category_id", categoryId)
+        .order("featured", { ascending: false })
+        .order("display_order")
+        .order("created_at", { ascending: false })
+        .order("id")
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
 /** Public single-photo page — resolved by the short, non-guessable public id. */
 export const photoByShortIdQuery = (shortId: string) =>
   queryOptions({

@@ -33,6 +33,11 @@ export const WEBP_QUALITY: Record<VariantKey, number> = {
   original: 0.82,
 };
 
+const GALLERY_BYTE_LIMITS: Partial<Record<VariantKey, number>> = {
+  thumbnail: 50 * 1024,
+  medium: 100 * 1024,
+};
+
 export type StoredVariant = {
   path: string;
   url: string;
@@ -126,8 +131,40 @@ async function canvasToWebp(canvas: HTMLCanvasElement, quality: number): Promise
   const blob = await new Promise<Blob | null>((resolve) =>
     canvas.toBlob(resolve, "image/webp", quality),
   );
-  if (!blob) throw new Error("This browser could not encode WebP");
+  if (!blob || blob.type !== "image/webp") throw new Error("This browser could not encode WebP");
   return blob;
+}
+
+async function encodeVariant(
+  bitmap: ImageBitmap,
+  base: { width: number; height: number },
+  key: VariantKey,
+): Promise<EncodedVariant> {
+  const limit = GALLERY_BYTE_LIMITS[key];
+  const quality = limit ? [WEBP_QUALITY[key], 0.65, 0.55, 0.45] : [WEBP_QUALITY[key]];
+  let edge = Math.min(Math.max(base.width, base.height), VARIANT_WIDTHS[key]);
+  const canvas = makeCanvas(1, 1);
+  try {
+    while (true) {
+      const { width, height } = scaledSize(base.width, base.height, edge);
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas is unavailable in this browser");
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(bitmap, 0, 0, width, height);
+      for (const level of quality) {
+        const blob = await canvasToWebp(canvas, level);
+        if (!limit || blob.size <= limit) return { key, blob, width, height };
+      }
+      if (edge === 1) throw new Error("Could not create a small WebP for the gallery");
+      edge = Math.max(1, Math.floor(edge * 0.8));
+    }
+  } finally {
+    canvas.width = 0;
+    canvas.height = 0;
+  }
 }
 
 function readDominantColor(bitmap: ImageBitmap): string {
@@ -159,18 +196,9 @@ export async function processImage(source: Blob): Promise<ProcessedImage> {
     let totalBytes = 0;
 
     for (const key of VARIANT_ORDER) {
-      const size = scaledSize(base.width, base.height, VARIANT_WIDTHS[key]);
-      const canvas = makeCanvas(size.width, size.height);
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Canvas is unavailable in this browser");
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-      ctx.drawImage(bitmap, 0, 0, size.width, size.height);
-      const blob = await canvasToWebp(canvas, WEBP_QUALITY[key]);
-      totalBytes += blob.size;
-      variants.push({ key, blob, width: size.width, height: size.height });
-      canvas.width = 0;
-      canvas.height = 0;
+      const variant = await encodeVariant(bitmap, base, key);
+      totalBytes += variant.blob.size;
+      variants.push(variant);
     }
 
     return { variants, width: base.width, height: base.height, dominantColor, totalBytes };
@@ -316,13 +344,14 @@ export function variantSrcSet(
   keys: VariantKey[] = ["thumbnail", "medium", "large"],
 ): string | undefined {
   const v = parseVariants(img.variants);
-  const parts = keys
-    .map((k) => {
-      const entry = v[k];
-      return entry ? `${entry.url} ${entry.width}w` : null;
-    })
-    .filter((p): p is string => p !== null);
-  return parts.length > 1 ? parts.join(", ") : undefined;
+  const candidates = new Map<number, string>();
+  for (const key of keys) {
+    const entry = v[key];
+    if (entry && entry.width > 0) candidates.set(entry.width, entry.url);
+  }
+  return candidates.size > 1
+    ? [...candidates].map(([width, url]) => `${url} ${width}w`).join(", ")
+    : undefined;
 }
 
 export function isOptimized(img: { variants?: unknown; optimized_at?: string | null }): boolean {
@@ -339,24 +368,27 @@ export function formatBytes(n: number): string {
 }
 
 /**
- * Optimize + upload a site-content image (hero, about, covers…). Site content
- * stores a single URL, so we keep the 2560px WebP and a medium preview.
+ * Optimize and upload the WebP size used by a site-content slot.
  */
-export async function optimizeSiteImage(file: Blob, folder: string): Promise<string> {
+export async function optimizeSiteImage(
+  file: Blob,
+  folder: string,
+  size: "original" | "medium" = "original",
+): Promise<string> {
   const processed = await processImage(file);
-  const id = crypto.randomUUID();
-  let url = "";
-  for (const v of processed.variants) {
-    if (v.key !== "original" && v.key !== "medium") continue;
-    const path = `${folder}/${id}/${v.key}.webp`;
-    const { error } = await supabase.storage
-      .from(BUCKET)
-      .upload(path, v.blob, { cacheControl: "31536000", upsert: false, contentType: "image/webp" });
-    if (error) throw new Error(error.message);
-    if (v.key === "original") url = await signPath(path);
+  const variant = processed.variants.find((item) => item.key === size);
+  if (!variant) throw new Error("Could not create the optimized image");
+  const path = `${folder}/${crypto.randomUUID()}/${size}.webp`;
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, variant.blob, { cacheControl: "31536000", upsert: false, contentType: "image/webp" });
+  if (error) throw new Error(error.message);
+  try {
+    return await signPath(path);
+  } catch (error) {
+    await removeStoragePaths([path]).catch(() => {});
+    throw error;
   }
-  if (!url) throw new Error("Could not store the optimized image");
-  return url;
 }
 
 /* -------------------------------------------------------------------------- */
