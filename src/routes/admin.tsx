@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminReminders } from "@/components/admin/reminder-indicator";
 
 export const Route = createFileRoute("/admin")({
-  head: () => ({ meta: [{ title: "Admin — Rajmoti Studio" }] }),
+  head: () => ({ meta: [{ title: "Admin — Rajmoti Studio" }, { name: "robots", content: "noindex, nofollow" }] }),
   component: AdminLayout,
 });
 

@@ -1,9 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, MessageCircle } from "lucide-react";
 import { whatsappLink } from "@/lib/site";
-import {useGiftCheckoutReady} from "@/features/catalogue/gift-checkout-status";
 export function SiteFooter() {
-  const giftReady=useGiftCheckoutReady();
   return (
     <footer className="studio-footer">
       <div className="ed-wrap">
@@ -42,7 +40,6 @@ export function SiteFooter() {
         </div>
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} Rajmoti Studio</span>
-          <span>{giftReady ? "Gift orders connected · UPI payments manually verified by the studio" : "Private demonstration · no live orders, uploads or payments"}</span>
           <Link to="/contact">ગુજરાતીમાં મદદ ઉપલબ્ધ છે</Link>
         </div>
       </div>

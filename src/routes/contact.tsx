@@ -3,7 +3,8 @@ import { useState, type FormEvent } from "react";
 import { ArrowRight, CheckCircle2, X, Heart, Package, ArrowLeft } from "lucide-react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
-import { useStyles, useQuote, useProducts, read, write } from "@/features/catalogue/store";
+import { whatsappLink } from "@/lib/site";
+import { useStyles, useQuote, useProducts } from "@/features/catalogue/store";
 export const Route = createFileRoute("/contact")({
   validateSearch: (s: Record<string, unknown>) => ({
     package: typeof s.package === "string" ? s.package : undefined,
@@ -23,8 +24,8 @@ const texts = {
     name: "Your name",
     phone: "WhatsApp number",
     age: "Baby’s age",
-    submit: "Save demo enquiry",
-    notice: "Private demonstration. Use fictional details. Nothing is sent to the studio.",
+    submit: "Prepare WhatsApp enquiry",
+    notice: "Review your details here, then send your enquiry in WhatsApp.",
     language: "ગુજરાતીમાં મદદ",
     help: "Dates, pricing and delivery are confirmed personally by the studio.",
   },
@@ -37,8 +38,8 @@ const texts = {
     name: "તમારું નામ",
     phone: "વોટ્સએપ નંબર",
     age: "બાળકની ઉંમર",
-    submit: "નમૂનાની પૂછપરછ સાચવો",
-    notice: "આ માત્ર નમૂનો છે. કાલ્પનિક વિગતો વાપરો. સ્ટુડિયોને કંઈ મોકલવામાં આવશે નહીં.",
+    submit: "WhatsApp પૂછપરછ તૈયાર કરો",
+    notice: "તમારી વિગતો ચકાસીને WhatsApp પર પૂછપરછ મોકલો.",
     language: "English form",
     help: "તારીખ, કિંમત અને ડિલિવરીની પુષ્ટિ સ્ટુડિયો કરશે.",
   },
@@ -80,34 +81,39 @@ function Contact() {
     if (!/^(?:91)?[6-9]\d{9}$/.test(phone.replace(/\D/g, ""))) {
       setError(
         gu
-          ? "સાચા ફોર્મેટમાં ૧૦ અંકનો નમૂનાનો મોબાઇલ નંબર લખો."
+          ? "સાચા ફોર્મેટમાં ૧૦ અંકનો મોબાઇલ નંબર લખો."
           : "Use a 10-digit Indian mobile number format, optionally prefixed with +91.",
       );
       return;
     }
-    const id = `DEMO-${Date.now().toString(36).toUpperCase()}`;
-    try {
-      write("rajmoti:editorial:enquiries:v2", [
-        ...read<any[]>("rajmoti:editorial:enquiries:v2", []),
-        {
-          id,
-          type,
-          date,
-          name: name.trim(),
-          phone,
-          age: type === "Baby" ? age : null,
-          package: search.package || null,
-          styles,
-          quote,
-          status: "awaiting_confirmation",
-          demo: true,
-          createdAt: new Date().toISOString(),
-        },
-      ]);
-      setSent(id);
-    } catch {
-      setError("Could not save in this browser. Please check browser storage and retry.");
-    }
+    const items = quote.map((line) => {
+      const product = products.find((item) => item.id === line.productId);
+      const variant = product?.variants.find((item) => item.id === line.variantId);
+      return [
+        product?.name || line.productId,
+        variant?.size || line.variantId,
+        "Qty " + line.quantity,
+      ].join(" · ");
+    });
+    const message = [
+      "Hello Rajmoti Studio, I would like to make an enquiry.",
+      "Name: " + name.trim(),
+      "Contact: " + phone,
+      "Interested in: " + type,
+      date && "Preferred date: " + date,
+      type === "Baby" && age && "Baby’s age: " + age,
+      search.package && "Collection: " + search.package,
+      styles.length > 0 &&
+        "Saved styles: " +
+          styles
+            .slice(0, 8)
+            .map((style) => style.title)
+            .join(", "),
+      items.length > 0 && "Product shortlist: " + items.slice(0, 8).join("; "),
+    ]
+      .filter(Boolean)
+      .join("\n");
+    setSent(whatsappLink(message));
   }
   return (
     <div className="editorial">
@@ -116,27 +122,18 @@ function Contact() {
         {sent ? (
           <section className="enquiry-success">
             <CheckCircle2 size={42} />
-            <p className="ed-kicker">Saved on this browser only</p>
-            <h1>
-              Your demo enquiry
-              <br />
-              <em>is ready.</em>
-            </h1>
-            <p className="status-pill">Awaiting confirmation · simulated</p>
-            <p>No booking or order has been made. No message was sent to Rajmoti Studio.</p>
-            <ol>
-              <li>The live studio would review your session or gift selection.</li>
-              <li>You would agree on date, inclusions, price and delivery.</li>
-              <li>Your booking would be confirmed only after that conversation.</li>
-            </ol>
-            <code>{sent}</code>
+            <h1>Your enquiry is ready.</h1>
+            <p>
+              Open WhatsApp to review and send it to the studio. Your session or order is confirmed
+              separately.
+            </p>
             <div className="ed-actions">
-              <button className="ed-button" onClick={() => setSent(null)}>
-                Edit another demo enquiry
+              <a href={sent} target="_blank" rel="noopener noreferrer" className="ed-button">
+                Open WhatsApp <ArrowRight size={16} />
+              </a>
+              <button className="ed-text-button" onClick={() => setSent(null)}>
+                Edit enquiry
               </button>
-              <Link to="/" className="ed-text-button">
-                Return home
-              </Link>
             </div>
           </section>
         ) : (
@@ -211,8 +208,7 @@ function Contact() {
                     required
                     minLength={2}
                     maxLength={120}
-                    autoComplete="off"
-                    placeholder="Demo customer"
+                    autoComplete="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
@@ -223,9 +219,8 @@ function Contact() {
                     required
                     type="tel"
                     inputMode="tel"
-                    autoComplete="off"
+                    autoComplete="tel"
                     maxLength={16}
-                    placeholder="10-digit demo number"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                   />
@@ -239,7 +234,7 @@ function Contact() {
                   {t.submit}
                   <ArrowRight size={16} />
                 </button>
-                <p className="ed-footnote">{t.help} The demo does not promise a response time.</p>
+                <p className="ed-footnote">{t.help}</p>
               </form>
               <aside className="enquiry-summary">
                 <h2>Your inspiration, together.</h2>
@@ -250,7 +245,7 @@ function Contact() {
                   {styles.length ? (
                     styles.map((s) => (
                       <div className="saved-style-row" key={s.id}>
-                        <img src={s.image} alt="Saved demonstration style" width="64" height="72" />
+                        <img src={s.image} alt="Saved photography style" width="64" height="72" />
                         <div>
                           <strong>{s.title}</strong>
                           <small>{s.id}</small>
@@ -302,7 +297,7 @@ function Contact() {
                   ) : (
                     <p>Choose products and variants from the gift directory.</p>
                   )}
-                  <Link to="/gifts" className="ed-text-button">
+                  <Link to="/products" className="ed-text-button">
                     Explore photo gifts <ArrowUpRightMini />
                   </Link>
                 </div>

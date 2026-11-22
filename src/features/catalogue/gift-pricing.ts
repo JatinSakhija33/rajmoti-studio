@@ -1,14 +1,14 @@
-import { calculateVariantPriceInr } from "@/lib/pricing";
 import type { Product, Variant } from "./store";
 
-// Preserve explicit main prices. Only apply the existing feature-branch rules to supported families.
-// In particular MAG-* in main means magnets, not magazines; never guess a magazine price for them.
-export function giftPrice(product: Product, variant: Variant): number | null {
-  if (variant.price != null && Number.isFinite(Number(variant.price))) return Number(variant.price);
-  if (!["frames", "acrylic", "led", "drinkware", "canvas", "gods-collection", "magazines"].includes(product.category)) return null;
-  return calculateVariantPriceInr(product.id, variant.size, variant.finish);
+// Public prices come only from explicit catalogue variant prices.
+export function giftPrice(_product: Product, variant: Variant): number | null {
+  return typeof variant.price === "number" && Number.isFinite(variant.price) && variant.price > 0 ? variant.price : null;
 }
+
 export function minimumGiftPrice(product: Product): number | null {
-  const values = product.variants.flatMap(v => { const price = giftPrice(product, v); return price == null ? [] : [price]; });
-  return values.length ? Math.min(...values) : null;
+  const prices = product.variants.flatMap(variant => {
+    const price = giftPrice(product, variant);
+    return price === null ? [] : [price];
+  });
+  return prices.length ? Math.min(...prices) : null;
 }

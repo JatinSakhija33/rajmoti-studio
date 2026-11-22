@@ -61,6 +61,7 @@ function PortfoliosIndex() {
       />
 
       <div className="container-page py-16 md:py-24">
+        {categories.length === 0 && <section className="max-w-2xl p-8 border border-onyx/10"><h2 className="font-display text-3xl">Explore a session with the studio</h2><p className="mt-4 text-sm">Ask us about baby, maternity, family or wedding photography and request relevant work from the studio.</p><Link to="/contact" className="mt-5 inline-block underline">Discuss a session</Link></section>}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
           {categories.map((c, i) => (
             <Link

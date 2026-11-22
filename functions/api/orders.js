@@ -10,7 +10,7 @@ function result(order, env) {
   }));
 }
 export async function onRequestPost({request,env}) {
-  if(env.GIFT_CHECKOUT_ENABLED!=="true"||!env.ORDER_DB||!env.ORDER_PHOTOS||!env.TURNSTILE_SECRET_KEY||!env.ORDER_UPLOAD_SECRET||env.ORDER_UPLOAD_SECRET.length<32)return failure("Gift ordering is not configured",503);
+  if(env.GIFT_PRODUCTION_APPROVED!=="true"||env.GIFT_CHECKOUT_ENABLED!=="true"||!env.ORDER_DB||!env.ORDER_PHOTOS||!env.TURNSTILE_SITE_KEY||!env.TURNSTILE_SECRET_KEY||!env.ORDER_UPLOAD_SECRET||env.ORDER_UPLOAD_SECRET.length<32)return failure("Gift ordering is not configured",503);
   try {
     assertOrigin(request);
     const reader=request.body?.getReader();if(!reader)return failure("Order details are required",400);

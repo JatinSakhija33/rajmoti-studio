@@ -1,7 +1,7 @@
 import { SITE } from "@/lib/site";
 
 /** Production origin used for canonical + Open Graph URLs. */
-export const SITE_URL = (import.meta.env.VITE_PUBLIC_SITE_URL || "https://rajmotistudio.lovable.app").replace(/\/$/, "");
+export const SITE_URL = (import.meta.env.VITE_PUBLIC_SITE_URL || "https://rajmotistudio.in").replace(/\/$/, "");
 
 /** Single source of truth for the local business entity. */
 export const STUDIO = {

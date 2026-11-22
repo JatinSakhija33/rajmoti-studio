@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@/demo/server-stub";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { studioConnected } from "@/lib/backend-mode";
 import { SITE } from "@/lib/site";
 import { ensureStudioAdminRole } from "@/lib/admin-auth.functions";
 
@@ -24,6 +25,7 @@ function AuthPage() {
   const ensureStudioAdmin = useServerFn(ensureStudioAdminRole);
 
   useEffect(() => {
+    if (!studioConnected) return;
     const search = new URLSearchParams(window.location.search);
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
     const type = search.get("type") ?? hash.get("type");
@@ -53,6 +55,7 @@ function AuthPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!studioConnected) return;
     setLoading(true);
     try {
       if (mode === "signin") {
@@ -90,45 +93,104 @@ function AuthPage() {
     }
   }
 
+  if (!studioConnected)
+    return (
+      <main className="min-h-dvh bg-cream grid place-items-center p-6">
+        <section className="max-w-md text-center">
+          <h1 className="font-display text-3xl mb-4">Studio access</h1>
+          <p className="text-sm">Studio sign-in is temporarily unavailable.</p>
+          <Link to="/" className="mt-6 inline-block underline">
+            Return to the website
+          </Link>
+        </section>
+      </main>
+    );
+
   return (
     <div className="min-h-dvh bg-cream text-onyx flex items-center justify-center px-6">
       <div className="w-full max-w-md">
         <Link to="/" className="block text-center mb-10">
-          <span className="font-display text-2xl tracking-[0.2em] uppercase">{SITE.name.split(" ")[0]}</span>
+          <span className="font-display text-2xl tracking-[0.2em] uppercase">
+            {SITE.name.split(" ")[0]}
+          </span>
         </Link>
         <div className="bg-white border border-onyx/10 p-8 md:p-10">
           <h1 className="font-display text-3xl mb-2">
-            {mode === "signin" ? "Studio access" : mode === "signup" ? "Create account" : "Reset password"}
+            {mode === "signin"
+              ? "Studio access"
+              : mode === "signup"
+                ? "Create account"
+                : "Reset password"}
           </h1>
           <p className="text-sm text-muted-foreground mb-8">
-            {mode === "signin" ? "Sign in to manage the studio." : mode === "signup" ? "For studio staff only." : "We'll email you a reset link."}
+            {mode === "signin"
+              ? "Sign in to manage the studio."
+              : mode === "signup"
+                ? "For studio staff only."
+                : "We'll email you a reset link."}
           </p>
           <form onSubmit={onSubmit} className="space-y-5">
             <label className="block">
               <span className="eyebrow text-muted-foreground block mb-2">Email</span>
-              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-transparent border-0 border-b border-onyx/15 py-2 focus:outline-none focus:border-gold" />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-transparent border-0 border-b border-onyx/15 py-2 focus:outline-none focus:border-gold"
+              />
             </label>
             {mode !== "reset" && (
               <label className="block">
                 <span className="eyebrow text-muted-foreground block mb-2">Password</span>
-                <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-transparent border-0 border-b border-onyx/15 py-2 focus:outline-none focus:border-gold" />
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-transparent border-0 border-b border-onyx/15 py-2 focus:outline-none focus:border-gold"
+                />
               </label>
             )}
-            <button type="submit" disabled={loading} className="w-full py-3.5 bg-onyx text-cream text-[11px] uppercase tracking-[0.25em] font-semibold hover:bg-gold transition-colors disabled:opacity-50">
-              {loading ? "Please wait…" : mode === "signin" ? "Sign in" : mode === "signup" ? "Create account" : "Send reset link"}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 bg-onyx text-cream text-[11px] uppercase tracking-[0.25em] font-semibold hover:bg-gold transition-colors disabled:opacity-50"
+            >
+              {loading
+                ? "Please wait…"
+                : mode === "signin"
+                  ? "Sign in"
+                  : mode === "signup"
+                    ? "Create account"
+                    : "Send reset link"}
             </button>
           </form>
           <div className="mt-8 pt-6 border-t border-onyx/10 text-xs space-y-2 text-muted-foreground">
-            {mode !== "signin" && <button onClick={() => setMode("signin")} className="hover:text-gold block">← Back to sign in</button>}
+            {mode !== "signin" && (
+              <button onClick={() => setMode("signin")} className="hover:text-gold block">
+                ← Back to sign in
+              </button>
+            )}
             {mode === "signin" && (
               <>
-                <button onClick={() => setMode("reset")} className="hover:text-gold block">Forgot password?</button>
-                <button onClick={() => setMode("signup")} className="hover:text-gold block">Create studio account</button>
+                <button onClick={() => setMode("reset")} className="hover:text-gold block">
+                  Forgot password?
+                </button>
+                <button onClick={() => setMode("signup")} className="hover:text-gold block">
+                  Create studio account
+                </button>
               </>
             )}
           </div>
         </div>
-        <Link to="/" className="block text-center mt-8 eyebrow text-muted-foreground hover:text-gold">← Return to site</Link>
+        <Link
+          to="/"
+          className="block text-center mt-8 eyebrow text-muted-foreground hover:text-gold"
+        >
+          ← Return to site
+        </Link>
       </div>
     </div>
   );

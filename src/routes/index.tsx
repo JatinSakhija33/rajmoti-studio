@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { siteContentQuery } from "@/lib/queries";
+import { categoriesQuery, siteContentQuery } from "@/lib/queries";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, ArrowUpRight, Heart, Check, MessageCircle } from "lucide-react";
 import { SiteNav } from "@/components/site-nav";
@@ -12,6 +12,7 @@ export const Route = createFileRoute("/")({
 });
 function Home() {
   const { data: content = {} } = useQuery(siteContentQuery);
+  const { data: galleries = [] } = useQuery(categoriesQuery);
   const candidate = content.hero?.images?.[0] || content.hero?.fallback_image;
   const customHero = candidate && !candidate.startsWith("/demo/") ? candidate : null;
   const [styles, setStyles] = useStyles();
@@ -115,39 +116,38 @@ function Home() {
                 label: "Weddings",
                 text: "The moments between the moments.",
               },
-            ].map((c, i) => (
-              <Link
-                to="/portfolios/$category"
-                params={{ category: c.slug }}
-                className="chapter-card"
-                key={c.slug}
-              >
-                <div className="chapter-image">
-                  <img
-                    src={
-                      c.slug === "family" ? "/editorial/family-hero.png" : `/demo/${c.slug}-1.svg`
-                    }
-                    alt={
-                      c.slug === "family"
-                        ? "Illustrative family portrait"
-                        : `${c.label} image placeholder`
-                    }
-                    width="1200"
-                    height="1500"
-                    loading="lazy"
-                  />
-                  <span>{c.slug === "family" ? "Concept image" : "Photography pending"}</span>
-                </div>
-                <div className="chapter-label">
-                  <span>
-                    0{i + 1} / {c.label}
-                  </span>
-                  <ArrowUpRight size={17} />
-                </div>
-                <h3>{c.name}</h3>
-                <p>{c.text}</p>
-              </Link>
-            ))}
+            ].map((c, i) => {
+              const gallery = galleries.find((item) => item.slug === c.slug);
+              return (
+                <Link
+                  to={gallery ? "/portfolios/$category" : "/contact"}
+                  params={gallery ? { category: c.slug } : undefined}
+                  search={gallery ? undefined : { session: c.slug }}
+                  className="chapter-card"
+                  key={c.slug}
+                >
+                  {gallery?.cover_image_url && (
+                    <div className="chapter-image">
+                      <img
+                        src={gallery.cover_image_url}
+                        alt={`${c.label} portfolio`}
+                        width="1200"
+                        height="1500"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                  <div className="chapter-label">
+                    <span>
+                      0{i + 1} / {c.label}
+                    </span>
+                    <ArrowUpRight size={17} />
+                  </div>
+                  <h3>{c.name}</h3>
+                  <p>{c.text}</p>
+                </Link>
+              );
+            })}
           </div>
         </section>
         <section className="story-feature">
@@ -158,11 +158,9 @@ function Home() {
                 width="1536"
                 height="1024"
                 loading="lazy"
-                alt="Fictional family used to demonstrate the story layout"
+                alt="Illustrative family photography"
               />
-              <figcaption>
-                Illustrative story concept · replace with a consented client session
-              </figcaption>
+              <figcaption>Illustrative portrait</figcaption>
             </figure>
             <div>
               <p className="ed-kicker">More than a single frame</p>
@@ -174,9 +172,6 @@ function Home() {
               <p className="ed-copy">
                 Explore how a complete session can bring together a child's personality, quiet
                 parent moments and everyone in one frame.
-              </p>
-              <p className="ed-footnote">
-                Demonstration story. No real customer names or testimonials are used.
               </p>
               <div className="ed-actions">
                 <Link to="/stories" className="ed-button outline">

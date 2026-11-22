@@ -1,74 +1,39 @@
-import { localBucket, resolveMedia, persistable } from "./media-storage";
-import { seed } from "./data";
-const KEY = "rajmoti:preview:database:v1";
-let db: any;
-function database() {
-  if (!db) {
-    try {
-      db = JSON.parse(localStorage.getItem(KEY) || "null");
-    } catch {}
-    db ||= structuredClone(seed);
-  }
-  return db;
-}
-function persist() {
-  localStorage.setItem(KEY, JSON.stringify(persistable(database())));
-}
-class Query {
-  table: string;
-  filters: ((r: any) => boolean)[] = [];
-  sorts: any[] = [];
-  one = false;
-  start = 0;
-  end = Infinity;
-  action = "read";
-  payload: any;
-  count = false;
-  constructor(table: string) {
-    this.table = table;
-  }
-  select(_fields?: any, options?: any) {
-    this.count = !!options?.count;
+// Offline read fallback. Studio records come only from the configured database.
+const unavailable = async () => ({
+  data: null,
+  error: new Error("The studio service is temporarily unavailable."),
+});
+class UnavailableQuery {
+  private writing = false;
+  private singleRow = false;
+  select() {
     return this;
   }
-  eq(k: string, v: any) {
-    this.filters.push((r) => r[k] === v);
+  eq() {
     return this;
   }
-  neq(k: string, v: any) {
-    this.filters.push((r) => r[k] !== v);
+  neq() {
     return this;
   }
-  is(k: string, v: any) {
-    this.filters.push((r) => (r[k] ?? null) === v);
+  is() {
     return this;
   }
-  in(k: string, v: any[]) {
-    this.filters.push((r) => v.includes(r[k]));
+  in() {
     return this;
   }
-  gte(k: string, v: any) {
-    this.filters.push((r) => r[k] >= v);
+  gte() {
     return this;
   }
-  lte(k: string, v: any) {
-    this.filters.push((r) => r[k] <= v);
+  lte() {
     return this;
   }
-  gt(k: string, v: any) {
-    this.filters.push((r) => r[k] > v);
+  gt() {
     return this;
   }
-  lt(k: string, v: any) {
-    this.filters.push((r) => r[k] < v);
+  lt() {
     return this;
   }
-  ilike(k: string, v: string) {
-    this.filters.push((r) =>
-      String(r[k] || "")
-        .toLowerCase()
-        .includes(v.replace(/%/g, "").toLowerCase()),
-    );
+  ilike() {
     return this;
   }
   or() {
@@ -77,128 +42,66 @@ class Query {
   not() {
     return this;
   }
-  order(k: string, o?: any) {
-    this.sorts.push([k, o?.ascending !== false]);
+  order() {
     return this;
   }
-  limit(n: number) {
-    this.end = this.start + n;
+  limit() {
     return this;
   }
-  range(a: number, b: number) {
-    this.start = a;
-    this.end = b + 1;
+  range() {
     return this;
   }
   maybeSingle() {
-    this.one = true;
+    this.singleRow = true;
     return this;
   }
   single() {
-    this.one = true;
+    return this.maybeSingle();
+  }
+  insert() {
+    this.writing = true;
     return this;
   }
-  insert(v: any) {
-    this.action = "insert";
-    this.payload = persistable(v);
-    return this;
+  upsert() {
+    return this.insert();
   }
-  upsert(v: any) {
-    this.action = "upsert";
-    this.payload = persistable(v);
-    return this;
-  }
-  update(v: any) {
-    this.action = "update";
-    this.payload = persistable(v);
-    return this;
+  update() {
+    return this.insert();
   }
   delete() {
-    this.action = "delete";
-    return this;
+    return this.insert();
   }
-  then(resolve: any, reject?: any) {
-    return Promise.resolve()
-      .then(async () => {
-        const rows = (database()[this.table] ||= []);
-        let matches = rows.filter((r: any) => this.filters.every((f) => f(r)));
-        if (this.action === "upsert" || this.action === "insert") {
-          matches = (Array.isArray(this.payload) ? this.payload : [this.payload]).map((r: any) => ({
-            ...r,
-            id: r.id || crypto.randomUUID(),
-            ...(this.table === "images"
-              ? {
-                  short_id: r.short_id || crypto.randomUUID().slice(0, 8),
-                  created_at: r.created_at || new Date().toISOString(),
-                }
-              : {}),
-          }));
-          for (const row of matches) {
-            const idx = rows.findIndex((r: any) =>
-              this.table === "site_content" ? r.section_key === row.section_key : r.id === row.id,
-            );
-            if (this.action === "upsert" && idx >= 0) rows[idx] = row;
-            else rows.push(row);
-          }
-          persist();
-        }
-        if (this.action === "update") {
-          matches.forEach((r: any) => Object.assign(r, this.payload));
-          persist();
-        }
-        if (this.action === "delete") {
-          database()[this.table] = rows.filter((r: any) => !matches.includes(r));
-          persist();
-        }
-        matches.sort((a: any, b: any) => {
-          for (const [k, asc] of this.sorts) {
-            const c = String(a[k] ?? "").localeCompare(String(b[k] ?? ""), undefined, {
-              numeric: true,
-            });
-            if (c) return asc ? c : -c;
-          }
-          return 0;
-        });
-        if (this.table === "images")
-          matches = matches.map((row: any) => ({
-            ...row,
-            categories: database().categories.find((c: any) => c.id === row.category_id) || null,
-            subcategories:
-              database().subcategories.find((c: any) => c.id === row.subcategory_id) || null,
-          }));
-        const count = matches.length;
-        matches = matches.slice(this.start, this.end);
-        return {
-          data: await resolveMedia(this.one ? (matches[0] ?? null) : structuredClone(matches)),
-          error: null,
-          count,
-        };
-      })
-      .then(resolve, reject);
+  then(resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) {
+    const result = this.writing
+      ? unavailable()
+      : Promise.resolve({ data: this.singleRow ? null : [], error: null, count: 0 });
+    return result.then(resolve, reject);
   }
 }
-const blocked = async () => ({
-  data: null,
-  error: new Error("Disabled in demonstration preview: no uploads, payments or external services."),
-});
-export const demoClient: any = {
-  from: (table: string) => new Query(table),
-  rpc: async (name: string) => ({ data: name === "has_role" ? true : [], error: null }),
+export const demoClient = {
+  from: () => new UnavailableQuery(),
+  rpc: unavailable,
   auth: {
     onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
-    getSession: async () => ({
-      data: { session: { user: { id: "demo-owner", email: "demo@example.invalid" } } },
-    }),
-    getUser: async () => ({ data: { user: { id: "demo-owner", email: "demo@example.invalid" } } }),
+    getSession: async () => ({ data: { session: null }, error: null }),
+    getUser: async () => ({ data: { user: null }, error: null }),
     signOut: async () => ({ error: null }),
-    signInWithPassword: blocked,
-    signUp: blocked,
-    resetPasswordForEmail: blocked,
-    updateUser: blocked,
-    signInWithOAuth: blocked,
+    signInWithPassword: unavailable,
+    signUp: unavailable,
+    resetPasswordForEmail: unavailable,
+    updateUser: unavailable,
+    signInWithOAuth: unavailable,
   },
-  functions: { invoke: blocked },
-  storage: { from: localBucket },
+  functions: { invoke: unavailable },
+  storage: {
+    from: () => ({
+      upload: unavailable,
+      remove: unavailable,
+      list: unavailable,
+      createSignedUrl: unavailable,
+      getPublicUrl: () => ({ data: { publicUrl: "" } }),
+    }),
+  },
   channel: () => ({
     on() {
       return this;
