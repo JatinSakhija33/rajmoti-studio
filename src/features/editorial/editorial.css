@@ -401,19 +401,6 @@
   color: var(--ed-muted);
   margin-top: 8px;
 }
-.chapter-card-text {
-  display: block;
-  padding: 20px;
-  border: 1px solid var(--ed-line);
-  background: var(--ed-cream);
-  transition: border-color 0.2s;
-}
-.chapter-card-text:hover {
-  border-color: var(--ed-gold);
-}
-.chapter-card-text .chapter-label {
-  margin-top: 0;
-}
 .story-feature {
   background: #ede6da;
   padding: 75px 0;

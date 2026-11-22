@@ -100,32 +100,38 @@ function Home() {
             </Link>
           </div>
           <div className="chapter-grid">
-            {photographySessions.map((c) => {
-              const gallery = galleries.find((item) => item.slug === c.slug);
+            {photographySessions.map((session, index) => {
+              const gallery = galleries.find((item) => item.slug === session.slug);
+              const publishedCover = gallery?.cover_image_url;
+              const familyConcept = session.slug === "family";
+              const fallbackCover = familyConcept
+                ? "/editorial/family-hero.webp"
+                : `/demo/${session.slug}-1.svg`;
               return (
                 <Link
                   to="/portfolios/$category"
-                  params={{ category: c.slug }}
-                  className={gallery?.cover_image_url ? "chapter-card" : "chapter-card chapter-card-text"}
-                  key={c.slug}
+                  params={{ category: session.slug }}
+                  className="chapter-card"
+                  key={session.slug}
                 >
-                  {gallery?.cover_image_url && (
-                    <div className="chapter-image">
-                      <img
-                        src={gallery.cover_image_url}
-                        alt=""
-                        width="1200"
-                        height="1500"
-                        loading="lazy"
-                      />
-                    </div>
-                  )}
-                  <div className="chapter-label">
-                    <span>{c.name}</span>
-                    <ArrowUpRight size={17} />
+                  <div className="chapter-image">
+                    <img
+                      src={publishedCover || fallbackCover}
+                      alt=""
+                      width="1200"
+                      height="1500"
+                      loading="lazy"
+                    />
+                    {!publishedCover && (
+                      <span>{familyConcept ? "Concept image" : "Photography pending"}</span>
+                    )}
                   </div>
-                  <h3>{c.title}</h3>
-                  <p>{c.description}</p>
+                  <div className="chapter-label">
+                    <span>{String(index + 1).padStart(2, "0")} / {session.name}</span>
+                    <ArrowUpRight size={17} aria-hidden="true" />
+                  </div>
+                  <h3>{session.title}</h3>
+                  <p>{session.caption}</p>
                 </Link>
               );
             })}
