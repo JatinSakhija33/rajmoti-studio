@@ -13,6 +13,7 @@ export type QuoteLine = {
   packaging: string;
   orderType: string;
   design?: GiftDesign;
+  quoteOnly?: boolean;
 };
 export type SavedStyle = { id: string; title: string; image: string };
 export const categories = [...seed.categories, ...extras.categories];

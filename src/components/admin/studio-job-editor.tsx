@@ -116,8 +116,9 @@ export function StudioJobEditor({
       (draft.total_amount !== null && draft.amount_received > draft.total_amount)
     )
       return setError("The received amount cannot exceed the total.");
-    if (draft.job_status === "delivered" && !isReviewed(draft))
-      return setError("Complete every before/after review check before marking delivered.");
+    const startsPrinting = draft.job_status === "printing" && job.job_status !== "printing";
+    if ((startsPrinting || draft.job_status === "delivered") && !isReviewed(draft))
+      return setError("Complete the before/after review checks before printing or closing the job.");
     if (draft.job_status === "delivered" && !["sent", "collected"].includes(draft.delivery_status))
       return setError("Set delivery to Collected or Sent before closing the job.");
     setBusy(true);

@@ -14,6 +14,7 @@ type Props = {
   meta?: string;
   crumbs?: Crumb[];
   whatsappMessage?: string;
+  session?: string;
 };
 
 /**
@@ -28,6 +29,7 @@ export function PortfolioHero({
   meta,
   crumbs = [],
   whatsappMessage,
+  session,
 }: Props) {
   return (
     <header className="relative overflow-hidden bg-onyx text-cream">
@@ -44,7 +46,7 @@ export function PortfolioHero({
           <div className="absolute inset-0 bg-gradient-to-t from-onyx via-onyx/70 to-onyx/40" />
         </>
       )}
-      <div className="container-page relative py-20 md:py-28">
+      <div className="container-page relative py-8 md:py-12">
         {crumbs.length > 0 && (
           <nav aria-label="Breadcrumb" className="eyebrow mb-6 text-cream/60 flex flex-wrap items-center gap-x-2">
             {crumbs.map((c, i) => (
@@ -63,18 +65,19 @@ export function PortfolioHero({
         )}
 
         {eyebrow && <p className="eyebrow text-gold mb-3">{eyebrow}</p>}
-        <h1 className="font-display text-5xl md:text-7xl leading-[1.03] max-w-3xl">{title}</h1>
+        <h1 className="font-display text-4xl md:text-6xl leading-[1.03] max-w-3xl">{title}</h1>
         {description && (
           <p className="mt-6 max-w-xl text-cream/75 leading-relaxed">{description}</p>
         )}
         {meta && <p className="eyebrow mt-6 text-cream/50">{meta}</p>}
 
-        <div className="mt-10 flex flex-wrap items-center gap-3">
+        <div className="mt-6 flex flex-wrap items-center gap-3">
           <Link
-            to="/book"
+            to="/contact"
+            search={{ session }}
             className="px-7 py-3 bg-gold text-onyx eyebrow hover:bg-gold/90 transition-colors"
           >
-            Book a session
+            Enquire about a session
           </Link>
           <a
             href={whatsappLink(whatsappMessage)}

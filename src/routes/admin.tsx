@@ -11,26 +11,58 @@ export const Route = createFileRoute("/admin")({
 });
 
 const NAV = [
-  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { to: "/admin/catalogue", label: "Product Catalogue", icon: Package },
-  { to: "/admin/workflow", label: "Studio Workflow", icon: ClipboardList },
-  { to: "/admin/gifts", label: "Gift Requests", icon: Gift },
-  { to: "/admin/gift-orders", label: "Gift Orders & Payments", icon: Gift },
-  { to: "/admin/calendar", label: "Calendar", icon: CalendarDays },
-  { to: "/admin/bookings", label: "Bookings", icon: CalendarDays },
-  { to: "/admin/booking", label: "Booking CMS", icon: Sparkles, exact: true },
+  { label: "Studio", items: [
+    { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/admin/workflow", label: "Today & jobs", icon: ClipboardList },
+    { to: "/admin/calendar", label: "Calendar", icon: CalendarDays },
+    { to: "/admin/bookings", label: "Bookings", icon: CalendarDays },
+  ] },
+  { label: "Customers", items: [
+    { to: "/admin/contacts", label: "Contacts", icon: Heart },
+    { to: "/admin/inquiries", label: "Enquiries", icon: MailOpen },
+    { to: "/admin/crm", label: "Reminders & offers", icon: Sparkles },
+  ] },
+  { label: "Catalogue & orders", items: [
+    { to: "/admin/catalogue", label: "Product catalogue", icon: Package },
+    { to: "/admin/gifts", label: "Gift requests", icon: Gift },
+    { to: "/admin/gift-orders", label: "Gift orders & payments", icon: Gift },
+  ] },
+  { label: "Website", items: [
+    { to: "/admin/content", label: "Content", icon: FileText },
+    { to: "/admin/images", label: "Gallery", icon: Images },
+    { to: "/admin/reels", label: "Cinematic reels", icon: Film },
+    { to: "/admin/categories", label: "Categories", icon: FolderTree },
+    { to: "/admin/packages", label: "Session packages", icon: Package },
+    { to: "/admin/booking", label: "Booking CMS", icon: Sparkles },
+    { to: "/admin/storage", label: "Storage", icon: HardDrive },
+    { to: "/admin/settings", label: "Settings", icon: Settings },
+  ] },
+] as const;
 
-  { to: "/admin/contacts", label: "Contacts", icon: Heart },
-  { to: "/admin/content", label: "Content", icon: FileText },
-  { to: "/admin/images", label: "Gallery", icon: Images },
-  { to: "/admin/reels", label: "Cinematic Reels", icon: Film },
-  { to: "/admin/categories", label: "Categories", icon: FolderTree },
-  { to: "/admin/packages", label: "Packages", icon: Package },
-  { to: "/admin/inquiries", label: "Inquiries", icon: MailOpen },
-  { to: "/admin/storage", label: "Storage", icon: HardDrive },
-  { to: "/admin/settings", label: "Settings", icon: Settings },
-  { to: "/admin/crm", label: "Reminders & offers", icon: Sparkles },
-];
+function AdminNavigation({ pathname, mobile = false }: { pathname: string; mobile?: boolean }) {
+  return (
+    <nav aria-label="Studio administration" className={mobile ? "flex gap-5 overflow-x-auto border-b border-onyx/10 px-4 py-3 md:hidden" : "space-y-5 flex-1"}>
+      {NAV.map(({ label, items }) => (
+        <div key={label} role="group" aria-label={label} className={mobile ? "shrink-0" : undefined}>
+          <p className="px-2 mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+          <div className={mobile ? "flex gap-1" : undefined}>
+            {items.map(({ to, label, icon: Icon }) => {
+              const active = pathname === to || (to !== "/admin" && pathname.startsWith(to + "/"));
+              return (
+                <Link key={to} to={to} aria-current={active ? "page" : undefined}
+                  className={"flex items-center gap-2 rounded-sm whitespace-nowrap px-2 py-2 text-sm focus-visible:outline-2 focus-visible:outline-gold " +
+                    (active ? "bg-onyx text-cream" : "hover:bg-onyx/5")}>
+                  {!mobile && <Icon className="size-4 shrink-0" aria-hidden />}
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </nav>
+  );
+}
 
 function AdminLayout() {
   const { loading, user, adminLoading, isAdmin } = useAuth();
@@ -51,8 +83,6 @@ function AdminLayout() {
     return <div className="min-h-dvh grid place-items-center px-6 text-center"><div><h1 className="text-3xl mb-4">Studio owner access only</h1><p className="text-sm text-muted-foreground mb-6">Your account does not have the admin role required to open customer and production records.</p><Link to="/" className="underline text-sm">Return to website</Link></div></div>;
   }
 
-  const nav = NAV;
-
   async function signOut() {
     await supabase.auth.signOut();
     navigate({ to: "/" });
@@ -62,17 +92,7 @@ function AdminLayout() {
     <div className="min-h-dvh bg-cream text-onyx flex">
       <aside className="w-60 shrink-0 border-r border-onyx/10 p-6 hidden md:flex flex-col">
         <Link to="/" className="font-display text-xl tracking-[0.2em] uppercase mb-10">Rajmoti</Link>
-        <nav className="space-y-1 flex-1">
-          {nav.map((n) => {
-            const active = n.exact ? pathname === n.to : pathname.startsWith(n.to);
-            return (
-              <Link key={n.to} to={n.to} className={`flex items-center gap-3 px-3 py-2.5 text-sm transition-colors ${active ? "bg-onyx text-cream" : "hover:bg-onyx/5"}`}>
-                <n.icon className="size-4" />
-                {n.label}
-              </Link>
-            );
-          })}
-        </nav>
+        <AdminNavigation pathname={pathname} />
         <div className="mt-6 pt-6 border-t border-onyx/10 space-y-3">
           <AdminReminders />
           <a href="/" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-gold">
@@ -88,14 +108,10 @@ function AdminLayout() {
           <Link to="/" className="font-display tracking-[0.2em] uppercase">Rajmoti</Link>
           <div className="flex items-center gap-2">
             <AdminReminders />
-            <button onClick={signOut} className="text-xs text-muted-foreground"><LogOut className="size-4" /></button>
+            <button onClick={signOut} aria-label="Sign out" className="text-xs text-muted-foreground"><LogOut className="size-4" /></button>
           </div>
         </header>
-        <div className="md:hidden border-b border-onyx/10 px-4 py-2 flex gap-3 overflow-x-auto text-xs">
-          {nav.map((n) => (
-            <Link key={n.to} to={n.to} className="whitespace-nowrap py-1 hover:text-gold">{n.label}</Link>
-          ))}
-        </div>
+        <AdminNavigation pathname={pathname} mobile />
         <div className="p-6 md:p-10 max-w-7xl">
           <Outlet />
         </div>

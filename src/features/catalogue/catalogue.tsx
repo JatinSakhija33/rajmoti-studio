@@ -59,7 +59,7 @@ function normal(s: string) {
     .replace(/\s+/g, "")
     .replace(/inches|inch/g, "in");
 }
-export function Catalogue({ productId }: { productId?: string }) {
+export function Catalogue({ productId, preferredVariantId }: { productId?: string; preferredVariantId?: string }) {
   const [products] = useProducts();
   const [quote, setQuote] = useQuote();
   const navigate = useNavigate();
@@ -122,8 +122,11 @@ export function Catalogue({ productId }: { productId?: string }) {
     setFilters((f) => ({ ...f, [key]: value }));
     setShown(12);
   };
-  const open = (id?: string) =>
-    navigate({ to: "/gifts", search: { product: id }, resetScroll: false });
+  const open = (id?: string) => {
+    const variant = products.find((p) => p.id === id)?.variants
+      .find((v) => v.size === filters.size)?.id;
+    return navigate({ to: "/gifts", search: { product: id, variant }, resetScroll: false });
+  };
   function toggleCompare(id: string) {
     setCompare((list) => {
       if (list.includes(id)) return list.filter((x) => x !== id);
@@ -141,7 +144,9 @@ export function Catalogue({ productId }: { productId?: string }) {
         x.variantId === line.variantId &&
         x.personalisation === line.personalisation &&
         x.packaging === line.packaging &&
-        x.orderType === line.orderType && JSON.stringify(x.design || null) === JSON.stringify(line.design || null),
+        x.orderType === line.orderType &&
+        Boolean(x.quoteOnly) === Boolean(line.quoteOnly) &&
+        JSON.stringify(x.design || null) === JSON.stringify(line.design || null),
     );
     const next = [...quote];
     if (existing >= 0)
@@ -151,7 +156,7 @@ export function Catalogue({ productId }: { productId?: string }) {
       };
     else next.push(line);
     setQuote(next);
-    toast.success("Your gift design was saved to the cart.");
+    toast.success(line.quoteOnly ? "Product added to your quote shortlist." : "Your gift design was saved to the cart.");
     open(undefined);
   }
   const active = Object.entries(filters).filter(([, v]) => v);
@@ -188,7 +193,7 @@ export function Catalogue({ productId }: { productId?: string }) {
           </div>
           <figure className="gift-intro-image">
             <img
-              src="/editorial/gift-still-life.png"
+              src="/editorial/gift-still-life.webp"
               width="1536"
               height="1024"
               alt="Illustrative photo frame, acrylic block, album and gift packaging"
@@ -312,7 +317,7 @@ export function Catalogue({ productId }: { productId?: string }) {
                   ).map(([key, label, options]) => (
                     <label key={key}>
                       {label}
-                      <select value={filters[key]} onChange={(e) => update(key, e.target.value)}>
+                      <select aria-label={label} value={filters[key]} onChange={(e) => update(key, e.target.value)}>
                         <option value="">All</option>
                         {[...new Set(options)].sort().map((o) => (
                           <option key={o}>{o}</option>
@@ -465,7 +470,7 @@ export function Catalogue({ productId }: { productId?: string }) {
             </DialogDescription>
           </DialogHeader>
           {product ? (
-            <ProductDetail key={product.id} product={product} onAdd={add} />
+            <ProductDetail key={product.id + ":" + (preferredVariantId ?? "")} product={product} preferredVariantId={preferredVariantId} onAdd={add} />
           ) : (
             <p>This product code is not in the directory. Close this panel to continue browsing.</p>
           )}
@@ -480,7 +485,7 @@ export function Catalogue({ productId }: { productId?: string }) {
               inventory.
             </DialogDescription>
           </DialogHeader>
-          <Compare products={products.filter((p) => compare.includes(p.id))} />
+          <Compare products={products.filter((p) => compare.includes(p.id))} size={filters.size} />
         </DialogContent>
       </Dialog>
       {quote.length > 0 && <div className="gift-cart-pill"><button className="ed-button" onClick={() => setShowQuote(true)}><ShoppingBag size={17}/>Your cart <span>{quote.length}</span></button></div>}
@@ -490,18 +495,25 @@ export function Catalogue({ productId }: { productId?: string }) {
 }
 function ProductDetail({
   product: p,
+  preferredVariantId,
   onAdd,
 }: {
   product: Product;
+  preferredVariantId?: string;
   onAdd: (line: QuoteLine) => void;
 }) {
-  const [variantId, setVariant] = useState(p.variants[0]?.id || "");
+  const [variantId, setVariant] = useState(
+    p.variants.find((v) => v.id === preferredVariantId)?.id ?? p.variants[0]?.id ?? "",
+  );
   const [qty, setQty] = useState(1);
   const [draft, setDraft] = useState<GiftDraft | undefined>();
   const [personalisation, setPersonalisation] = useState(p.personalisation[0]);
   const [packaging, setPackaging] = useState(p.packaging[0]);
   const [orderType, setOrderType] = useState(p.orderTypes[0]);
   const v = p.variants.find((v) => v.id === variantId)!;
+  const unavailable = !Number.isInteger(qty) || qty < 1 || qty > 9999 ||
+    p.availability === "Discontinued";
+  const selection = { productId: p.id, variantId, quantity: qty, personalisation, packaging, orderType };
   const dims = (v?.size || "").match(/^(\d+)×(\d+) in$/);
   const w = dims ? Number(dims[1]) : 0;
   const h = dims ? Number(dims[2]) : 0;
@@ -525,7 +537,7 @@ function ProductDetail({
           <p>{p.description}</p>
           <label>
             Proposed size / variant
-            <select value={variantId} onChange={(e) => setVariant(e.target.value)}>
+            <select aria-label="Proposed size / variant" value={variantId} onChange={(e) => setVariant(e.target.value)}>
               {p.variants.map((v) => (
                 <option value={v.id} key={v.id}>
                   {v.size}
@@ -558,7 +570,7 @@ function ProductDetail({
           </div>
           <label>
             Personalisation
-            <select value={personalisation} onChange={(e) => setPersonalisation(e.target.value)}>
+            <select aria-label="Personalisation" value={personalisation} onChange={(e) => setPersonalisation(e.target.value)}>
               {p.personalisation.map((t) => (
                 <option key={t}>{t}</option>
               ))}
@@ -566,7 +578,7 @@ function ProductDetail({
           </label>
           <label>
             Packaging
-            <select value={packaging} onChange={(e) => setPackaging(e.target.value)}>
+            <select aria-label="Packaging" value={packaging} onChange={(e) => setPackaging(e.target.value)}>
               {p.packaging.map((t) => (
                 <option key={t}>{t}</option>
               ))}
@@ -576,28 +588,23 @@ function ProductDetail({
             <strong>{giftPrice(p,v) == null ? "Price on request" : `₹${giftPrice(p,v)}`}</strong>
             <span>Existing variant pricing is confirmed again by the order server.</span>
           </div>
-          <button
-            className="ed-button"
-            disabled={
-              !Number.isInteger(qty) || qty < 1 || qty > 9999 || p.availability === "Discontinued"
-            }
-            onClick={() => {
-              if (!draft || (draft.design.kind !== "devotional" && (!draft.files.length || draft.design.photoSlots.some(slot=>slot.source!=="upload")))) { toast.error("Upload your own photograph for every design slot before saving. Sample artwork is for preview only."); return; }
-              rememberCartPhotos(draft);
-              onAdd({
-                productId: p.id,
-                variantId,
-                quantity: qty,
-                personalisation,
-                packaging,
-                orderType,
-                design: draft?.design,
-              });
-            }}
-          >
-            Save design & add to cart <Plus size={16} />
+          <button className="ed-button" disabled={unavailable}
+            onClick={() => onAdd({ ...selection, quoteOnly: true })}>
+            Add to quote shortlist <Plus size={16} />
           </button>
-          <small>Photos stay on this device until you submit your order. UPI payments are verified manually by the studio.</small>
+          <button className="ed-text-button" disabled={unavailable}
+            onClick={() => {
+              if (!draft || (draft.design.kind !== "devotional" &&
+                (!draft.files.length || draft.design.photoSlots.some((slot) => slot.source !== "upload")))) {
+                toast.error("Upload your own photo for each design slot before saving a design.");
+                return;
+              }
+              rememberCartPhotos(draft);
+              onAdd({ ...selection, design: draft.design });
+            }}>
+            Save design & add to cart
+          </button>
+          <small>You can request a quote without a photo. Uploaded previews remain on this device until you submit an order.</small>
         </div>
       </div>
       <h3 className="spec-heading">The specification directory</h3>
@@ -654,8 +661,12 @@ function ProductDetail({
     </>
   );
 }
-function Compare({ products }: { products: Product[] }) {
+function Compare({ products, size }: { products: Product[]; size: string }) {
   const [selected, setSelected] = useState<Record<string, string>>({});
+  const variantFor = (p: Product) =>
+    p.variants.find((v) => v.id === selected[p.id]) ??
+    p.variants.find((v) => v.size === size) ??
+    p.variants[0];
   const rows = [
     "Material",
     "Shape",
@@ -680,7 +691,7 @@ function Compare({ products }: { products: Product[] }) {
                 {p.name}
                 <select
                   aria-label={`Variant for ${p.name}`}
-                  value={selected[p.id] || p.variants[0].id}
+                  value={variantFor(p).id}
                   onChange={(e) => setSelected({ ...selected, [p.id]: e.target.value })}
                 >
                   {p.variants.map((v) => (
@@ -698,7 +709,7 @@ function Compare({ products }: { products: Product[] }) {
             <tr key={key}>
               <th>{key}</th>
               {products.map((p) => {
-                const v = p.variants.find((v) => v.id === (selected[p.id] || p.variants[0].id))!;
+                const v = variantFor(p);
                 const data: Record<string, string> = {
                   Material: p.material,
                   Shape: p.shape,

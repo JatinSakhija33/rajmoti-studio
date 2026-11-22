@@ -141,6 +141,7 @@ function CinematicReelsPage() {
               videoUrl={hero.video_url}
               ratio={hero.aspect_ratio}
               title={publicReelTitle(hero)}
+              autoPlay={false}
               className="w-full max-h-[70vh] mx-auto"
             />
           ) : (
@@ -306,8 +307,9 @@ function CinematicReelsPage() {
             )}
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {visible.map((r) => (
+            {visible.map((r, index) => (
               <ReelCard
+                warmPreview={index < 2}
                 key={r.id}
                 reel={r}
                 onOpen={() => setViewerIndex(showcase.findIndex((x) => x.id === r.id))}

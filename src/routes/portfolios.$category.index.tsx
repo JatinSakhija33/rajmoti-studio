@@ -125,6 +125,8 @@ function CategoryPage() {
 
   const total = counts.byCategory[cat.id] ?? shown;
   const seo = categorySeo(params.category, cat.name, cat.description);
+  const showSessionTypes = subs.length > 1 ||
+    (subs.length === 1 && (total === 0 || counts.bySubcategory[subs[0].id] !== total));
 
   return (
     <div>
@@ -136,18 +138,19 @@ function CategoryPage() {
 
         meta={total ? `${total} photographs${subs.length ? ` · ${subs.length} session types` : ""}` : undefined}
         crumbs={[{ label: "Portfolios", to: "/portfolios" }, { label: cat.name }]}
+        session={cat.slug}
         whatsappMessage={waMessage.category(cat.name)}
       />
 
-      <div className="container-page py-10 md:py-14">
-        <SubcategoryNav
+      <div className="container-page py-6 md:py-9">
+        {showSessionTypes && <SubcategoryNav
           categorySlug={params.category}
           subs={subs}
           active={null}
           counts={counts.bySubcategory}
-        />
+        />}
 
-        <div className="pt-10 md:pt-14">
+        <div className={showSessionTypes ? "pt-6 md:pt-8" : undefined}>
           <PortfolioGallery
             categoryId={cat.id}
             contextName={cat.name}
@@ -187,10 +190,11 @@ function CategoryPage() {
                   {p.description && <p className="text-sm text-muted-foreground mb-6">{p.description}</p>}
                   <p className="font-display text-3xl mb-6 mt-auto">{formatPrice(p.price)}</p>
                   <Link
-                    to="/book"
+                    to="/contact"
+                    search={{ session: cat.slug, package: p.name }}
                     className="eyebrow px-5 py-2.5 bg-onyx text-cream text-center hover:bg-gold hover:text-onyx transition-colors"
                   >
-                    Book this
+                    Enquire about this package
                   </Link>
                 </article>
               ))}

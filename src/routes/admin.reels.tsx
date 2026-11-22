@@ -24,6 +24,7 @@ function AdminReels() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const videoInput = useRef<HTMLInputElement>(null);
+  const previewInput = useRef<HTMLInputElement>(null);
   const posterInput = useRef<HTMLInputElement>(null);
 
   const invalidate = () => {
@@ -36,6 +37,7 @@ function AdminReels() {
         title: d.title?.trim() || "Untitled reel",
         description: d.description ?? null,
         video_url: d.video_url ?? null,
+        ...(d.preview_url !== undefined && { preview_url: d.preview_url }),
         video_path: d.video_path ?? null,
         poster_url: d.poster_url ?? null,
         poster_path: d.poster_path ?? null,
@@ -91,13 +93,20 @@ function AdminReels() {
     await patch(other.id, { display_order: reel.display_order });
   }
 
-  async function onVideo(file: File) {
+  async function onVideo(file: File, preview = false) {
+    if (preview && (!["video/mp4", "video/webm"].includes(file.type) || file.size > 750_000)) {
+      toast.error("Choose an MP4 or WebM hover clip smaller than 750 KB.");
+      return;
+    }
     const id = draft?.id ?? crypto.randomUUID();
-    setBusy("video");
+    setBusy(preview ? "preview" : "video");
     try {
-      const { path, url } = await uploadReelVideo(id, file);
-      setDraft((d) => ({ ...(d ?? {}), id: d?.id, video_path: path, video_url: url }));
-      toast.success("Video uploaded");
+      const { path, url } = await uploadReelVideo(id, file, preview);
+      setDraft((d) => d && ({
+        ...d,
+        ...(preview ? { preview_url: url } : { video_path: path, video_url: url }),
+      }));
+      toast.success(preview ? "Hover clip uploaded" : "Video uploaded");
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -322,6 +331,38 @@ function AdminReels() {
                   {draft.poster_url ? "Replace poster" : "Upload poster"}
                 </button>
               </div>
+            </div>
+
+            <div>
+              <p className="text-sm">Hover preview (optional)</p>
+              <p className="text-xs text-muted-foreground mb-2">
+                Use a 3–5 second silent MP4 or WebM under 750 KB, cropped like the poster.
+              </p>
+              <input
+                ref={previewInput}
+                type="file"
+                accept="video/mp4,video/webm"
+                hidden
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  event.currentTarget.value = "";
+                  if (file) void onVideo(file, true);
+                }}
+              />
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => previewInput.current?.click()}
+                className="border border-onyx/20 px-4 py-2 text-sm"
+              >
+                {busy === "preview" ? "Uploading…" : draft.preview_url ? "Replace hover clip" : "Upload hover clip"}
+              </button>
+              {draft.preview_url && (
+                <button type="button" disabled={busy !== null} className="ml-3 text-sm underline"
+                  onClick={() => setDraft({ ...draft, preview_url: null })}>
+                  Remove hover clip
+                </button>
+              )}
             </div>
 
             {draft.poster_url && (
