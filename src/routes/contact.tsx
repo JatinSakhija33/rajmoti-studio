@@ -3,15 +3,41 @@ import { useState, type FormEvent } from "react";
 import { ArrowRight, CheckCircle2, X, Heart, Package, ArrowLeft } from "lucide-react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
-import { useStyles, useQuote, useProducts, read, write } from "@/features/catalogue/store";
+import { whatsappLink } from "@/lib/site";
+import { canonicalFor } from "@/lib/seo";
+import { useStyles, useQuote, useProducts } from "@/features/catalogue/store";
+import { giftPrice } from "@/features/catalogue/gift-pricing";
 export const Route = createFileRoute("/contact")({
   validateSearch: (s: Record<string, unknown>) => ({
     package: typeof s.package === "string" ? s.package : undefined,
     session: typeof s.session === "string" ? s.session : undefined,
   }),
-  head: () => ({ meta: [{ title: "Plan your session — Rajmoti Studio" }] }),
+  head: () => ({
+    meta: [{ title: "Contact Rajmoti Studio — Sessions & Photo Gifts" }, canonicalFor("/contact").ogUrl],
+    links: canonicalFor("/contact").links,
+  }),
   component: Contact,
 });
+const services = [
+  ["Baby", "બાળકની ફોટોગ્રાફી"],
+  ["Maternity", "મેટરનિટી ફોટોગ્રાફી"],
+  ["Family", "પરિવારની ફોટોગ્રાફી"],
+  ["Wedding", "લગ્નની ફોટોગ્રાફી"],
+  ["Photo gifting", "ફોટો ભેટ"],
+  ["Corporate / bulk gifts", "કોર્પોરેટ / મોટી સંખ્યામાં ભેટ"],
+  ["Passport photos", "પાસપોર્ટ ફોટા"],
+  ["Photo restoration", "જૂના ફોટાનું રિસ્ટોરેશન"],
+  ["Memorial photos", "સ્મૃતિ ફોટા"],
+  ["Other", "અન્ય"],
+] as const;
+
+function serviceFor(session: string | undefined, hasGifts: boolean) {
+  if (!session) return hasGifts ? "Photo gifting" : "Baby";
+  const value = session.toLowerCase().replaceAll("-", " ");
+  return services.find(([label]) => label.toLowerCase() === value)?.[0] ??
+    services.slice(0, 4).find(([label]) => new RegExp("\\b" + label.toLowerCase() + "\\b").test(value))?.[0] ??
+    "Other";
+}
 const texts = {
   en: {
     kicker: "Let’s make a little room for your story",
@@ -23,8 +49,8 @@ const texts = {
     name: "Your name",
     phone: "WhatsApp number",
     age: "Baby’s age",
-    submit: "Save demo enquiry",
-    notice: "Private demonstration. Use fictional details. Nothing is sent to the studio.",
+    submit: "Prepare WhatsApp enquiry",
+    notice: "Review your details here, then send your enquiry in WhatsApp.",
     language: "ગુજરાતીમાં મદદ",
     help: "Dates, pricing and delivery are confirmed personally by the studio.",
   },
@@ -37,8 +63,8 @@ const texts = {
     name: "તમારું નામ",
     phone: "વોટ્સએપ નંબર",
     age: "બાળકની ઉંમર",
-    submit: "નમૂનાની પૂછપરછ સાચવો",
-    notice: "આ માત્ર નમૂનો છે. કાલ્પનિક વિગતો વાપરો. સ્ટુડિયોને કંઈ મોકલવામાં આવશે નહીં.",
+    submit: "WhatsApp પૂછપરછ તૈયાર કરો",
+    notice: "તમારી વિગતો ચકાસીને WhatsApp પર પૂછપરછ મોકલો.",
     language: "English form",
     help: "તારીખ, કિંમત અને ડિલિવરીની પુષ્ટિ સ્ટુડિયો કરશે.",
   },
@@ -50,18 +76,14 @@ function Contact() {
   const [styles, setStyles] = useStyles();
   const [quote, setQuote] = useQuote();
   const [products] = useProducts();
-  const [type, setType] = useState(
-    [
-      "Baby",
-      "Maternity",
-      "Family",
-      "Wedding",
-      "Photo gifting",
-      "Corporate / bulk gifts",
-      "Other",
-    ].find((x) => x.toLowerCase() === search.session?.toLowerCase()) ||
-      (quote.length ? "Photo gifting" : "Baby"),
-  );
+  const [type, setType] = useState<string>(serviceFor(search.session, quote.length > 0));
+  const [venue, setVenue] = useState("");
+  const [coverage, setCoverage] = useState("");
+  const [fulfilment, setFulfilment] = useState("");
+  const [notes, setNotes] = useState("");
+  const [maternityWeeks, setMaternityWeeks] = useState("");
+  const isGift = type === "Photo gifting" || type === "Corporate / bulk gifts";
+  const selectedPackage = type === serviceFor(search.session, quote.length > 0) ? search.package : undefined;
   const [date, setDate] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -80,34 +102,44 @@ function Contact() {
     if (!/^(?:91)?[6-9]\d{9}$/.test(phone.replace(/\D/g, ""))) {
       setError(
         gu
-          ? "સાચા ફોર્મેટમાં ૧૦ અંકનો નમૂનાનો મોબાઇલ નંબર લખો."
+          ? "સાચા ફોર્મેટમાં ૧૦ અંકનો મોબાઇલ નંબર લખો."
           : "Use a 10-digit Indian mobile number format, optionally prefixed with +91.",
       );
       return;
     }
-    const id = `DEMO-${Date.now().toString(36).toUpperCase()}`;
-    try {
-      write("rajmoti:editorial:enquiries:v2", [
-        ...read<any[]>("rajmoti:editorial:enquiries:v2", []),
-        {
-          id,
-          type,
-          date,
-          name: name.trim(),
-          phone,
-          age: type === "Baby" ? age : null,
-          package: search.package || null,
-          styles,
-          quote,
-          status: "awaiting_confirmation",
-          demo: true,
-          createdAt: new Date().toISOString(),
-        },
-      ]);
-      setSent(id);
-    } catch {
-      setError("Could not save in this browser. Please check browser storage and retry.");
-    }
+    const items = isGift ? quote.map((line) => {
+      const product = products.find((item) => item.id === line.productId);
+      const variant = product?.variants.find((item) => item.id === line.variantId);
+      return [
+        product?.name || line.productId,
+        variant?.size,
+        variant?.finish,
+        variant?.thickness,
+        line.productId + " / " + line.variantId,
+        "Qty " + line.quantity,
+        line.personalisation,
+        line.packaging,
+        line.orderType,
+      ].filter(Boolean).join(" · ");
+    }) : [];
+    const message = [
+      "Hello Rajmoti Studio, I’d like to ask about " + type.toLowerCase() + ".",
+      gu && "Please reply in Gujarati if possible.",
+      "Name: " + name.trim(),
+      "Contact: " + phone,
+      type === "Other" && search.session && "Service: " + search.session,
+      selectedPackage && "Session package: " + selectedPackage,
+      date && (isGift ? "Needed by: " : "Preferred date: ") + date,
+      type === "Baby" && age && "Baby’s age: " + age,
+      type === "Maternity" && maternityWeeks && "Pregnancy week: " + maternityWeeks,
+      type === "Wedding" && venue.trim() && "Venue / city: " + venue.trim(),
+      type === "Wedding" && coverage.trim() && "Coverage: " + coverage.trim(),
+      isGift && fulfilment && "Preferred fulfilment: " + fulfilment,
+      !isGift && styles.length > 0 && "Saved styles: " + styles.slice(0, 8).map((style) => style.title).join(", "),
+      ...items.map((item) => "• " + item),
+      notes.trim() && "Notes: " + notes.trim(),
+    ].filter(Boolean).join("\n");
+    setSent(message);
   }
   return (
     <div className="editorial">
@@ -116,27 +148,19 @@ function Contact() {
         {sent ? (
           <section className="enquiry-success">
             <CheckCircle2 size={42} />
-            <p className="ed-kicker">Saved on this browser only</p>
-            <h1>
-              Your demo enquiry
-              <br />
-              <em>is ready.</em>
-            </h1>
-            <p className="status-pill">Awaiting confirmation · simulated</p>
-            <p>No booking or order has been made. No message was sent to Rajmoti Studio.</p>
-            <ol>
-              <li>The live studio would review your session or gift selection.</li>
-              <li>You would agree on date, inclusions, price and delivery.</li>
-              <li>Your booking would be confirmed only after that conversation.</li>
-            </ol>
-            <code>{sent}</code>
+            <h1>Your enquiry is ready.</h1>
+            <p>
+              Open WhatsApp to review and send it to the studio. Your session or order is confirmed
+              separately.
+            </p>
+            <p className="whitespace-pre-wrap break-words p-4 text-left text-sm bg-white/70 border border-onyx/10 my-5 max-h-80 overflow-auto">{sent}</p>
             <div className="ed-actions">
-              <button className="ed-button" onClick={() => setSent(null)}>
-                Edit another demo enquiry
+              <a href={whatsappLink(sent)} target="_blank" rel="noopener noreferrer" className="ed-button">
+                Open WhatsApp <ArrowRight size={16} />
+              </a>
+              <button className="ed-text-button" onClick={() => setSent(null)}>
+                Edit enquiry
               </button>
-              <Link to="/" className="ed-text-button">
-                Return home
-              </Link>
             </div>
           </section>
         ) : (
@@ -155,27 +179,19 @@ function Contact() {
                 )}
               </h1>
               <p className="ed-copy">{t.intro}</p>
-              <button onClick={() => setGu(!gu)} className="ed-text-button">
+              <button type="button" lang={gu ? "en" : "gu"} onClick={() => setGu(!gu)} className="ed-text-button">
                 {t.language}
               </button>
             </div>
             <div className="enquiry-layout">
-              <form className="enquiry-form" onSubmit={submit}>
+              <form lang={gu ? "gu" : "en"} className="enquiry-form" onSubmit={submit}>
                 <p className="ed-notice">{t.notice}</p>
-                {search.package && <p className="status-pill">Collection: {search.package}</p>}
+                {selectedPackage && <p className="status-pill">{gu ? "પેકેજ" : "Session package"} · {selectedPackage}</p>}
                 <label>
                   {t.type}
                   <select value={type} onChange={(e) => setType(e.target.value)}>
-                    {[
-                      "Baby",
-                      "Maternity",
-                      "Family",
-                      "Wedding",
-                      "Photo gifting",
-                      "Corporate / bulk gifts",
-                      "Other",
-                    ].map((x) => (
-                      <option key={x}>{x}</option>
+                    {services.map(([value, guLabel]) => (
+                      <option key={value} value={value}>{gu ? guLabel : value}</option>
                     ))}
                   </select>
                 </label>
@@ -196,8 +212,37 @@ function Contact() {
                     </select>
                   </label>
                 )}
+                {type === "Maternity" && (
+                  <label>
+                    {gu ? "ગર્ભાવસ્થાનું અઠવાડિયું (વૈકલ્પિક)" : "Pregnancy week (optional)"}
+                    <input type="number" min={1} max={42} value={maternityWeeks}
+                      onChange={(e) => setMaternityWeeks(e.target.value)} />
+                  </label>
+                )}
+                {type === "Wedding" && (
+                  <>
+                    <label>
+                      {gu ? "સ્થળ અથવા શહેર" : "Venue or city (optional)"}
+                      <input maxLength={120} value={venue} onChange={(e) => setVenue(e.target.value)} />
+                    </label>
+                    <label>
+                      {gu ? "કયા પ્રસંગો આવરી લેવા છે?" : "Events and coverage (optional)"}
+                      <input maxLength={180} value={coverage} onChange={(e) => setCoverage(e.target.value)} />
+                    </label>
+                  </>
+                )}
+                {isGift && (
+                  <label>
+                    {gu ? "ભેટ કેવી રીતે મેળવવી છે?" : "How would you like to receive it?"}
+                    <select aria-label={gu ? "ભેટ કેવી રીતે મેળવવી છે?" : "How would you like to receive it?"} value={fulfilment} onChange={(e) => setFulfilment(e.target.value)}>
+                      <option value="">{gu ? "હજુ નક્કી નથી" : "Undecided"}</option>
+                      <option value="Jetpur studio pickup">{gu ? "જેતપુર સ્ટુડિયોથી લેવું" : "Pick up at the Jetpur studio"}</option>
+                      <option value="Ask about delivery">{gu ? "ડિલિવરી વિશે પૂછવું છે" : "Ask about delivery"}</option>
+                    </select>
+                  </label>
+                )}
                 <label>
-                  {t.date}
+                  {isGift ? (gu ? "ભેટ ક્યારે જોઈએ છે? (વૈકલ્પિક)" : "Needed by (optional)") : t.date}
                   <input
                     type="date"
                     value={date}
@@ -211,8 +256,7 @@ function Contact() {
                     required
                     minLength={2}
                     maxLength={120}
-                    autoComplete="off"
-                    placeholder="Demo customer"
+                    autoComplete="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
@@ -223,12 +267,17 @@ function Contact() {
                     required
                     type="tel"
                     inputMode="tel"
-                    autoComplete="off"
+                    autoComplete="tel"
                     maxLength={16}
-                    placeholder="10-digit demo number"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                   />
+                </label>
+                <label>
+                  {isGift
+                    ? (gu ? "નામ, સંદેશ અથવા ભેટની વિગતો" : "Name, message or other gift details (optional)")
+                    : (gu ? "બીજી વિગતો (વૈકલ્પિક)" : "Anything else we should know? (optional)")}
+                  <textarea rows={3} maxLength={350} value={notes} onChange={(e) => setNotes(e.target.value)} />
                 </label>
                 {error && (
                   <p role="alert" className="form-error">
@@ -239,7 +288,7 @@ function Contact() {
                   {t.submit}
                   <ArrowRight size={16} />
                 </button>
-                <p className="ed-footnote">{t.help} The demo does not promise a response time.</p>
+                <p className="ed-footnote">{t.help}</p>
               </form>
               <aside className="enquiry-summary">
                 <h2>Your inspiration, together.</h2>
@@ -250,7 +299,7 @@ function Contact() {
                   {styles.length ? (
                     styles.map((s) => (
                       <div className="saved-style-row" key={s.id}>
-                        <img src={s.image} alt="Saved demonstration style" width="64" height="72" />
+                        <img src={s.image} alt="Saved photography style" width="64" height="72" />
                         <div>
                           <strong>{s.title}</strong>
                           <small>{s.id}</small>
@@ -278,17 +327,18 @@ function Contact() {
                     quote.map((line, i) => {
                       const p = products.find((p) => p.id === line.productId);
                       const v = p?.variants.find((v) => v.id === line.variantId);
+                      const price = p && v ? giftPrice(p, v) : null;
                       return (
                         <div className="quote-summary-row" key={i}>
                           <div>
                             <strong>{p?.name || line.productId}</strong>
                             <small>
-                              {v?.size} · Qty {line.quantity}
+                              {[v?.size, v?.finish, "Qty " + line.quantity].filter(Boolean).join(" · ")}
                             </small>
                             <small>
                               {line.personalisation} · {line.packaging}
                             </small>
-                            <small>{line.variantId} · Price to confirm</small>
+                            <small>{line.variantId} · {price == null ? "Price to confirm" : "₹" + price.toLocaleString("en-IN") + " each"}</small>
                           </div>
                           <button
                             aria-label={`Remove gift ${p?.name}`}
@@ -302,13 +352,12 @@ function Contact() {
                   ) : (
                     <p>Choose products and variants from the gift directory.</p>
                   )}
-                  <Link to="/gifts" className="ed-text-button">
+                  <Link to="/products" className="ed-text-button">
                     Explore photo gifts <ArrowUpRightMini />
                   </Link>
                 </div>
                 <p className="ed-footnote">
-                  No file uploads, payments or external submissions. Your demonstration details
-                  remain in this browser.
+                  WhatsApp receives the details only when you send the message. Your preview photos stay on this device.
                 </p>
               </aside>
             </div>

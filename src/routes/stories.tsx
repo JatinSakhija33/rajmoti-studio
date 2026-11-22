@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { categoriesQuery } from "@/lib/queries";
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { SiteNav } from "@/components/site-nav";
@@ -11,28 +13,19 @@ export const Route = createFileRoute("/stories")({
 });
 function Stories() {
   const [lightbox, setLightbox] = useState<number | null>(null);
-  const images = [
-    {
-      src: "/demo/baby-1.svg",
-      title: "The little personality",
-      caption: "Solo baby portrait — demonstration placeholder",
-    },
-    {
-      src: "/demo/maternity-1.svg",
-      title: "A quiet moment with mother",
-      caption: "Mother and child — demonstration placeholder",
-    },
-    {
-      src: "/demo/family-2.svg",
-      title: "Laughter with father",
-      caption: "Father and child — demonstration placeholder",
-    },
-    {
-      src: "/editorial/family-hero.png",
-      title: "Everyone, together",
-      caption: "Illustrative AI concept — not a real client session",
-    },
-  ];
+  const { data: galleries = [] } = useQuery(categoriesQuery);
+  const images = galleries.flatMap((gallery) =>
+    gallery.cover_image_url
+      ? [
+          {
+            src: gallery.cover_image_url,
+            title: gallery.name,
+            caption: gallery.description || `${gallery.name} photography`,
+            id: gallery.id,
+          },
+        ]
+      : [],
+  );
   return (
     <div className="editorial">
       <SiteNav />
@@ -45,13 +38,14 @@ function Stories() {
             <em>So many ways to remember.</em>
           </h1>
           <p className="ed-copy">
-            A complete story makes space for individuals, relationships and the whole family.
-            Explore the layout below, then save the moments you would like in your own session.
+            A complete story makes space for individuals, relationships and the whole family. Browse
+            photographs from the studio and save styles you would like to discuss.
           </p>
-          <p className="ed-notice">
-            This is an illustrative session storyboard. Real, consented client photographs and
-            reviews will replace these examples.
-          </p>
+          {!images.length && (
+            <Link to="/portfolios" className="ed-text-button">
+              Explore the photography portfolio <ArrowRight size={16} />
+            </Link>
+          )}
         </section>
         <section className="ed-wrap story-sequence">
           {images.map((im, i) => (
@@ -69,7 +63,9 @@ function Stories() {
                 <p className="ed-kicker">Chapter 0{i + 1}</p>
                 <h2>{im.title}</h2>
                 <p>{im.caption}</p>
-                <SaveStyle style={{ id: `demo-story-${i + 1}`, title: im.title, image: im.src }} />
+                <SaveStyle
+                  style={{ id: `studio-story-${im.id}`, title: im.title, image: im.src }}
+                />
               </div>
             </article>
           ))}
@@ -117,7 +113,7 @@ function Stories() {
         </section>
       </main>
       <SiteFooter />
-      {lightbox !== null && (
+      {lightbox !== null && images[lightbox] && (
         <Lightbox
           images={images}
           startIndex={lightbox}

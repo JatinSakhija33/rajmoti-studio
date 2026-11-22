@@ -1416,6 +1416,7 @@ export type Database = {
           short_id: string
           title: string
           updated_at: string
+          preview_url: string | null
           video_path: string | null
           video_url: string | null
         }
@@ -1435,6 +1436,7 @@ export type Database = {
           short_id?: string
           title: string
           updated_at?: string
+          preview_url?: string | null
           video_path?: string | null
           video_url?: string | null
         }
@@ -1454,6 +1456,7 @@ export type Database = {
           short_id?: string
           title?: string
           updated_at?: string
+          preview_url?: string | null
           video_path?: string | null
           video_url?: string | null
         }

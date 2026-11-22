@@ -119,6 +119,7 @@ function SubcategoryPage() {
           { label: cat.name, to: "/portfolios/$category", params: { category: params.category } },
           { label: sub.name },
         ]}
+        session={cat.slug}
         whatsappMessage={wa}
       />
 

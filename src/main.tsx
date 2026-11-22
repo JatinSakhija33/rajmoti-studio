@@ -3,6 +3,5 @@ import { RouterProvider } from "@tanstack/react-router";
 import { getRouter } from "./router";
 import "./styles.css";
 import "./features/editorial/editorial.css";
-import { installDemoGuards } from "./demo/guards";
-installDemoGuards();
+import "./features/catalogue/gifting.css";
 createRoot(document.getElementById("root")!).render(<RouterProvider router={getRouter()} />);

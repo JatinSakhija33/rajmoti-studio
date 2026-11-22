@@ -40,7 +40,6 @@ export function SiteFooter() {
         </div>
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} Rajmoti Studio</span>
-          <span>Private demonstration · no live orders, uploads or payments</span>
           <Link to="/contact">ગુજરાતીમાં મદદ ઉપલબ્ધ છે</Link>
         </div>
       </div>

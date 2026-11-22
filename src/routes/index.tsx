@@ -1,18 +1,28 @@
 import { useQuery } from "@tanstack/react-query";
-import { siteContentQuery } from "@/lib/queries";
+import { categoriesQuery, siteContentQuery } from "@/lib/queries";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, ArrowUpRight, Heart, Check, MessageCircle } from "lucide-react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { useStyles } from "@/features/catalogue/store";
 import { whatsappLink } from "@/lib/site";
+import { canonicalFor } from "@/lib/seo";
+import { photographySessions } from "@/lib/photography-sessions";
 export const Route = createFileRoute("/")({
-  head: () => ({ meta: [{ title: "Rajmoti Studio — Little moments. Lasting stories. | Jetpur" }] }),
+  head: () => ({
+    meta: [{ title: "Rajmoti Studio — Little moments. Lasting stories. | Jetpur" }, canonicalFor("/").ogUrl],
+    links: canonicalFor("/").links,
+  }),
   component: Home,
 });
 function Home() {
   const { data: content = {} } = useQuery(siteContentQuery);
-  const candidate = content.hero?.images?.[0] || content.hero?.fallback_image;
+  const { data: galleries = [] } = useQuery(categoriesQuery);
+  const familyCover = galleries.find((gallery) =>
+    ["baby", "family"].includes(gallery.slug) && gallery.cover_image_url &&
+      !gallery.cover_image_url.startsWith("/demo/"),
+  )?.cover_image_url;
+  const candidate = content.hero?.images?.[0] || familyCover || content.hero?.fallback_image;
   const customHero = candidate && !candidate.startsWith("/demo/") ? candidate : null;
   const [styles, setStyles] = useStyles();
   const saved = styles.some((s) => s.id === "demo-family-story");
@@ -34,11 +44,11 @@ function Home() {
             </p>
             <div className="ed-actions">
               <Link to="/portfolios" className="ed-button">
-                Explore sessions <ArrowRight size={17} />
+                View photography <ArrowRight size={17} />
               </Link>
-              <a className="ed-text-button" href={whatsappLink()}>
-                <MessageCircle size={16} /> Let's talk
-              </a>
+              <Link to="/gifts" className="ed-text-button">
+                Shop photo gifts <ArrowUpRight size={16} />
+              </Link>
             </div>
             <div className="hero-signature">
               <span className="signature-line" />A family studio. A lifetime of memories.
@@ -48,10 +58,10 @@ function Home() {
             <picture>
               <source
                 media="(max-width: 700px)"
-                srcSet={customHero || "/editorial/family-hero.png"}
+                srcSet={customHero || "/editorial/family-hero-mobile.webp"}
               />
               <img
-                src={customHero || "/editorial/family-hero.png"}
+                src={customHero || "/editorial/family-hero.webp"}
                 width="1536"
                 height="1024"
                 fetchPriority="high"
@@ -90,79 +100,48 @@ function Home() {
             </Link>
           </div>
           <div className="chapter-grid">
-            {[
-              {
-                slug: "baby",
-                name: "Their little beginnings",
-                label: "Baby & milestones",
-                text: "Tiny expressions. Big feelings.",
-              },
-              {
-                slug: "maternity",
-                name: "Before we meet",
-                label: "Maternity",
-                text: "A beautiful chapter, just beginning.",
-              },
-              {
-                slug: "family",
-                name: "Together, as you are",
-                label: "Family",
-                text: "The people who make a home.",
-              },
-              {
-                slug: "wedding",
-                name: "A day. A lifetime.",
-                label: "Weddings",
-                text: "The moments between the moments.",
-              },
-            ].map((c, i) => (
-              <Link
-                to="/portfolios/$category"
-                params={{ category: c.slug }}
-                className="chapter-card"
-                key={c.slug}
-              >
-                <div className="chapter-image">
-                  <img
-                    src={
-                      c.slug === "family" ? "/editorial/family-hero.png" : `/demo/${c.slug}-1.svg`
-                    }
-                    alt={
-                      c.slug === "family"
-                        ? "Illustrative family portrait"
-                        : `${c.label} image placeholder`
-                    }
-                    width="1200"
-                    height="1500"
-                    loading="lazy"
-                  />
-                  <span>{c.slug === "family" ? "Concept image" : "Photography pending"}</span>
-                </div>
-                <div className="chapter-label">
-                  <span>
-                    0{i + 1} / {c.label}
-                  </span>
-                  <ArrowUpRight size={17} />
-                </div>
-                <h3>{c.name}</h3>
-                <p>{c.text}</p>
-              </Link>
-            ))}
+            {photographySessions.map((c) => {
+              const gallery = galleries.find((item) => item.slug === c.slug);
+              return (
+                <Link
+                  to="/portfolios/$category"
+                  params={{ category: c.slug }}
+                  className={gallery?.cover_image_url ? "chapter-card" : "chapter-card chapter-card-text"}
+                  key={c.slug}
+                >
+                  {gallery?.cover_image_url && (
+                    <div className="chapter-image">
+                      <img
+                        src={gallery.cover_image_url}
+                        alt=""
+                        width="1200"
+                        height="1500"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                  <div className="chapter-label">
+                    <span>{c.name}</span>
+                    <ArrowUpRight size={17} />
+                  </div>
+                  <h3>{c.title}</h3>
+                  <p>{c.description}</p>
+                </Link>
+              );
+            })}
           </div>
         </section>
         <section className="story-feature">
           <div className="ed-wrap story-feature-inner">
             <figure>
               <img
-                src="/editorial/family-hero.png"
+                src="/editorial/family-hero.webp"
                 width="1536"
                 height="1024"
                 loading="lazy"
-                alt="Fictional family used to demonstrate the story layout"
+                alt="Illustrative family photography"
               />
-              <figcaption>
-                Illustrative story concept · replace with a consented client session
-              </figcaption>
+              <figcaption>Illustrative portrait</figcaption>
             </figure>
             <div>
               <p className="ed-kicker">More than a single frame</p>
@@ -174,9 +153,6 @@ function Home() {
               <p className="ed-copy">
                 Explore how a complete session can bring together a child's personality, quiet
                 parent moments and everyone in one frame.
-              </p>
-              <p className="ed-footnote">
-                Demonstration story. No real customer names or testimonials are used.
               </p>
               <div className="ed-actions">
                 <Link to="/stories" className="ed-button outline">
@@ -194,7 +170,7 @@ function Home() {
                             {
                               id: "demo-family-story",
                               title: "Family story concept",
-                              image: "/editorial/family-hero.png",
+                              image: "/editorial/family-hero.webp",
                             },
                           ],
                     )
@@ -271,7 +247,7 @@ function Home() {
           </div>
           <figure>
             <img
-              src="/editorial/gift-still-life.png"
+              src="/editorial/gift-still-life.webp"
               width="1536"
               height="1024"
               loading="lazy"

@@ -9,7 +9,6 @@ type Auth = {
   adminLoading: boolean;
   isAdmin: boolean;
 };
-const demoUser = { id: "demo-owner", email: "demo@example.invalid" } as User;
 const Ctx = createContext<Auth>({
   user: null,
   session: null,
@@ -85,11 +84,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin: admin && checked === session?.user.id,
       }
     : {
-        user: demoUser,
-        session: { user: demoUser } as Session,
+        user: null,
+        session: null,
         loading: false,
         adminLoading: false,
-        isAdmin: true,
+        isAdmin: false,
       };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

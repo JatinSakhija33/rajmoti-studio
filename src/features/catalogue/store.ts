@@ -1,6 +1,9 @@
 import seed from "./seed.json";
+import extras from "./gift-extras.json";
+import type { GiftDesign } from "./gift-design";
 import { useSyncExternalStore } from "react";
-export type Product = (typeof seed.products)[number];
+type SeedProduct = (typeof seed.products)[number];
+export type Product = Omit<SeedProduct, "variants"> & { variants: (Omit<SeedProduct["variants"][number], "price"> & { price: number | null })[] };
 export type Variant = Product["variants"][number];
 export type QuoteLine = {
   productId: string;
@@ -9,9 +12,11 @@ export type QuoteLine = {
   personalisation: string;
   packaging: string;
   orderType: string;
+  design?: GiftDesign;
+  quoteOnly?: boolean;
 };
 export type SavedStyle = { id: string; title: string; image: string };
-export const categories = seed.categories;
+export const categories = [...seed.categories, ...extras.categories];
 export const keys = {
   catalogue: "rajmoti:editorial:catalogue:v2",
   quote: "rajmoti:editorial:quote:v2",
@@ -49,12 +54,12 @@ export function useLocal<T>(key: string, fallback: T): [T, (data: T) => void] {
   return [value, (v: T) => write(key, v)];
 }
 export function useProducts() {
-  return useLocal<Product[]>(keys.catalogue, seed.products);
+  return useLocal<Product[]>(keys.catalogue, [...seed.products, ...extras.products]);
 }
 export function getProducts() {
-  return read<Product[]>(keys.catalogue, seed.products);
+  return read<Product[]>(keys.catalogue, [...seed.products, ...extras.products]);
 }
-export const seedProducts = seed.products;
+export const seedProducts: Product[] = [...seed.products, ...extras.products];
 export function useQuote() {
   return useLocal<QuoteLine[]>(keys.quote, []);
 }

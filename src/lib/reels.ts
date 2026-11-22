@@ -24,17 +24,28 @@ const REEL_FIELDS =
   "id,short_id,title,description,video_url,poster_url,aspect_ratio,category_id,package_id,location,featured,published,display_order,created_at";
 
 const REEL_SELECT = `${REEL_FIELDS}, categories(name,slug), packages(name,slug,price,currency)`;
+const WITH_PREVIEW = `${REEL_SELECT}, preview_url`;
+
+// The existing catalogue stays readable until the additive migration is applied.
+async function selectAvailableReelFields<T>(
+  fetch: (fields: string) => PromiseLike<{ data: T; error: { code: string; message: string } | null }>,
+) {
+  const result = await fetch(WITH_PREVIEW);
+  return result.error &&
+    ["42703", "PGRST204"].includes(result.error.code) &&
+    result.error.message.includes("preview_url")
+    ? fetch(REEL_SELECT)
+    : result;
+}
 
 /** Public showcase — only published reels, in curated order. */
 export const publishedReelsQuery = queryOptions({
   queryKey: ["reels", "published"],
   queryFn: async (): Promise<Reel[]> => {
-    const { data, error } = await supabase
-      .from("reels")
-      .select(REEL_SELECT)
-      .eq("published", true)
-      .order("display_order")
-      .order("created_at", { ascending: false });
+    const { data, error } = await selectAvailableReelFields((fields) =>
+      supabase.from("reels").select(fields).eq("published", true)
+        .order("display_order").order("created_at", { ascending: false }),
+    );
     if (error) throw error;
     return (data ?? []) as unknown as Reel[];
   },
@@ -44,12 +55,10 @@ export const reelByShortIdQuery = (shortId: string) =>
   queryOptions({
     queryKey: ["reel", shortId],
     queryFn: async (): Promise<Reel | null> => {
-      const { data, error } = await supabase
-        .from("reels")
-        .select(REEL_SELECT)
-        .eq("short_id", shortId)
-        .eq("published", true)
-        .maybeSingle();
+      const { data, error } = await selectAvailableReelFields((fields) =>
+        supabase.from("reels").select(fields).eq("short_id", shortId)
+          .eq("published", true).maybeSingle(),
+      );
       if (error) throw error;
       return (data ?? null) as unknown as Reel | null;
     },
@@ -127,9 +136,11 @@ export function reelVideoPath(reelId: string, ext: string) {
  * is intentionally left outside the app — the Worker runtime cannot do it and
  * browser-side video encoding is not acceptable for visitors.
  */
-export async function uploadReelVideo(reelId: string, file: File) {
-  const ext = (file.name.split(".").pop() ?? "mp4").toLowerCase();
-  const path = reelVideoPath(reelId, ext === "webm" ? "webm" : "mp4");
+export async function uploadReelVideo(reelId: string, file: File, preview = false) {
+  const ext = file.name.toLowerCase().endsWith(".webm") ? "webm" : "mp4";
+  const path = preview
+    ? `${reelId}/preview-${crypto.randomUUID()}.${ext}`
+    : reelVideoPath(reelId, ext);
   const { error } = await supabase.storage
     .from(REEL_BUCKET)
     .upload(path, file, { upsert: true, cacheControl: "31536000", contentType: file.type || "video/mp4" });

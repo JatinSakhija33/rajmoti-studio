@@ -6,7 +6,7 @@ import { WhatsAppFloat } from "@/components/whatsapp-float";
 import { MobileCtaBar } from "@/components/mobile-cta-bar";
 import { siteContentQuery } from "@/lib/queries";
 import { absUrl, breadcrumbJsonLd } from "@/lib/seo";
-import placeholder from "@/assets/image-placeholder.svg";
+import { directionsLink, SITE, telLink } from "@/lib/site";
 
 const TITLE = "About Rajmoti Studio | Photography Studio in Jetpur";
 const DESC =
@@ -49,13 +49,15 @@ function About() {
   const heading = about.heading || "A quiet practice, devoted to memory.";
   const body = about.body ||
     "Rajmoti Studio was founded on a single conviction — that a photograph, made with care, becomes an heirloom from the moment it is captured.\n\nWe work slowly. We listen first. We compose for light, for posture, for the unhurried instant between performance and presence. Every session is delivered as a considered edit, never a flood of files.\n\nToday the studio serves families, parents-to-be, and couples across India, photographing the milestones that quietly define a life.";
-  const image = about.image || placeholder;
+  const contact = (siteContent.contact ?? {}) as { address?: string; hours?: string; phone?: string };
+  const address = contact.address?.trim() || SITE.location;
+  const image = about.image;
 
   return (
     <div className="bg-cream text-onyx min-h-dvh">
       <SiteNav />
       <div className="pt-28 pb-24 container-page max-w-5xl">
-        <div className="grid md:grid-cols-2 gap-16 items-start mb-24">
+        <div className={"grid gap-10 items-start mb-16 " + (image ? "md:grid-cols-2" : "max-w-2xl")}>
           <div>
             <p className="eyebrow text-gold mb-3">{eyebrow}</p>
             <h1 className="font-display text-5xl md:text-6xl mb-8 text-balance">{heading}</h1>
@@ -68,12 +70,10 @@ function About() {
               </p>
             </div>
           </div>
-          <img
-            src={image}
-            alt="Inside Rajmoti Studio, the photography studio in Jetpur, Gujarat"
-            loading="lazy"
-            className="aspect-[4/5] object-cover w-full"
-          />
+          {image && (
+            <img src={image} alt="Rajmoti Studio" loading="lazy" decoding="async"
+              className="aspect-[4/5] object-cover w-full" />
+          )}
         </div>
 
         <section className="border-t border-onyx/10 pt-16 mb-16">
@@ -88,7 +88,22 @@ function About() {
           </ul>
         </section>
 
-        <div className="border-t border-onyx/10 pt-16 text-center">
+        <section className="border-t border-onyx/10 py-10">
+          <h2 className="font-display text-3xl mb-4">Visit the studio</h2>
+          <p>{address}</p>
+          {contact.hours?.trim() && <p className="mt-2 text-sm">{contact.hours}</p>}
+          <div className="flex flex-wrap gap-5 mt-4 text-sm">
+            <a className="underline" href={directionsLink(SITE.name + ", " + address)}>Get directions</a>
+            <a className="underline" href={telLink(contact.phone?.trim() || undefined)}>Call the studio</a>
+          </div>
+          <h3 className="font-display text-2xl mt-7 mb-3">Ask about studio services</h3>
+          <ul className="flex flex-wrap gap-x-5 gap-y-3 text-sm">
+            {["Passport photos", "Photo restoration", "Memorial photos"].map((session) => (
+              <li key={session}><Link className="underline" to="/contact" search={{ session }}>{session}</Link></li>
+            ))}
+          </ul>
+        </section>
+        <div className="border-t border-onyx/10 pt-12 text-center">
           <p className="font-display text-3xl italic max-w-3xl mx-auto text-balance mb-8">
             "We don't make pictures of moments. We make pictures of how moments felt."
           </p>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Maximize2, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { aspectValue } from "@/lib/reels";
 import { usePrefersReducedMotion } from "@/lib/motion";
+import { prefersLightMedia } from "./media-preferences";
 
 type Props = {
   posterUrl?: string | null;
@@ -10,7 +11,6 @@ type Props = {
   title: string;
   /** Autoplay muted once visible — used for the hero and the open viewer. */
   autoPlay?: boolean;
-  /** Start unmuted (viewer only; browsers block autoplay with sound). */
   className?: string;
   rounded?: boolean;
 };
@@ -19,10 +19,10 @@ type Props = {
  * Poster-first cinematic player.
  *
  * 1. Renders the optimised poster inside a fixed aspect box (no CLS).
- * 2. Attaches the video source only when the element nears the viewport.
+ * 2. Attaches video on play or when eligible for visible autoplay.
  * 3. Fades from poster to video; if autoplay is refused the poster stays with
  *    a quiet "Watch film" affordance.
- * 4. Pauses when scrolled out of view so bandwidth is never wasted.
+ * 4. Pauses playback when scrolled out of view.
  */
 export function ReelPlayer({
   posterUrl,
@@ -35,7 +35,8 @@ export function ReelPlayer({
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [nearViewport, setNearViewport] = useState(false);
+  const [inViewport, setInViewport] = useState(false);
+  const userPaused = useRef(false);
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -48,14 +49,14 @@ export function ReelPlayer({
     const io = new IntersectionObserver(
       ([entry]) => {
         if (!entry) return;
-        if (entry.isIntersecting) setNearViewport(true);
+        setInViewport(entry.isIntersecting);
         const v = videoRef.current;
         if (v && !entry.isIntersecting && !v.paused) {
           v.pause();
           setPlaying(false);
         }
       },
-      { rootMargin: "200px" },
+      { threshold: 0.15 },
     );
     io.observe(el);
     return () => io.disconnect();
@@ -64,27 +65,38 @@ export function ReelPlayer({
   // Attempt a muted autoplay once the source is attached.
   useEffect(() => {
     const v = videoRef.current;
-    if (!v || !nearViewport || !autoPlay || reduced || !videoUrl) return;
-    v.muted = true;
-    v.play()
-      .then(() => setPlaying(true))
-      .catch(() => setPlaying(false));
-  }, [nearViewport, autoPlay, reduced, videoUrl]);
+    if (!v || !inViewport || !autoPlay || reduced || !videoUrl ||
+        prefersLightMedia() || userPaused.current || document.hidden) return;
+    if (!v.getAttribute("src")) v.src = videoUrl;
+    v.play().catch(() => setPlaying(false));
+  }, [inViewport, autoPlay, reduced, videoUrl]);
+
+  useEffect(() => {
+    const pauseHidden = () => {
+      if (document.hidden) videoRef.current?.pause();
+    };
+    document.addEventListener("visibilitychange", pauseHidden);
+    return () => document.removeEventListener("visibilitychange", pauseHidden);
+  }, []);
 
   const toggle = useCallback(() => {
     const v = videoRef.current;
-    if (!v) return;
+    if (!v || !videoUrl) return;
     if (v.paused) {
-      v.play()
-        .then(() => setPlaying(true))
-        .catch(() => setFailed(true));
+      userPaused.current = false;
+      if (!v.getAttribute("src")) v.src = videoUrl;
+      else if (v.error) v.load();
+      setFailed(false);
+      v.play().catch((error: DOMException) => {
+        if (error.name !== "AbortError") setFailed(true);
+      });
     } else {
+      userPaused.current = true;
       v.pause();
-      setPlaying(false);
     }
-  }, []);
+  }, [videoUrl]);
 
-  const showVideo = Boolean(videoUrl) && nearViewport && ready && !failed;
+  const showVideo = Boolean(videoUrl) && ready && !failed && playing;
 
   return (
     <div
@@ -104,19 +116,18 @@ export function ReelPlayer({
         />
       )}
 
-      {videoUrl && nearViewport && (
+      {videoUrl && (
         <video
           ref={videoRef}
-          src={videoUrl}
           poster={posterUrl ?? undefined}
           playsInline
           loop
           muted={muted}
-          preload="metadata"
+          preload="none"
           aria-label={title}
           onLoadedData={() => setReady(true)}
           onError={() => setFailed(true)}
-          onPlay={() => setPlaying(true)}
+          onPlaying={() => setPlaying(true)}
           onPause={() => setPlaying(false)}
           className={`absolute inset-0 size-full object-cover transition-opacity duration-700 ${
             showVideo ? "opacity-100" : "opacity-0"
@@ -128,7 +139,7 @@ export function ReelPlayer({
       <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-onyx/60 via-transparent to-onyx/20" />
 
       {videoUrl ? (
-        <div className="absolute bottom-3 right-3 flex items-center gap-2">
+        <div className="absolute bottom-3 right-3 z-20 flex items-center gap-2">
           <button
             type="button"
             onClick={toggle}
@@ -164,11 +175,11 @@ export function ReelPlayer({
         <button
           type="button"
           onClick={toggle}
-          className="absolute inset-0 grid place-items-center text-cream focus-visible:outline-2 focus-visible:outline-gold"
+          className="absolute inset-0 z-10 grid place-items-center text-cream focus-visible:outline-2 focus-visible:outline-gold"
           aria-label={`Watch ${title}`}
         >
           <span className="flex items-center gap-3 px-6 py-3 bg-onyx/40 backdrop-blur-sm text-[10px] uppercase tracking-[0.3em]">
-            <Play className="size-4" aria-hidden /> Watch film
+            <Play className="size-4" aria-hidden /> {failed ? "Retry film" : "Watch film"}
           </span>
         </button>
       )}
