@@ -16,6 +16,7 @@ import { SectionCta } from "@/components/section-cta";
 import { ReelsCrossSell } from "@/components/reels/reels-cross-sell";
 import { CategorySeoSections } from "@/components/category-seo-sections";
 import { formatPrice, waMessage } from "@/lib/site";
+import { photographySession } from "@/lib/photography-sessions";
 import { variantUrl } from "@/lib/images";
 import {
   absUrl,
@@ -27,8 +28,8 @@ import {
 
 export const Route = createFileRoute("/portfolios/$category/")({
   head: ({ params, loaderData }: { params: { category: string }; loaderData?: any }) => {
-    const name = loaderData?.name ?? "Portfolio";
-    const seo = categorySeo(params.category, name, loaderData?.description);
+    const name = loaderData?.name ?? loaderData?.session?.label ?? "Portfolio";
+    const seo = categorySeo(params.category, name, loaderData?.description ?? loaderData?.session?.copy);
     const title = loaderData?.seo_title || seo.title;
     const desc = loaderData?.seo_description || seo.description;
     const path = `/portfolios/${params.category}`;
@@ -77,11 +78,19 @@ export const Route = createFileRoute("/portfolios/$category/")({
     };
   },
   loader: async ({ context, params }) => {
-    const cat = await context.queryClient.ensureQueryData(categoryBySlugQuery(params.category));
+    const session = photographySession(params.category);
+    let cat;
+    try {
+      cat = await context.queryClient.ensureQueryData(categoryBySlugQuery(params.category));
+    } catch (error) {
+      if (session) return { session };
+      throw error;
+    }
     if (!cat) {
-      // The slug may have been renamed in the CMS — follow the recorded redirect.
+      // A CMS rename takes precedence over the built-in session page.
       const next = await lookupSlugRedirect("category", params.category);
       if (next) throw redirect({ to: "/portfolios/$category", params: { category: next } });
+      if (session) return { session };
       throw notFound();
     }
     const [images] = await Promise.all([
@@ -102,12 +111,47 @@ export const Route = createFileRoute("/portfolios/$category/")({
 /** Remount per category so a new heading is never shown over the old gallery. */
 function CategoryRoute() {
   const { category } = Route.useParams();
-  return <CategoryPage key={category} />;
+  const data = Route.useLoaderData();
+  if (data.session) return <SessionGuide session={data.session} />;
+  return <CategoryPage key={category} cat={data} />;
 }
 
-function CategoryPage() {
+function SessionGuide({ session }: { session: NonNullable<ReturnType<typeof photographySession>> }) {
+  return (
+    <>
+      <PortfolioHero
+        eyebrow="Photography in Jetpur"
+        title={session.label + " photography"}
+        description={session.copy}
+        crumbs={[{ label: "Portfolios", to: "/portfolios" }, { label: session.label }]}
+        session={session.slug}
+        whatsappMessage={waMessage.category(session.label + " photography")}
+      />
+      <section className="container-page grid items-center gap-7 py-8 sm:grid-cols-2 md:gap-12">
+        <figure className="max-w-sm">
+          <img src={session.cover} alt="" width="720" height="900"
+            className="aspect-[4/5] w-full object-cover" decoding="async" />
+          <figcaption className="mt-2 text-xs text-muted-foreground">Illustrative session inspiration</figcaption>
+        </figure>
+        <div>
+          <h2 className="font-display text-3xl mb-3">{session.title}</h2>
+          <p className="max-w-md text-muted-foreground mb-6">
+            Ask the studio to share available photographs from this type of session and help plan yours.
+          </p>
+          <Link to="/contact" search={{ session: session.slug }}
+            className="inline-block bg-onyx px-5 py-3 text-sm text-cream">
+            Request examples and availability
+          </Link>
+        </div>
+      </section>
+    </>
+  );
+}
+
+type CategoryData = Exclude<ReturnType<typeof Route.useLoaderData>, { session: unknown }>;
+
+function CategoryPage({ cat }: { cat: CategoryData }) {
   const params = Route.useParams();
-  const cat = Route.useLoaderData();
   const { data: allPackages } = useSuspenseQuery(packagesQuery);
   const { data: testimonials } = useSuspenseQuery(testimonialsQuery);
   const { data: counts } = useSuspenseQuery(taxonomyCountsQuery);

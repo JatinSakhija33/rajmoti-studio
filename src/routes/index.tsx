@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { useStyles } from "@/features/catalogue/store";
 import { whatsappLink } from "@/lib/site";
 import { canonicalFor } from "@/lib/seo";
+import { photographySessions } from "@/lib/photography-sessions";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [{ title: "Rajmoti Studio — Little moments. Lasting stories. | Jetpur" }, canonicalFor("/").ogUrl],
@@ -99,60 +100,27 @@ function Home() {
             </Link>
           </div>
           <div className="chapter-grid">
-            {[
-              {
-                slug: "baby",
-                name: "Their little beginnings",
-                label: "Baby & milestones",
-                text: "Tiny expressions. Big feelings.",
-              },
-              {
-                slug: "maternity",
-                name: "Before we meet",
-                label: "Maternity",
-                text: "A beautiful chapter, just beginning.",
-              },
-              {
-                slug: "family",
-                name: "Together, as you are",
-                label: "Family",
-                text: "The people who make a home.",
-              },
-              {
-                slug: "wedding",
-                name: "A day. A lifetime.",
-                label: "Weddings",
-                text: "The moments between the moments.",
-              },
-            ].map((c, i) => {
-              const gallery = galleries.find((item) => item.slug === c.slug);
+            {photographySessions.map((session) => {
+              const gallery = galleries.find((item) => item.slug === session.slug);
+              const cover = gallery?.cover_image_url;
               return (
                 <Link
-                  to={gallery ? "/portfolios/$category" : "/contact"}
-                  params={gallery ? { category: c.slug } : undefined}
-                  search={gallery ? undefined : { session: c.slug }}
+                  to="/portfolios/$category"
+                  params={{ category: session.slug }}
                   className="chapter-card"
-                  key={c.slug}
+                  key={session.slug}
                 >
-                  {gallery?.cover_image_url && (
-                    <div className="chapter-image">
-                      <img
-                        src={gallery.cover_image_url}
-                        alt={`${c.label} portfolio`}
-                        width="1200"
-                        height="1500"
-                        loading="lazy"
-                      />
-                    </div>
-                  )}
-                  <div className="chapter-label">
-                    <span>
-                      0{i + 1} / {c.label}
-                    </span>
-                    <ArrowUpRight size={17} />
+                  <div className="chapter-image">
+                    <img src={cover || session.cover} alt="" width="720" height="900"
+                      loading="lazy" decoding="async" />
+                    {!cover && <span>Session inspiration</span>}
                   </div>
-                  <h3>{c.name}</h3>
-                  <p>{c.text}</p>
+                  <div className="chapter-label">
+                    <span>{session.label}</span>
+                    <ArrowUpRight size={17} aria-hidden />
+                  </div>
+                  <h3>{session.title}</h3>
+                  <p>{session.copy}</p>
                 </Link>
               );
             })}
