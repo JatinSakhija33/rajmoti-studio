@@ -3,6 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
 import { variantSrcSet, variantUrl } from "@/lib/images";
 import { photographySessions } from "@/lib/photography-sessions";
+import { studioConnected } from "@/lib/backend-mode";
+import { publishedCategories } from "@/lib/published-portfolio";
 import { categoriesQuery, photographyCoverQuery, siteContentQuery } from "@/lib/queries";
 
 type Session = (typeof photographySessions)[number];
@@ -59,6 +61,9 @@ function ChapterCard({
     enabled: Boolean(categoryId && !selectedCover),
   });
   const familyConcept = session.slug === "family";
+  const bundledCover = !studioConnected
+    ? publishedCategories.find((category) => category.slug === session.slug)?.cover_image_url
+    : undefined;
   const fallback = familyConcept ? "/editorial/family-hero.webp" : `/demo/${session.slug}-1.svg`;
   const galleryCover = photograph ? variantUrl({
     ...photograph,
@@ -72,7 +77,7 @@ function ChapterCard({
     <Link to="/portfolios/$category" params={{ category: session.slug }} className="chapter-card">
       <div className="chapter-image">
         <img
-          src={selectedCover || galleryCover || fallback}
+          src={selectedCover || galleryCover || bundledCover || fallback}
           srcSet={srcSet}
           sizes={srcSet ? "(max-width: 850px) 50vw, 25vw" : undefined}
           alt=""
@@ -81,7 +86,7 @@ function ChapterCard({
           loading="lazy"
           decoding="async"
         />
-        {!selectedCover && !galleryCover && (
+        {!selectedCover && !galleryCover && !bundledCover && (
           <span>{familyConcept ? "Concept image" : "Photography pending"}</span>
         )}
       </div>

@@ -1,5 +1,7 @@
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { studioConnected } from "@/lib/backend-mode";
+import { publishedCategories, publishedCounts, publishedPhotos } from "@/lib/published-portfolio";
 
 /** Public taxonomy: only published, non-archived categories. */
 export const categoriesQuery = queryOptions({
@@ -48,6 +50,7 @@ export const adminSubcategoriesQuery = queryOptions({
 export const taxonomyCountsQuery = queryOptions({
   queryKey: ["taxonomy", "counts"],
   queryFn: async () => {
+    if (!studioConnected) return publishedCounts;
     const { data, error } = await supabase
       .from("images")
       .select("category_id,subcategory_id,featured");
@@ -84,6 +87,7 @@ export const categoryBySlugQuery = (slug: string) =>
   queryOptions({
     queryKey: ["category", slug],
     queryFn: async () => {
+      if (!studioConnected) return publishedCategories.find((category) => category.slug === slug) ?? null;
       const { data, error } = await supabase
         .from("categories")
         .select("*, subcategories(*)")
@@ -141,6 +145,8 @@ export const photoByShortIdQuery = (shortId: string) =>
   queryOptions({
     queryKey: ["photo", shortId],
     queryFn: async () => {
+      const publishedPhoto = publishedPhotos.find((photo) => photo.short_id === shortId);
+      if (publishedPhoto) return publishedPhoto;
       const { data, error } = await supabase
         .from("images")
         .select(`${GALLERY_FIELDS}, categories(name,slug), subcategories(name,slug)`)
@@ -187,6 +193,11 @@ export const imagesByCategoryInfiniteQuery = (categoryId: string, subcategoryId?
     initialPageParam: 0,
     queryFn: async ({ pageParam }) => {
       const from = (pageParam as number) * GALLERY_PAGE_SIZE;
+      if (!studioConnected) {
+        return publishedPhotos
+          .filter((photo) => photo.category_id === categoryId && (!subcategoryId || photo.subcategory_id === subcategoryId))
+          .slice(from, from + GALLERY_PAGE_SIZE);
+      }
       let q = supabase
         .from("images")
         .select(GALLERY_FIELDS)
