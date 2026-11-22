@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { useStyles } from "@/features/catalogue/store";
 import { whatsappLink } from "@/lib/site";
 import { canonicalFor } from "@/lib/seo";
+import { photographySessions } from "@/lib/photography-sessions";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [{ title: "Rajmoti Studio — Little moments. Lasting stories. | Jetpur" }, canonicalFor("/").ogUrl],
@@ -99,46 +100,20 @@ function Home() {
             </Link>
           </div>
           <div className="chapter-grid">
-            {[
-              {
-                slug: "baby",
-                name: "Their little beginnings",
-                label: "Baby & milestones",
-                text: "Tiny expressions. Big feelings.",
-              },
-              {
-                slug: "maternity",
-                name: "Before we meet",
-                label: "Maternity",
-                text: "A beautiful chapter, just beginning.",
-              },
-              {
-                slug: "family",
-                name: "Together, as you are",
-                label: "Family",
-                text: "The people who make a home.",
-              },
-              {
-                slug: "wedding",
-                name: "A day. A lifetime.",
-                label: "Weddings",
-                text: "The moments between the moments.",
-              },
-            ].map((c, i) => {
+            {photographySessions.map((c) => {
               const gallery = galleries.find((item) => item.slug === c.slug);
               return (
                 <Link
-                  to={gallery ? "/portfolios/$category" : "/contact"}
-                  params={gallery ? { category: c.slug } : undefined}
-                  search={gallery ? undefined : { session: c.slug }}
-                  className="chapter-card"
+                  to="/portfolios/$category"
+                  params={{ category: c.slug }}
+                  className={gallery?.cover_image_url ? "chapter-card" : "chapter-card chapter-card-text"}
                   key={c.slug}
                 >
                   {gallery?.cover_image_url && (
                     <div className="chapter-image">
                       <img
                         src={gallery.cover_image_url}
-                        alt={`${c.label} portfolio`}
+                        alt=""
                         width="1200"
                         height="1500"
                         loading="lazy"
@@ -146,13 +121,11 @@ function Home() {
                     </div>
                   )}
                   <div className="chapter-label">
-                    <span>
-                      0{i + 1} / {c.label}
-                    </span>
+                    <span>{c.name}</span>
                     <ArrowUpRight size={17} />
                   </div>
-                  <h3>{c.name}</h3>
-                  <p>{c.text}</p>
+                  <h3>{c.title}</h3>
+                  <p>{c.description}</p>
                 </Link>
               );
             })}
