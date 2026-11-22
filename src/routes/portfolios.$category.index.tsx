@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   categoryBySlugQuery,
@@ -88,21 +88,22 @@ export const Route = createFileRoute("/portfolios/$category/")({
     }
     if (!cat) {
       // A CMS rename takes precedence over the built-in session page.
-      const next = await lookupSlugRedirect("category", params.category);
+      const next = await lookupSlugRedirect("category", params.category).catch((error) => {
+        if (!session) throw error;
+        return null;
+      });
       if (next) throw redirect({ to: "/portfolios/$category", params: { category: next } });
       if (session) return { session };
       throw notFound();
     }
-    const [images] = await Promise.all([
-      context.queryClient.ensureInfiniteQueryData(imagesByCategoryInfiniteQuery(cat.id)),
-      context.queryClient.ensureQueryData(packagesQuery),
-      context.queryClient.ensureQueryData(testimonialsQuery),
-      context.queryClient.ensureQueryData(taxonomyCountsQuery),
-    ]);
-    // A real photograph from this category makes the WhatsApp/social preview useful.
-    const first = (images as any)?.pages?.[0]?.[0];
-    const ogImage = first ? variantUrl(first, "large") : null;
-    return { ...cat, ogImage };
+    try {
+      const images = await context.queryClient.ensureInfiniteQueryData(imagesByCategoryInfiniteQuery(cat.id));
+      const first = images.pages[0]?.[0];
+      return { ...cat, ogImage: first ? variantUrl(first, "large") : null };
+    } catch (error) {
+      if (session) return { session };
+      throw error;
+    }
   },
 
   component: CategoryRoute,
@@ -152,25 +153,25 @@ type CategoryData = Exclude<ReturnType<typeof Route.useLoaderData>, { session: u
 
 function CategoryPage({ cat }: { cat: CategoryData }) {
   const params = Route.useParams();
-  const { data: allPackages } = useSuspenseQuery(packagesQuery);
-  const { data: testimonials } = useSuspenseQuery(testimonialsQuery);
-  const { data: counts } = useSuspenseQuery(taxonomyCountsQuery);
+  const { data: allPackages } = useQuery(packagesQuery);
+  const { data: testimonials } = useQuery(testimonialsQuery);
+  const { data: counts } = useQuery(taxonomyCountsQuery);
   const [shown, setShown] = useState(0);
 
   const packages = useMemo(
-    () => allPackages.filter((p: any) => p.categories?.slug === params.category).slice(0, 3),
+    () => (allPackages ?? []).filter((p) => p.categories?.slug === params.category).slice(0, 3),
     [allPackages, params.category],
   );
-  const testimonial = testimonials[0];
+  const testimonial = testimonials?.[0];
 
   const subs = (cat.subcategories ?? [])
     .filter((s: any) => !s.hidden && !s.archived_at)
     .sort((a: any, b: any) => a.display_order - b.display_order);
 
-  const total = counts.byCategory[cat.id] ?? shown;
+  const total = counts?.byCategory[cat.id] ?? shown;
   const seo = categorySeo(params.category, cat.name, cat.description);
   const showSessionTypes = subs.length > 1 ||
-    (subs.length === 1 && (total === 0 || counts.bySubcategory[subs[0].id] !== total));
+    (subs.length === 1 && (total === 0 || counts?.bySubcategory[subs[0].id] !== total));
 
   return (
     <div>
@@ -191,7 +192,7 @@ function CategoryPage({ cat }: { cat: CategoryData }) {
           categorySlug={params.category}
           subs={subs}
           active={null}
-          counts={counts.bySubcategory}
+          counts={counts?.bySubcategory}
         />}
 
         <div className={showSessionTypes ? "pt-6 md:pt-8" : undefined}>
