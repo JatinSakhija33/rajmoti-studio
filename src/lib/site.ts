@@ -5,6 +5,8 @@ export const SITE = {
   whatsapp: "+919429070317",
   instagram: "https://www.instagram.com/rajmoti_studio/",
   location: "Jetpur, Gujarat, India",
+  mapsEmbedUrl:
+    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3705.638024760167!2d70.62149029999999!3d21.7555545!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x395819dff9cc49c1%3A0x26bbaa83b6b5e2db!2sRajmoti%20Studio!5e0!3m2!1sen!2sin!4v1795349980693!5m2!1sen!2sin",
 };
 
 export function whatsappLink(message?: string, phone = SITE.whatsapp) {
@@ -23,6 +25,18 @@ export function telLink(phone = SITE.whatsapp) {
 /** Opens the studio location in the visitor's maps app. */
 export function directionsLink(place = `${SITE.name}, ${SITE.location}`) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}`;
+}
+
+export function googleMapsEmbedUrl(value: string): string | null {
+  const text = value.trim();
+  const source = text.match(/<iframe\b[^>]*\s+src\s*=\s*["']([^"']+)["']/i)?.[1] ?? text;
+  try {
+    const url = new URL(source.replaceAll("&amp;", "&"));
+    const isEmbed = url.pathname === "/maps/embed" || url.pathname.startsWith("/maps/embed/");
+    return url.origin === "https://www.google.com" && isEmbed ? url.href : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Canonical Instagram profile URL (also used by the "Follow" button). */

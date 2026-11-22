@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { settingsQuery, categoriesQuery } from "@/lib/queries";
 import { SlotManager } from "@/components/admin/slot-manager";
 import { useMotionPrefs } from "@/lib/motion";
+import { googleMapsEmbedUrl } from "@/lib/site";
 import {
   communicationQuery, templatesQuery, saveSetting, buildMessage, portfolioUrlFor,
   TEMPLATE_ORDER, TEMPLATE_VARIABLES, DEFAULT_TEMPLATES,
@@ -156,6 +157,7 @@ function GeneralSection() {
   const [form, setForm] = useState({ name: "", tagline: "", email: "", whatsapp: "", location: "" });
   const [maps, setMaps] = useState("");
   const [ready, setReady] = useState(false);
+  const mapPreview = googleMapsEmbedUrl(maps);
 
   useEffect(() => {
     setForm({
@@ -194,7 +196,7 @@ function GeneralSection() {
         <SaveBar dirty={dirty} state={saver.state} onSave={save} label="Save studio details" />
       </SectionCard>
 
-      <SectionCard title="Google Maps embed" hint="Google Maps → search your studio → Share → Embed a map → paste the URL or the full iframe. Shown on the home page.">
+      <SectionCard title="Google Maps embed" hint="Google Maps → search your studio → Share → Embed a map → paste the URL or the full iframe. Shown on the Contact and About pages.">
         <textarea
           value={maps} onChange={(e) => setMaps(e.target.value)} rows={4}
           placeholder='https://www.google.com/maps/embed?pb=…'
@@ -202,10 +204,10 @@ function GeneralSection() {
         />
         <SaveBar dirty={ready && maps !== mapsEmbed} state={mapsSaver.state}
           onSave={() => mapsSaver.run("maps_embed_url", maps, "Maps embed saved")} label="Save maps embed" />
-        {maps && extractSrc(maps) && (
+        {mapPreview && (
           <div className="mt-6">
             <p className="eyebrow text-[10px] text-muted-foreground mb-2">Preview</p>
-            <iframe src={extractSrc(maps)!} className="w-full aspect-video border border-onyx/10" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+            <iframe title="Google Maps preview" src={mapPreview} className="w-full aspect-video border border-onyx/10" loading="lazy" referrerPolicy="strict-origin-when-cross-origin" />
           </div>
         )}
       </SectionCard>
@@ -407,12 +409,4 @@ function SkeletonCard() {
       <div className="h-10 w-full bg-onyx/5 animate-pulse" />
     </div>
   );
-}
-
-export function extractSrc(raw: string): string | null {
-  if (!raw) return null;
-  const trimmed = raw.trim();
-  if (trimmed.startsWith("http")) return trimmed;
-  const match = trimmed.match(/src=["']([^"']+)["']/i);
-  return match ? match[1] : null;
 }

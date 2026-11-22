@@ -3,7 +3,8 @@ import { useState, type FormEvent } from "react";
 import { ArrowRight, CheckCircle2, X, Heart, Package, ArrowLeft } from "lucide-react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
-import { whatsappLink } from "@/lib/site";
+import { StudioMap } from "@/components/studio-map";
+import { directionsLink, SITE, whatsappLink } from "@/lib/site";
 import { canonicalFor } from "@/lib/seo";
 import { useStyles, useQuote, useProducts } from "@/features/catalogue/store";
 import { giftPrice } from "@/features/catalogue/gift-pricing";
@@ -363,6 +364,14 @@ function Contact() {
             </div>
           </>
         )}
+        <section className="mt-16 border-t border-onyx/10 pt-10">
+          <h2 className="mb-3 font-display text-3xl">{gu ? "સ્ટુડિયોની મુલાકાત લો" : "Visit the studio"}</h2>
+          <p className="mb-3 text-sm">{gu ? "જેતપુર, ગુજરાત, ભારત" : SITE.location}</p>
+          <a className="text-sm underline" href={directionsLink()}>
+            {gu ? "માર્ગ જુઓ" : "Get directions"}
+          </a>
+          <StudioMap />
+        </section>
       </main>
       <SiteFooter />
     </div>

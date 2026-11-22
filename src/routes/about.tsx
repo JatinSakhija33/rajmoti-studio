@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
+import { StudioMap } from "@/components/studio-map";
 import { WhatsAppFloat } from "@/components/whatsapp-float";
 import { MobileCtaBar } from "@/components/mobile-cta-bar";
 import { siteContentQuery } from "@/lib/queries";
@@ -96,6 +97,7 @@ function About() {
             <a className="underline" href={directionsLink(SITE.name + ", " + address)}>Get directions</a>
             <a className="underline" href={telLink(contact.phone?.trim() || undefined)}>Call the studio</a>
           </div>
+          <StudioMap />
           <h3 className="font-display text-2xl mt-7 mb-3">Ask about studio services</h3>
           <ul className="flex flex-wrap gap-x-5 gap-y-3 text-sm">
             {["Passport photos", "Photo restoration", "Memorial photos"].map((session) => (
