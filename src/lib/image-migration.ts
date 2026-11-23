@@ -9,8 +9,6 @@ import {
   isOptimized,
   optimizeAndUpload,
   parseVariants,
-  removeStoragePaths,
-  type ImageVariants,
 } from "@/lib/images";
 
 export type MigratableImage = {
@@ -86,8 +84,8 @@ async function downloadOriginal(row: MigratableImage): Promise<Blob> {
 }
 
 /**
- * Migrate one image. Deletes the oversized original only after the new
- * variants are uploaded, verified and the database row is updated.
+ * Create web-ready derivatives without deleting the original image.
+ * Preserve the old storage path in the migration journal for recovery.
  */
 export async function migrateOne(row: MigratableImage): Promise<JournalEntry> {
   if (!row.category_id) throw new Error("no category");
@@ -111,15 +109,6 @@ export async function migrateOne(row: MigratableImage): Promise<JournalEntry> {
     })
     .eq("id", row.id);
   if (updErr) throw new Error(updErr.message);
-
-  const newPaths = new Set(
-    Object.values(result.variants as ImageVariants)
-      .filter((v): v is NonNullable<typeof v> => Boolean(v))
-      .map((v) => v.path),
-  );
-  if (!newPaths.has(row.storage_path)) {
-    await removeStoragePaths([row.storage_path]);
-  }
 
   return {
     id: row.id,
