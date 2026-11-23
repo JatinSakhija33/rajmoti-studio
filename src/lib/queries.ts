@@ -1,22 +1,13 @@
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { studioConnected } from "@/lib/backend-mode";
+import { hybridPublicCategories, hybridCategoryBySlug, hybridSubcategories, hybridPublicCounts, hybridImagePage, isPublishedId } from "@/lib/hybrid-portfolio";
 import { loadPublishedPhotos, publishedCategories, publishedCounts } from "@/lib/published-portfolio";
 
 /** Public taxonomy: only published, non-archived categories. */
 export const categoriesQuery = queryOptions({
   queryKey: ["categories"],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from("categories")
-      .select("*")
-      .eq("hidden", false)
-      .is("archived_at", null)
-      .order("display_order")
-      .order("name");
-    if (error) throw error;
-    return data ?? [];
-  },
+  queryFn: hybridPublicCategories,
 });
 
 /** Admin taxonomy: everything, including hidden and archived rows. */
@@ -49,55 +40,19 @@ export const adminSubcategoriesQuery = queryOptions({
 /** How many photographs live in each category / subcategory. */
 export const taxonomyCountsQuery = queryOptions({
   queryKey: ["taxonomy", "counts"],
-  queryFn: async () => {
-    if (!studioConnected) return publishedCounts;
-    const { data, error } = await supabase
-      .from("images")
-      .select("category_id,subcategory_id,featured");
-    if (error) throw error;
-    const byCategory: Record<string, number> = {};
-    const bySubcategory: Record<string, number> = {};
-    const featuredByCategory: Record<string, number> = {};
-    for (const row of data ?? []) {
-      if (row.category_id) {
-        byCategory[row.category_id] = (byCategory[row.category_id] ?? 0) + 1;
-        if (row.featured) featuredByCategory[row.category_id] = (featuredByCategory[row.category_id] ?? 0) + 1;
-      }
-      if (row.subcategory_id) bySubcategory[row.subcategory_id] = (bySubcategory[row.subcategory_id] ?? 0) + 1;
-    }
-    return { byCategory, bySubcategory, featuredByCategory };
-  },
+  queryFn: hybridPublicCounts,
 });
 
 export const subcategoriesQuery = (categoryId: string) =>
   queryOptions({
     queryKey: ["subcategories", categoryId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("subcategories")
-        .select("*")
-        .eq("category_id", categoryId)
-        .order("display_order");
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: () => hybridSubcategories(categoryId),
   });
 
 export const categoryBySlugQuery = (slug: string) =>
   queryOptions({
     queryKey: ["category", slug],
-    queryFn: async () => {
-      if (!studioConnected) return publishedCategories.find((category) => category.slug === slug) ?? null;
-      const { data, error } = await supabase
-        .from("categories")
-        .select("*, subcategories(*)")
-        .eq("slug", slug)
-        .eq("hidden", false)
-        .is("archived_at", null)
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => hybridCategoryBySlug(slug),
   });
 
 /** Old portfolio URLs keep working after a slug is renamed. */
@@ -173,70 +128,57 @@ export const imagesByCategoryQuery = (categoryId: string, subcategoryId?: string
   queryOptions({
     queryKey: ["images", categoryId, subcategoryId ?? "all"],
     queryFn: async () => {
-      let q = supabase
-        .from("images")
-        .select(GALLERY_FIELDS)
-        .eq("hidden", false)
-        .eq("category_id", categoryId)
-        .order("display_order")
-        .order("created_at", { ascending: false })
-        .order("id");
-      if (subcategoryId) q = q.eq("subcategory_id", subcategoryId);
-      const { data, error } = await q;
-      if (error) throw error;
-      return data ?? [];
+      if (!isPublishedId(categoryId)) {
+        let q = supabase.from("images").select(GALLERY_FIELDS)
+          .eq("hidden", false).eq("category_id", categoryId)
+          .order("display_order").order("created_at", { ascending: false })
+          .order("id");
+        if (subcategoryId) q = q.eq("subcategory_id", subcategoryId);
+        const { data, error } = await q;
+        if (error) throw error;
+        return data ?? [];
+      }
+      const all: any[] = [];
+      for (let page = 0; page < 50; page++) {
+        const batch = await hybridImagePage(categoryId, subcategoryId, page, 100, GALLERY_FIELDS);
+        all.push(...batch);
+        if (batch.length < 100) break;
+      }
+      return all;
     },
   });
 
-/** Paged gallery reads — the grid only fetches what the visitor scrolls to. */
+/** Paged gallery reads: existing Cloudflare assets + new Supabase CMS images. */
 export const imagesByCategoryInfiniteQuery = (categoryId: string, subcategoryId?: string) =>
   infiniteQueryOptions({
     queryKey: ["images", "paged", categoryId, subcategoryId ?? "all"],
     initialPageParam: 0,
-    queryFn: async ({ pageParam }) => {
-      const from = (pageParam as number) * GALLERY_PAGE_SIZE;
-      if (!studioConnected) {
-        return (await loadPublishedPhotos())
-          .filter((photo) => photo.category_id === categoryId && (!subcategoryId || photo.subcategory_id === subcategoryId))
-          .slice(from, from + GALLERY_PAGE_SIZE);
-      }
-      let q = supabase
-        .from("images")
-        .select(GALLERY_FIELDS)
-        .eq("hidden", false)
-        .eq("category_id", categoryId)
-        // Deterministic tiebreakers: every row shares display_order = 0 and bulk
-        // uploads share created_at, so without `id` the range windows overlap and
-        // photographs silently vanish between pages.
-        .order("display_order")
-        .order("created_at", { ascending: false })
-        .order("id")
-        .range(from, from + GALLERY_PAGE_SIZE - 1);
-      if (subcategoryId) q = q.eq("subcategory_id", subcategoryId);
-      const { data, error } = await q;
-      if (error) throw error;
-      return data ?? [];
-    },
+    queryFn: ({ pageParam }) =>
+      hybridImagePage(categoryId, subcategoryId, pageParam as number, GALLERY_PAGE_SIZE, GALLERY_FIELDS),
     getNextPageParam: (lastPage, allPages) =>
       lastPage.length < GALLERY_PAGE_SIZE ? undefined : allPages.length,
   });
 
-
 export const featuredImagesQuery = queryOptions({
   queryKey: ["images", "featured"],
   queryFn: async () => {
-    const { data, error } = await supabase
-      .from("images")
-      .select(GALLERY_FIELDS)
-      .eq("hidden", false)
-      .eq("featured", true)
-      .order("display_order")
-      .limit(12);
-    if (error) throw error;
-    return data ?? [];
+    // Bundled first-in-manifest photos remain visible after switching to
+    // Supabase, even before the old database/schema is restored.
+    const published = (await loadPublishedPhotos()).slice(0, 12);
+    if (!studioConnected) return published;
+    try {
+      const { data, error } = await supabase.from("images")
+        .select(GALLERY_FIELDS).eq("hidden", false).eq("featured", true)
+        .order("display_order").limit(12);
+      if (error) return published;
+      const live = data ?? [];
+      const seen = new Set(live.map((row) => row.short_id));
+      return [...live, ...published.filter((row) => !seen.has(row.short_id))].slice(0, 12);
+    } catch {
+      return published;
+    }
   },
 });
-
 
 export const packagesQuery = queryOptions({
   queryKey: ["packages"],
