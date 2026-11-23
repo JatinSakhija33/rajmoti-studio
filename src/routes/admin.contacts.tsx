@@ -48,6 +48,7 @@ function Highlight({ text, term }: { text: string; term: string }) {
 function AdminContacts() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [letter, setLetter] = useState<string | null>(null);
   const [unclassifiedOnly, setUnclassifiedOnly] = useState(false);
   const [page, setPage] = useState(0);
@@ -59,7 +60,12 @@ function AdminContacts() {
   const [dropHot, setDropHot] = useState(false);
   const [followUpFor, setFollowUpFor] = useState<Contact | null>(null);
 
-  const filter = { search, letter, unclassifiedOnly };
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedSearch(search.trim()), 275);
+    return () => window.clearTimeout(t);
+  }, [search]);
+
+  const filter = { search: debouncedSearch, letter, unclassifiedOnly };
   const m = useMotionPrefs();
   const searchRef = useRef<HTMLInputElement>(null);
   const { data: categories = [] } = useQuery(categoriesQuery);
@@ -76,15 +82,17 @@ function AdminContacts() {
     queryKey: [...contactsQueryKey(filter), page],
     queryFn: () => fetchContactsPage(filter, page),
     placeholderData: (prev) => prev,
+    retry: false,
+    staleTime: 45_000,
   });
-  const stats = useQuery({ queryKey: ["contact-stats"], queryFn: fetchContactStats });
+  const stats = useQuery({ queryKey: ["contact-stats"], queryFn: fetchContactStats, retry: false, staleTime: 90_000 });
 
   const rows = list.data?.rows ?? [];
   const total = list.data?.total ?? 0;
   const ids = rows.map((r) => r.id);
 
-  const nextActions = useQuery({ queryKey: ["next-actions", ids], queryFn: () => fetchNextActions(ids), enabled: ids.length > 0 });
-  const noteCounts = useQuery({ queryKey: ["note-counts", ids], queryFn: () => fetchNoteCounts(ids), enabled: ids.length > 0 });
+  const nextActions = useQuery({ queryKey: ["next-actions", ids], queryFn: () => fetchNextActions(ids), enabled: ids.length > 0, retry: false, staleTime: 60_000 });
+  const noteCounts = useQuery({ queryKey: ["note-counts", ids], queryFn: () => fetchNoteCounts(ids), enabled: ids.length > 0, retry: false, staleTime: 60_000 });
 
   /* Keyboard: "/" focuses search, "n" adds a contact, Esc closes overlays. */
   useEffect(() => {
@@ -179,6 +187,7 @@ function AdminContacts() {
 
       <div className="mb-4"><GoogleContactsPanel /></div>
 
+      {stats.isError && <p role="status" className="text-xs text-amber-900 mb-4">Contact totals unavailable. Check your database setup.</p>}
       {stats.data && (
         <p className="text-xs text-muted-foreground mb-4">
           {stats.data.total} contacts · {stats.data.withMobile} with mobile · {stats.data.fromGoogle} from Google ·{" "}
@@ -254,7 +263,14 @@ function AdminContacts() {
         {dropHot ? "Drop to set a follow-up" : "Drag a contact here to follow up"}
       </motion.div>
 
-      {list.isLoading ? (
+      {list.isError ? (
+        <div role="alert" className="border border-amber-300 bg-amber-50 px-6 py-7 text-sm space-y-3">
+          <p className="font-semibold text-amber-950">Contacts cannot load from the studio database.</p>
+          <p className="text-xs text-amber-900 break-words">{list.error instanceof Error ? list.error.message : "The connection or database schema is unavailable."}</p>
+          <p className="text-xs text-amber-900">This is not an empty contact book. No data has been deleted.</p>
+          <button type="button" onClick={() => void list.refetch()} className="border border-amber-700 px-4 py-2 text-xs font-semibold">Retry</button>
+        </div>
+      ) : list.isLoading ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true" aria-label="Loading contacts">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="bg-white border border-onyx/10 p-4">
