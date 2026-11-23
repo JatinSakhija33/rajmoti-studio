@@ -1,0 +1,712 @@
+-- INTERNAL SOURCE PART 2, DO NOT RUN BY ITSELF.
+-- Original migrations 12-22.
+
+-- SOURCE: supabase/migrations/20260706045252_0a0d3e70-56c0-47b8-ae8e-ea6fca9f1578.sql
+ALTER TYPE public.inquiry_status ADD VALUE IF NOT EXISTS 'confirmed';
+ALTER TYPE public.inquiry_status ADD VALUE IF NOT EXISTS 'completed';
+ALTER TYPE public.inquiry_status ADD VALUE IF NOT EXISTS 'cancelled';
+
+
+-- SOURCE: supabase/migrations/20260706045309_7d2a5c94-ab5a-47a5-aee5-4e9f29b74f81.sql
+CREATE OR REPLACE FUNCTION public.get_taken_slots(d date)
+RETURNS TABLE(slot text)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT session_slot
+  FROM public.inquiries
+  WHERE session_date = d
+    AND session_slot IS NOT NULL
+    AND status <> 'cancelled'::inquiry_status;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_taken_slots(date) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_taken_slots(date) TO anon, authenticated;
+
+
+-- SOURCE: supabase/migrations/20260707073416_fa118c4b-5e89-40c0-afc1-63f408ff47e9.sql
+
+-- SERVICES
+CREATE TABLE public.booking_services (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  slug text NOT NULL UNIQUE,
+  description text,
+  cover_url text,
+  gallery jsonb NOT NULL DEFAULT '[]'::jsonb,
+  booking_instructions text,
+  sort_order int NOT NULL DEFAULT 0,
+  active boolean NOT NULL DEFAULT true,
+  featured boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+GRANT SELECT ON public.booking_services TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.booking_services TO authenticated;
+GRANT ALL ON public.booking_services TO service_role;
+ALTER TABLE public.booking_services ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public read active services" ON public.booking_services FOR SELECT USING (active OR public.has_role(auth.uid(),'admin'));
+CREATE POLICY "admins manage services" ON public.booking_services FOR ALL TO authenticated USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
+CREATE TRIGGER trg_booking_services_updated BEFORE UPDATE ON public.booking_services FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+
+-- PACKAGES (booking)
+CREATE TABLE public.booking_packages (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  service_id uuid NOT NULL REFERENCES public.booking_services(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  description text,
+  price numeric(10,2) NOT NULL DEFAULT 0,
+  duration_minutes int NOT NULL DEFAULT 55,
+  max_themes int NOT NULL DEFAULT 1,
+  max_poses int NOT NULL DEFAULT 1,
+  max_edited_photos int NOT NULL DEFAULT 1,
+  max_family_members int NOT NULL DEFAULT 0,
+  features jsonb NOT NULL DEFAULT '[]'::jsonb,
+  badge text,
+  popular boolean NOT NULL DEFAULT false,
+  advance_percent int NOT NULL DEFAULT 30,
+  seasonal_discount_percent int NOT NULL DEFAULT 0,
+  sort_order int NOT NULL DEFAULT 0,
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+GRANT SELECT ON public.booking_packages TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.booking_packages TO authenticated;
+GRANT ALL ON public.booking_packages TO service_role;
+ALTER TABLE public.booking_packages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public read active packages" ON public.booking_packages FOR SELECT USING (active OR public.has_role(auth.uid(),'admin'));
+CREATE POLICY "admins manage packages" ON public.booking_packages FOR ALL TO authenticated USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
+CREATE TRIGGER trg_booking_packages_updated BEFORE UPDATE ON public.booking_packages FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+CREATE INDEX idx_booking_packages_service ON public.booking_packages(service_id);
+
+-- THEMES
+CREATE TABLE public.booking_themes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  service_id uuid NOT NULL REFERENCES public.booking_services(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  thumbnail_url text,
+  gallery jsonb NOT NULL DEFAULT '[]'::jsonb,
+  recommended_age text,
+  bg_color text,
+  props text[] NOT NULL DEFAULT '{}',
+  sort_order int NOT NULL DEFAULT 0,
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+GRANT SELECT ON public.booking_themes TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.booking_themes TO authenticated;
+GRANT ALL ON public.booking_themes TO service_role;
+ALTER TABLE public.booking_themes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public read active themes" ON public.booking_themes FOR SELECT USING (active OR public.has_role(auth.uid(),'admin'));
+CREATE POLICY "admins manage themes" ON public.booking_themes FOR ALL TO authenticated USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
+CREATE TRIGGER trg_booking_themes_updated BEFORE UPDATE ON public.booking_themes FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+CREATE INDEX idx_booking_themes_service ON public.booking_themes(service_id);
+
+-- POSES
+CREATE TABLE public.booking_poses (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  theme_id uuid NOT NULL REFERENCES public.booking_themes(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  preview_url text,
+  category text,
+  difficulty text,
+  recommended_age text,
+  description text,
+  sort_order int NOT NULL DEFAULT 0,
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+GRANT SELECT ON public.booking_poses TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.booking_poses TO authenticated;
+GRANT ALL ON public.booking_poses TO service_role;
+ALTER TABLE public.booking_poses ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public read active poses" ON public.booking_poses FOR SELECT USING (active OR public.has_role(auth.uid(),'admin'));
+CREATE POLICY "admins manage poses" ON public.booking_poses FOR ALL TO authenticated USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
+CREATE TRIGGER trg_booking_poses_updated BEFORE UPDATE ON public.booking_poses FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+CREATE INDEX idx_booking_poses_theme ON public.booking_poses(theme_id);
+
+-- WORKING HOURS
+CREATE TABLE public.booking_hours (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  day_of_week int NOT NULL UNIQUE CHECK (day_of_week BETWEEN 0 AND 6),
+  blocks jsonb NOT NULL DEFAULT '[]'::jsonb,
+  session_minutes int NOT NULL DEFAULT 55,
+  open boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+GRANT SELECT ON public.booking_hours TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.booking_hours TO authenticated;
+GRANT ALL ON public.booking_hours TO service_role;
+ALTER TABLE public.booking_hours ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public read hours" ON public.booking_hours FOR SELECT USING (true);
+CREATE POLICY "admins manage hours" ON public.booking_hours FOR ALL TO authenticated USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
+CREATE TRIGGER trg_booking_hours_updated BEFORE UPDATE ON public.booking_hours FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+
+-- BLOCKED DATES
+CREATE TABLE public.booking_blocked_dates (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  date date NOT NULL,
+  reason text,
+  all_day boolean NOT NULL DEFAULT true,
+  blocked_slots text[] NOT NULL DEFAULT '{}',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+GRANT SELECT ON public.booking_blocked_dates TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.booking_blocked_dates TO authenticated;
+GRANT ALL ON public.booking_blocked_dates TO service_role;
+ALTER TABLE public.booking_blocked_dates ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public read blocked" ON public.booking_blocked_dates FOR SELECT USING (true);
+CREATE POLICY "admins manage blocked" ON public.booking_blocked_dates FOR ALL TO authenticated USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
+CREATE TRIGGER trg_booking_blocked_updated BEFORE UPDATE ON public.booking_blocked_dates FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+CREATE INDEX idx_booking_blocked_date ON public.booking_blocked_dates(date);
+
+-- OFFERS
+CREATE TABLE public.booking_offers (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  code text,
+  discount_percent int,
+  flat_amount numeric(10,2),
+  starts_at date,
+  ends_at date,
+  applies_to_service_ids uuid[] NOT NULL DEFAULT '{}',
+  applies_to_package_ids uuid[] NOT NULL DEFAULT '{}',
+  weekday_mask int NOT NULL DEFAULT 127,
+  active boolean NOT NULL DEFAULT true,
+  auto_apply boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+GRANT SELECT ON public.booking_offers TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.booking_offers TO authenticated;
+GRANT ALL ON public.booking_offers TO service_role;
+ALTER TABLE public.booking_offers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "public read active offers" ON public.booking_offers FOR SELECT USING (active OR public.has_role(auth.uid(),'admin'));
+CREATE POLICY "admins manage offers" ON public.booking_offers FOR ALL TO authenticated USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
+CREATE TRIGGER trg_booking_offers_updated BEFORE UPDATE ON public.booking_offers FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+
+-- EXTEND INQUIRIES
+ALTER TABLE public.inquiries
+  ADD COLUMN IF NOT EXISTS theme_ids uuid[] NOT NULL DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS pose_ids uuid[] NOT NULL DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS offer_id uuid REFERENCES public.booking_offers(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS discount_amount numeric(10,2) NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS booking_service_id uuid REFERENCES public.booking_services(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS booking_package_id uuid REFERENCES public.booking_packages(id) ON DELETE SET NULL;
+
+-- Seed default hours (Mon-Sun open 10-14 & 15-21)
+INSERT INTO public.booking_hours (day_of_week, blocks, session_minutes, open)
+SELECT d, '[{"start":"10:00","end":"14:00"},{"start":"15:00","end":"21:00"}]'::jsonb, 55, true
+FROM generate_series(0,6) d
+ON CONFLICT (day_of_week) DO NOTHING;
+
+
+-- SOURCE: supabase/migrations/20260708162711_e73496d1-411c-46ec-be18-b4fbea987f8f.sql
+
+-- Customers
+CREATE TABLE public.customers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_name TEXT NOT NULL,
+  baby_name TEXT,
+  baby_dob DATE,
+  baby_gender TEXT,
+  phone TEXT,
+  email TEXT,
+  anniversary_date DATE,
+  mother_name TEXT,
+  father_name TEXT,
+  city TEXT,
+  address TEXT,
+  notes TEXT,
+  source TEXT,
+  whatsapp_consent BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.customers TO authenticated;
+GRANT ALL ON public.customers TO service_role;
+ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "admins manage customers" ON public.customers FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
+CREATE TRIGGER customers_updated_at BEFORE UPDATE ON public.customers
+  FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+CREATE INDEX customers_phone_idx ON public.customers(phone);
+
+-- Custom important dates
+CREATE TABLE public.customer_dates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id UUID NOT NULL REFERENCES public.customers(id) ON DELETE CASCADE,
+  label TEXT NOT NULL,
+  date DATE NOT NULL,
+  recurring BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.customer_dates TO authenticated;
+GRANT ALL ON public.customer_dates TO service_role;
+ALTER TABLE public.customer_dates ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "admins manage customer_dates" ON public.customer_dates FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
+
+-- Milestone configs
+CREATE TABLE public.milestone_configs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  label TEXT NOT NULL,
+  months INTEGER NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT true,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(months)
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.milestone_configs TO authenticated;
+GRANT ALL ON public.milestone_configs TO service_role;
+ALTER TABLE public.milestone_configs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "admins manage milestone_configs" ON public.milestone_configs FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
+CREATE TRIGGER milestone_configs_updated_at BEFORE UPDATE ON public.milestone_configs
+  FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+
+-- Reminder offers
+CREATE TABLE public.reminder_offers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  label TEXT NOT NULL,
+  offer_type TEXT NOT NULL DEFAULT 'percent', -- percent | flat | free_item | text
+  value NUMERIC,
+  message TEXT,
+  active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.reminder_offers TO authenticated;
+GRANT ALL ON public.reminder_offers TO service_role;
+ALTER TABLE public.reminder_offers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "admins manage reminder_offers" ON public.reminder_offers FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
+CREATE TRIGGER reminder_offers_updated_at BEFORE UPDATE ON public.reminder_offers
+  FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+
+-- Message templates
+CREATE TABLE public.message_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  body TEXT NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.message_templates TO authenticated;
+GRANT ALL ON public.message_templates TO service_role;
+ALTER TABLE public.message_templates ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "admins manage message_templates" ON public.message_templates FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
+CREATE TRIGGER message_templates_updated_at BEFORE UPDATE ON public.message_templates
+  FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+
+-- Reminders
+CREATE TABLE public.reminders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id UUID NOT NULL REFERENCES public.customers(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL DEFAULT 'baby_milestone', -- baby_milestone | anniversary | custom | birthday
+  label TEXT NOT NULL,
+  milestone_date DATE NOT NULL,
+  remind_on DATE NOT NULL,
+  offer_id UUID REFERENCES public.reminder_offers(id) ON DELETE SET NULL,
+  message TEXT,
+  status TEXT NOT NULL DEFAULT 'pending', -- pending | sent | snoozed | dismissed
+  sent_at TIMESTAMPTZ,
+  snoozed_until DATE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(customer_id, kind, label, milestone_date)
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.reminders TO authenticated;
+GRANT ALL ON public.reminders TO service_role;
+ALTER TABLE public.reminders ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "admins manage reminders" ON public.reminders FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
+CREATE TRIGGER reminders_updated_at BEFORE UPDATE ON public.reminders
+  FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+CREATE INDEX reminders_remind_on_idx ON public.reminders(remind_on);
+CREATE INDEX reminders_status_idx ON public.reminders(status);
+
+-- Link inquiries to customers
+ALTER TABLE public.inquiries ADD COLUMN IF NOT EXISTS customer_id UUID REFERENCES public.customers(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS inquiries_customer_id_idx ON public.inquiries(customer_id);
+
+-- Seed default milestones
+INSERT INTO public.milestone_configs (label, months, sort_order) VALUES
+  ('1 Month', 1, 10),
+  ('3 Months', 3, 20),
+  ('5 Months', 5, 30),
+  ('6 Months', 6, 40),
+  ('9 Months', 9, 50),
+  ('1 Year', 12, 60),
+  ('18 Months', 18, 70),
+  ('2 Years', 24, 80)
+ON CONFLICT (months) DO NOTHING;
+
+-- Seed message templates
+INSERT INTO public.message_templates (body) VALUES
+  ('Tiny hands, tiny feet, and memories that last forever. 💕'),
+  ('Every month is a new adventure worth remembering. 📸'),
+  ('Today''s little smile becomes tomorrow''s priceless memory. ✨'),
+  ('They grow in the blink of an eye — capture every milestone. 🌸'),
+  ('The cutest smiles deserve the most beautiful photographs. 📷');
+
+-- Function: generate upcoming reminders (7 days ahead) for all active customers
+CREATE OR REPLACE FUNCTION public.generate_upcoming_reminders(lookahead_days INTEGER DEFAULT 7)
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  inserted_count INTEGER := 0;
+  c RECORD;
+  m RECORD;
+  milestone_dt DATE;
+  remind_dt DATE;
+BEGIN
+  -- Baby milestones
+  FOR c IN SELECT id, baby_dob FROM public.customers WHERE baby_dob IS NOT NULL LOOP
+    FOR m IN SELECT label, months FROM public.milestone_configs WHERE active = true LOOP
+      milestone_dt := c.baby_dob + (m.months || ' months')::interval;
+      remind_dt := milestone_dt - (lookahead_days || ' days')::interval;
+      IF remind_dt >= CURRENT_DATE - 1 AND remind_dt <= CURRENT_DATE + lookahead_days THEN
+        INSERT INTO public.reminders (customer_id, kind, label, milestone_date, remind_on)
+        VALUES (c.id, 'baby_milestone', m.label, milestone_dt, remind_dt)
+        ON CONFLICT (customer_id, kind, label, milestone_date) DO NOTHING;
+        IF FOUND THEN inserted_count := inserted_count + 1; END IF;
+      END IF;
+    END LOOP;
+  END LOOP;
+
+  -- Custom dates (recurring yearly)
+  FOR c IN
+    SELECT cd.customer_id, cd.label, cd.date, cd.recurring
+    FROM public.customer_dates cd
+  LOOP
+    IF c.recurring THEN
+      milestone_dt := make_date(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM c.date)::int, EXTRACT(DAY FROM c.date)::int);
+      IF milestone_dt < CURRENT_DATE THEN
+        milestone_dt := milestone_dt + interval '1 year';
+      END IF;
+    ELSE
+      milestone_dt := c.date;
+    END IF;
+    remind_dt := milestone_dt - (lookahead_days || ' days')::interval;
+    IF remind_dt >= CURRENT_DATE - 1 AND remind_dt <= CURRENT_DATE + lookahead_days THEN
+      INSERT INTO public.reminders (customer_id, kind, label, milestone_date, remind_on)
+      VALUES (c.customer_id, 'custom', c.label, milestone_dt, remind_dt)
+      ON CONFLICT (customer_id, kind, label, milestone_date) DO NOTHING;
+    END IF;
+  END LOOP;
+
+  RETURN inserted_count;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.generate_upcoming_reminders(INTEGER) TO authenticated;
+
+
+-- SOURCE: supabase/migrations/20260708162734_6198e1ee-3365-4eb9-a74b-3542ce3a50a6.sql
+
+REVOKE EXECUTE ON FUNCTION public.generate_upcoming_reminders(INTEGER) FROM PUBLIC, authenticated;
+
+
+-- SOURCE: supabase/migrations/20260806104407_835b3c69-49a1-4d2d-97d8-b469497c51ca.sql
+ALTER TABLE public.images
+  ADD COLUMN IF NOT EXISTS variants jsonb,
+  ADD COLUMN IF NOT EXISTS optimized_at timestamptz;
+
+-- SOURCE: supabase/migrations/20260809100416_86a66b97-9e4a-4386-b9a5-1c0b1136855a.sql
+CREATE TABLE public.calendar_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id uuid REFERENCES public.customers(id) ON DELETE SET NULL,
+  title text NOT NULL,
+  type text NOT NULL DEFAULT 'task',
+  description text,
+  contact_name text,
+  phone text,
+  event_date date NOT NULL,
+  start_time time,
+  end_time time,
+  amount numeric,
+  payment_status text,
+  status text NOT NULL DEFAULT 'scheduled',
+  priority text NOT NULL DEFAULT 'normal',
+  reminder_at timestamptz,
+  reminder_offset_minutes integer,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  deleted_at timestamptz
+);
+
+CREATE INDEX calendar_events_date_idx ON public.calendar_events (event_date) WHERE deleted_at IS NULL;
+CREATE INDEX calendar_events_customer_idx ON public.calendar_events (customer_id);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.calendar_events TO authenticated;
+GRANT ALL ON public.calendar_events TO service_role;
+
+ALTER TABLE public.calendar_events ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins manage calendar events" ON public.calendar_events
+  FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(), 'admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'admin'));
+
+CREATE TRIGGER calendar_events_updated_at BEFORE UPDATE ON public.calendar_events
+  FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+
+-- SOURCE: supabase/migrations/20260811140839_abf6537f-6d4f-4b89-9be6-baa07afa0b93.sql
+CREATE TABLE public.studio_notes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  note text NOT NULL,
+  note_date date NOT NULL,
+  is_completed boolean NOT NULL DEFAULT false,
+  completed_at timestamptz,
+  moved_from_date date,
+  created_by uuid REFERENCES auth.users(id),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  deleted_at timestamptz
+);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.studio_notes TO authenticated;
+GRANT ALL ON public.studio_notes TO service_role;
+
+ALTER TABLE public.studio_notes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins manage studio notes"
+ON public.studio_notes FOR ALL TO authenticated
+USING (public.has_role(auth.uid(), 'admin'))
+WITH CHECK (public.has_role(auth.uid(), 'admin'));
+
+CREATE INDEX idx_studio_notes_date ON public.studio_notes (note_date) WHERE deleted_at IS NULL;
+CREATE INDEX idx_studio_notes_open ON public.studio_notes (is_completed, note_date) WHERE deleted_at IS NULL AND is_completed = false;
+
+CREATE TRIGGER studio_notes_updated_at BEFORE UPDATE ON public.studio_notes
+FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+
+-- SOURCE: supabase/migrations/20260818065558_fa9b61a9-dfeb-444b-96a5-a6f2a0785d8d.sql
+
+create or replace function public.gallery_object_public(objname text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select
+    -- site-wide CMS assets (hero, covers) are public by design
+    objname like 'site/%'
+    or exists (
+      select 1 from public.images i
+      where i.hidden = false
+        and (
+          i.storage_path = objname
+          or objname like (i.id::text || '/%')
+          or split_part(objname, '/', 2) = i.id::text
+          or split_part(split_part(objname, '/', 2), '.', 1) = i.id::text
+        )
+    );
+$$;
+
+revoke all on function public.gallery_object_public(text) from public;
+grant execute on function public.gallery_object_public(text) to anon, authenticated, service_role;
+
+drop policy if exists "gallery public read" on storage.objects;
+create policy "gallery public read"
+on storage.objects for select
+to public
+using (
+  bucket_id = 'gallery'
+  and (
+    public.gallery_object_public(name)
+    or has_role(auth.uid(), 'admin'::app_role)
+  )
+);
+
+drop policy if exists "anon manage session favorites" on public.image_favorites;
+
+
+-- SOURCE: supabase/migrations/20260818080306_7adf2590-c5bb-437d-8b04-376332fbeb42.sql
+ALTER TABLE public.categories
+  ADD COLUMN IF NOT EXISTS hidden boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS featured boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS seo_title text,
+  ADD COLUMN IF NOT EXISTS seo_description text,
+  ADD COLUMN IF NOT EXISTS archived_at timestamptz;
+
+ALTER TABLE public.subcategories
+  ADD COLUMN IF NOT EXISTS hidden boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS cover_image_url text,
+  ADD COLUMN IF NOT EXISTS seo_title text,
+  ADD COLUMN IF NOT EXISTS seo_description text,
+  ADD COLUMN IF NOT EXISTS archived_at timestamptz;
+
+CREATE TABLE IF NOT EXISTS public.slug_redirects (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  kind text NOT NULL CHECK (kind IN ('category','subcategory')),
+  old_slug text NOT NULL,
+  new_slug text NOT NULL,
+  category_slug text,
+  target_id uuid NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS slug_redirects_unique
+  ON public.slug_redirects (kind, old_slug, coalesce(category_slug, ''));
+
+GRANT SELECT ON public.slug_redirects TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.slug_redirects TO authenticated;
+GRANT ALL ON public.slug_redirects TO service_role;
+
+ALTER TABLE public.slug_redirects ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "slug_redirects public read" ON public.slug_redirects;
+CREATE POLICY "slug_redirects public read" ON public.slug_redirects
+  FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "slug_redirects admin write" ON public.slug_redirects;
+CREATE POLICY "slug_redirects admin write" ON public.slug_redirects
+  FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(), 'admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'admin'));
+
+CREATE OR REPLACE FUNCTION public.tg_record_category_slug_change()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path TO 'public'
+AS $$
+BEGIN
+  IF NEW.slug IS DISTINCT FROM OLD.slug THEN
+    INSERT INTO public.slug_redirects (kind, old_slug, new_slug, target_id)
+    VALUES ('category', OLD.slug, NEW.slug, NEW.id)
+    ON CONFLICT (kind, old_slug, coalesce(category_slug, ''))
+    DO UPDATE SET new_slug = EXCLUDED.new_slug, target_id = EXCLUDED.target_id;
+
+    UPDATE public.slug_redirects
+      SET new_slug = NEW.slug
+      WHERE kind = 'category' AND target_id = NEW.id AND old_slug <> NEW.slug;
+
+    DELETE FROM public.slug_redirects
+      WHERE kind = 'category' AND old_slug = NEW.slug;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_category_slug_change ON public.categories;
+CREATE TRIGGER trg_category_slug_change
+  BEFORE UPDATE ON public.categories
+  FOR EACH ROW EXECUTE FUNCTION public.tg_record_category_slug_change();
+
+CREATE OR REPLACE FUNCTION public.tg_record_subcategory_slug_change()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path TO 'public'
+AS $$
+DECLARE
+  cat_slug text;
+BEGIN
+  IF NEW.slug IS DISTINCT FROM OLD.slug THEN
+    SELECT slug INTO cat_slug FROM public.categories WHERE id = NEW.category_id;
+
+    INSERT INTO public.slug_redirects (kind, old_slug, new_slug, category_slug, target_id)
+    VALUES ('subcategory', OLD.slug, NEW.slug, cat_slug, NEW.id)
+    ON CONFLICT (kind, old_slug, coalesce(category_slug, ''))
+    DO UPDATE SET new_slug = EXCLUDED.new_slug, target_id = EXCLUDED.target_id;
+
+    UPDATE public.slug_redirects
+      SET new_slug = NEW.slug
+      WHERE kind = 'subcategory' AND target_id = NEW.id AND old_slug <> NEW.slug;
+
+    DELETE FROM public.slug_redirects
+      WHERE kind = 'subcategory' AND old_slug = NEW.slug
+        AND coalesce(category_slug, '') = coalesce(cat_slug, '');
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_subcategory_slug_change ON public.subcategories;
+CREATE TRIGGER trg_subcategory_slug_change
+  BEFORE UPDATE ON public.subcategories
+  FOR EACH ROW EXECUTE FUNCTION public.tg_record_subcategory_slug_change();
+
+-- SOURCE: supabase/migrations/20260818095409_7fcaa52f-a3ab-4462-bea5-595c0f776384.sql
+-- Permanent public photo identity system
+
+ALTER TABLE public.images ADD COLUMN IF NOT EXISTS theme text;
+
+CREATE OR REPLACE FUNCTION public.generate_photo_short_id()
+RETURNS text
+LANGUAGE plpgsql
+VOLATILE
+SET search_path = public
+AS $$
+DECLARE
+  alphabet constant text := 'abcdefghijklmnopqrstuvwxyz0123456789';
+  candidate text;
+  i int;
+BEGIN
+  LOOP
+    candidate := '';
+    FOR i IN 1..10 LOOP
+      candidate := candidate || substr(alphabet, 1 + floor(random() * length(alphabet))::int, 1);
+    END LOOP;
+    EXIT WHEN NOT EXISTS (SELECT 1 FROM public.images WHERE short_id = candidate);
+  END LOOP;
+  RETURN candidate;
+END;
+$$;
+
+-- Backfill anything missing (no-op if already complete)
+UPDATE public.images
+SET short_id = public.generate_photo_short_id()
+WHERE short_id IS NULL OR btrim(short_id) = '';
+
+ALTER TABLE public.images ALTER COLUMN short_id SET DEFAULT public.generate_photo_short_id();
+ALTER TABLE public.images ALTER COLUMN short_id SET NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS images_short_id_key ON public.images (short_id);
+
+-- short_id is permanent: auto-generate on insert, immutable on update
+CREATE OR REPLACE FUNCTION public.images_enforce_public_id()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.short_id IS NULL OR btrim(NEW.short_id) = '' THEN
+      NEW.short_id := public.generate_photo_short_id();
+    END IF;
+  ELSE
+    NEW.short_id := OLD.short_id;
+  END IF;
+
+  IF NEW.hidden IS FALSE THEN
+    IF NEW.category_id IS NULL THEN
+      RAISE EXCEPTION 'A published photograph must have a category';
+    END IF;
+    IF NEW.image_url IS NULL OR btrim(NEW.image_url) = '' THEN
+      RAISE EXCEPTION 'A published photograph must have an image';
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS images_enforce_public_id ON public.images;
+CREATE TRIGGER images_enforce_public_id
+BEFORE INSERT OR UPDATE ON public.images
+FOR EACH ROW EXECUTE FUNCTION public.images_enforce_public_id();
