@@ -1795,6 +1795,42 @@ comment on column public.reels.preview_url is
   'Optional short silent web clip for hover previews on published reels.';
 
 
+-- SECURITY HARDENING of two overly broad historical read policies.
+-- Public site may read approved non-sensitive config keys only; other settings
+-- (templates, private configuration) remain admin-only.
+DROP POLICY IF EXISTS "profiles readable by authenticated" ON public.profiles;
+CREATE POLICY "profiles readable by owner or self" ON public.profiles
+  FOR SELECT TO authenticated
+  USING (id = (SELECT auth.uid()) OR public.has_role((SELECT auth.uid()), 'admin'));
+
+DROP POLICY IF EXISTS "settings readable by authenticated" ON public.settings;
+DROP POLICY IF EXISTS "public approved site settings" ON public.settings;
+CREATE POLICY "public approved site settings" ON public.settings
+  FOR SELECT TO anon, authenticated
+  USING (key IN ('site', 'hero', 'maps_embed_url', 'google_profile_share_url'));
+GRANT SELECT ON public.settings TO anon, authenticated;
+
+-- Prevent any anonymous caller from evaluating privileged role membership.
+REVOKE EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated;
+
+-- Invariant: no broad authenticated write policies may expose sensitive records.
+DO $privcheck$
+DECLARE bad text;
+BEGIN
+  SELECT string_agg(tablename || ':' || policyname, ', ') INTO bad
+  FROM pg_policies
+  WHERE schemaname='public'
+    AND tablename IN ('customers','bookings','studio_jobs','contact_notes','contact_tasks','reminders','gift_orders')
+    AND (
+      (cmd IN ('ALL','INSERT','UPDATE','DELETE') AND trim(coalesce(qual,''),'() ') = 'true')
+      OR (cmd IN ('ALL','INSERT','UPDATE') AND trim(coalesce(with_check,''),'() ') = 'true')
+    );
+  IF bad IS NOT NULL THEN
+    RAISE EXCEPTION 'STOP: permissive authenticated write policies detected: %',bad;
+  END IF;
+END $privcheck$;
+
 -- POST-INSTALL CHECKS: fail transaction if private public-schema tables have no RLS.
 DO $verify$
 DECLARE bad_tables text;
