@@ -5,7 +5,8 @@ import { liveBackend, backendConfigured, backendUrl, backendKey } from "@/lib/ba
 let client: SupabaseClient<Database> | undefined;
 export const supabase = new Proxy({} as SupabaseClient<Database>, {
   get(_, key) {
-    if (!liveBackend || !backendConfigured) return Reflect.get(demoClient, key);
+    if (!liveBackend) return Reflect.get(demoClient, key);
+    if (!backendConfigured) throw new Error("Supabase mode is enabled but its public URL or publishable key is missing. Configure Cloudflare Pages production build variables and redeploy.");
     client ||= createClient<Database>(backendUrl, backendKey, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
     });
