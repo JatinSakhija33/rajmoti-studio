@@ -15,6 +15,12 @@ import { studioConnected } from "@/lib/backend-mode";
 import type { GalleryImageLike } from "@/lib/images";
 import { loadPublishedPhotos, publishedCategories, publishedCounts } from "@/lib/published-portfolio";
 
+export type HybridGalleryPhoto = GalleryImageLike & {
+  id: string;
+  short_id: string;
+  description: string | null;
+};
+
 export const isPublishedId = (id: string) => id.startsWith("published:");
 export const publishedCategory = (slug: string) =>
   publishedCategories.find((c) => c.slug === slug) ?? null;
@@ -73,7 +79,7 @@ export async function hybridImagePage(
   page: number,
   pageSize: number,
   fields: string
-): Promise<GalleryImageLike[]> {
+): Promise<HybridGalleryPhoto[]> {
   const start = page * pageSize;
   if (!isPublishedId(categoryId)) {
     let q = supabase.from("images").select(fields)
@@ -83,7 +89,7 @@ export async function hybridImagePage(
     if (subcategoryId) q = q.eq("subcategory_id", subcategoryId);
     const { data, error } = await q;
     if (error) throw error;
-    return (data ?? []) as unknown as GalleryImageLike[];
+    return (data ?? []) as unknown as HybridGalleryPhoto[];
   }
 
   const categorySlug = categoryId.slice("published:".length);
@@ -123,7 +129,7 @@ export async function hybridImagePage(
     if (remoteSubId) q = q.eq("subcategory_id", remoteSubId);
     const { data, error } = await q;
     // Database read errors do not erase existing publicly bundled assets.
-    return error ? bundledPage : [...bundledPage, ...((data ?? []) as unknown as GalleryImageLike[])];
+    return error ? bundledPage : [...bundledPage, ...((data ?? []) as unknown as HybridGalleryPhoto[])];
   } catch {
     return bundledPage;
   }
