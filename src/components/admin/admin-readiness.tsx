@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Database, RefreshCw } from "lucide-react";
-import { checkAdminSystem, moduleHealth } from "@/lib/admin-system-health";
+import { ADMIN_SPECIAL_MODULES, checkAdminSystem, moduleHealth } from "@/lib/admin-system-health";
 
 export function useAdminSystemHealth() {
   return useQuery({
@@ -16,6 +16,7 @@ export function useAdminSystemHealth() {
 export function AdminReadiness({ pathname }: { pathname: string }) {
   const health = useAdminSystemHealth();
   const current = moduleHealth(pathname, health.data);
+  const special = ADMIN_SPECIAL_MODULES.find((mod) => mod.path === pathname);
   if (pathname === "/admin/system") return null;
 
   if (health.isPending) {
@@ -36,7 +37,7 @@ export function AdminReadiness({ pathname }: { pathname: string }) {
 
   const missing = health.data?.tables.filter((row) => !row.ok) ?? [];
   const specific = current && !current.ok;
-  if (!specific && missing.length === 0) return null;
+  if (!specific && missing.length === 0 && !special) return null;
 
   return (
     <section role="status" className="mb-6 flex flex-wrap items-center justify-between gap-3 border border-amber-300 bg-[#fffaf0] px-4 py-3 text-sm">
@@ -44,11 +45,11 @@ export function AdminReadiness({ pathname }: { pathname: string }) {
         <AlertTriangle className="size-5 shrink-0 text-amber-700" aria-hidden />
         <div>
           <p className="font-semibold text-onyx">
-            {specific ? "This section needs database setup" : "Some studio modules need database setup"}
+            {special ? "This section needs a separate production integration" : specific ? "This section needs database setup" : "Some studio modules need database setup"}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            {specific
-              ? `Unavailable: ${current.missing.join(", ")}. Unsaved changes may not reach other devices.`
+            {special ? special.detail
+              : specific ? `Unavailable: ${current.missing.join(", ")}. Unsaved changes may not reach other devices.`
               : `${missing.length} backend table(s) are unavailable. Empty results may not mean zero records.`}
           </p>
         </div>
