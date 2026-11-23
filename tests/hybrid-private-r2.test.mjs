@@ -105,7 +105,7 @@ test("invalid image bytes and unexpected paths are refused", async (t) => {
   });
   assert.equal(upload.status, 415);
   const read = await onRequestGet({
-    request: new Request("https://rajmotistudio.in/api/owner/studio-files?key=../../secrets"), env: e,
+    request: new Request("https://rajmotistudio.in/api/owner/studio-files?key=../../secrets", { headers: admin }), env: e,
   });
   assert.equal(read.status, 400);
 });
