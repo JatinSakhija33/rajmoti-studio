@@ -1,0 +1,177 @@
+-- INTERNAL SOURCE PART 4, DO NOT RUN BY ITSELF.
+-- Original migrations 34-41.
+
+-- SOURCE: supabase/migrations/20260821121514_98cc3915-b8a7-43e5-a882-dd75a5bc4568.sql
+CREATE POLICY "Admins manage reel videos"
+  ON storage.objects FOR ALL
+  TO authenticated
+  USING (bucket_id = 'reels' AND public.has_role(auth.uid(), 'admin'))
+  WITH CHECK (bucket_id = 'reels' AND public.has_role(auth.uid(), 'admin'));
+
+-- SOURCE: supabase/migrations/20260824105322_6a844c30-4932-40c6-8ade-6da90d1fc810.sql
+DROP POLICY IF EXISTS "settings readable by authenticated allowlist" ON public.settings;
+CREATE POLICY "settings readable by authenticated allowlist"
+ON public.settings FOR SELECT TO authenticated
+USING (key = ANY (ARRAY['maps_embed_url','site','google_profile_share_url']));
+
+-- SOURCE: supabase/migrations/20260826140646_432dd528-f457-441a-86ac-f8e7c86567ce.sql
+DROP POLICY IF EXISTS "settings readable by authenticated allowlist" ON public.settings;
+CREATE POLICY "settings readable by authenticated" ON public.settings FOR SELECT TO authenticated USING (true);
+
+-- SOURCE: supabase/migrations/20260826141001_f9e46413-11fc-45ef-8fad-d2ec3f8118c8.sql
+-- Contacts: staff can read and update (mark contacted, favourite), not delete
+CREATE POLICY "staff read customers" ON public.customers FOR SELECT TO authenticated USING (true);
+CREATE POLICY "staff insert customers" ON public.customers FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "staff update customers" ON public.customers FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+
+-- Notes and tasks: staff can fully manage
+CREATE POLICY "staff manage contact notes" ON public.contact_notes FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "staff manage contact tasks" ON public.contact_tasks FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Reminders: staff can read and update status
+CREATE POLICY "staff read reminders" ON public.reminders FOR SELECT TO authenticated USING (true);
+CREATE POLICY "staff update reminders" ON public.reminders FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+
+-- Read-only reference data used to render messages
+CREATE POLICY "staff read reminder offers" ON public.reminder_offers FOR SELECT TO authenticated USING (true);
+CREATE POLICY "staff read message templates" ON public.message_templates FOR SELECT TO authenticated USING (true);
+
+-- SOURCE: supabase/migrations/20260826152147_e11666bd-5634-4369-940c-ad4dc709ec4e.sql
+-- Studio-internal tool: any signed-in account is studio staff.
+DO $$
+DECLARE p record; q text; wc text;
+BEGIN
+  FOR p IN
+    SELECT schemaname, tablename, policyname, cmd, roles::text AS roles, qual, with_check
+      FROM pg_policies
+     WHERE (schemaname = 'public' OR (schemaname = 'storage' AND tablename = 'objects'))
+       AND (qual ILIKE '%has_role%' OR with_check ILIKE '%has_role%')
+  LOOP
+    q := replace(coalesce(p.qual, ''), 'has_role(auth.uid(), ''admin''::app_role)', '(auth.uid() IS NOT NULL)');
+    wc := replace(coalesce(p.with_check, ''), 'has_role(auth.uid(), ''admin''::app_role)', '(auth.uid() IS NOT NULL)');
+    EXECUTE format('DROP POLICY %I ON %I.%I', p.policyname, p.schemaname, p.tablename);
+    EXECUTE format(
+      'CREATE POLICY %I ON %I.%I AS PERMISSIVE FOR %s TO %s %s %s',
+      p.policyname, p.schemaname, p.tablename,
+      CASE p.cmd WHEN 'ALL' THEN 'ALL' ELSE p.cmd END,
+      trim(both '{}' from p.roles),
+      CASE WHEN p.qual IS NULL THEN '' ELSE 'USING (' || q || ')' END,
+      CASE WHEN p.with_check IS NULL THEN '' ELSE 'WITH CHECK (' || wc || ')' END
+    );
+  END LOOP;
+END $$;
+
+-- SOURCE: supabase/migrations/20261112090000_gifts_and_studio_workflow.sql
+-- Rajmoti Studio independent-hosting extension (2026-11-12)
+-- Run after the original 38 project migrations. No live customer/image rows are embedded here.
+
+CREATE TABLE IF NOT EXISTS public.gift_orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_slug TEXT NOT NULL CHECK (char_length(product_slug) BETWEEN 2 AND 80),
+  product_name TEXT NOT NULL CHECK (char_length(product_name) BETWEEN 2 AND 120),
+  requested_size TEXT NOT NULL DEFAULT 'To be discussed',
+  customer_name TEXT NOT NULL CHECK (char_length(customer_name) BETWEEN 2 AND 140),
+  phone TEXT NOT NULL CHECK (char_length(phone) BETWEEN 8 AND 20),
+  email TEXT,
+  customer_message TEXT NOT NULL DEFAULT '',
+  photo_paths TEXT[] NOT NULL DEFAULT '{}'::TEXT[],
+  status TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new','confirmed','in_production','ready','fulfilled','cancelled')),
+  quoted_price NUMERIC(10,2),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS gift_orders_status_date_idx ON public.gift_orders(status, created_at DESC);
+CREATE TRIGGER gift_orders_updated BEFORE UPDATE ON public.gift_orders FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+ALTER TABLE public.gift_orders ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, UPDATE ON public.gift_orders TO authenticated;
+GRANT ALL ON public.gift_orders TO service_role;
+CREATE POLICY "Only studio admins see and edit gift orders" ON public.gift_orders
+  FOR ALL TO authenticated USING (public.has_role(auth.uid(), 'admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'admin'));
+-- No anonymous INSERT/SELECT: gift submissions must pass through the verified Edge Function.
+
+CREATE TABLE IF NOT EXISTS public.studio_jobs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  customer_id UUID REFERENCES public.customers(id) ON DELETE SET NULL,
+  source_gift_order_id UUID UNIQUE REFERENCES public.gift_orders(id) ON DELETE SET NULL,
+  customer_name TEXT NOT NULL CHECK (char_length(customer_name) BETWEEN 1 AND 140),
+  phone TEXT NOT NULL DEFAULT '',
+  photo_type TEXT NOT NULL DEFAULT 'Other',
+  template_type TEXT NOT NULL DEFAULT 'custom',
+  requested_size TEXT NOT NULL DEFAULT 'Not confirmed',
+  restoration_instructions TEXT NOT NULL DEFAULT '',
+  background_instructions TEXT NOT NULL DEFAULT '',
+  memorial_name TEXT NOT NULL DEFAULT '',
+  memorial_date TEXT NOT NULL DEFAULT '',
+  memorial_tithi TEXT NOT NULL DEFAULT '',
+  memorial_details TEXT NOT NULL DEFAULT '',
+  notes TEXT NOT NULL DEFAULT '',
+  assumptions TEXT NOT NULL DEFAULT '',
+  priority TEXT NOT NULL DEFAULT 'normal' CHECK (priority IN ('low','normal','high','urgent')),
+  job_status TEXT NOT NULL DEFAULT 'received' CHECK (job_status IN ('received','editing','review','printing','ready','delivered')),
+  payment_status TEXT NOT NULL DEFAULT 'unpaid' CHECK (payment_status IN ('unpaid','advance','paid')),
+  delivery_status TEXT NOT NULL DEFAULT 'not_ready' CHECK (delivery_status IN ('not_ready','ready','collected','sent')),
+  total_amount NUMERIC(10,2) CHECK (total_amount IS NULL OR total_amount >= 0),
+  amount_received NUMERIC(10,2) NOT NULL DEFAULT 0 CHECK (amount_received >= 0),
+  received_on DATE NOT NULL DEFAULT CURRENT_DATE,
+  due_on DATE,
+  original_path TEXT,
+  edited_path TEXT,
+  review JSONB NOT NULL DEFAULT '{"identity_safe": false, "original_preserved": false, "instructions_checked": false, "size_verified": false, "client_approved": false}'::JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT amount_received_not_over_total CHECK (total_amount IS NULL OR amount_received <= total_amount)
+);
+CREATE INDEX IF NOT EXISTS studio_jobs_queue_idx ON public.studio_jobs(job_status, due_on, priority);
+CREATE INDEX IF NOT EXISTS studio_jobs_phone_idx ON public.studio_jobs(phone);
+CREATE INDEX IF NOT EXISTS studio_jobs_updated_idx ON public.studio_jobs(updated_at DESC);
+CREATE TRIGGER studio_jobs_updated BEFORE UPDATE ON public.studio_jobs FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+ALTER TABLE public.studio_jobs ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.studio_jobs TO authenticated;
+GRANT ALL ON public.studio_jobs TO service_role;
+CREATE POLICY "Only studio admins manage production jobs" ON public.studio_jobs
+  FOR ALL TO authenticated USING (public.has_role(auth.uid(), 'admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'admin'));
+
+-- All customer-supplied images remain PRIVATE, accessible only by admin auth or service-role.
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('gift-order-photos', 'gift-order-photos', false, 10485760, ARRAY['image/jpeg','image/png','image/webp'])
+ON CONFLICT (id) DO UPDATE SET public = false, file_size_limit = EXCLUDED.file_size_limit, allowed_mime_types = EXCLUDED.allowed_mime_types;
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('studio-job-files', 'studio-job-files', false, 20971520, ARRAY['image/jpeg','image/png','image/webp','image/tiff'])
+ON CONFLICT (id) DO UPDATE SET public = false, file_size_limit = EXCLUDED.file_size_limit, allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+CREATE POLICY "Admins manage gift photo objects" ON storage.objects FOR ALL TO authenticated
+USING (bucket_id = 'gift-order-photos' AND public.has_role(auth.uid(), 'admin'))
+WITH CHECK (bucket_id = 'gift-order-photos' AND public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins manage studio job photo objects" ON storage.objects FOR ALL TO authenticated
+USING (bucket_id = 'studio-job-files' AND public.has_role(auth.uid(), 'admin'))
+WITH CHECK (bucket_id = 'studio-job-files' AND public.has_role(auth.uid(), 'admin'));
+
+
+-- SOURCE: supabase/migrations/20261112160000_explicit_owner_access.sql
+-- New installations must assign the studio owner explicitly, not by an email string.
+-- Existing admin role rows are preserved.
+CREATE OR REPLACE FUNCTION public.handle_new_user() RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  INSERT INTO public.profiles (id, display_name, avatar_url)
+  VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'display_name', split_part(NEW.email, '@', 1)), NEW.raw_user_meta_data->>'avatar_url')
+  ON CONFLICT (id) DO NOTHING;
+  RETURN NEW;
+END; $$;
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
+
+-- Original export created storage policies but assumed this bucket already existed.
+INSERT INTO storage.buckets (id,name,public,file_size_limit,allowed_mime_types)
+VALUES ('gallery','gallery',false,26214400,ARRAY['image/jpeg','image/png','image/webp'])
+ON CONFLICT (id) DO NOTHING;
+
+
+-- SOURCE: supabase/migrations/20261122010000_reel_preview_url.sql
+alter table public.reels
+  add column if not exists preview_url text;
+
+comment on column public.reels.preview_url is
+  'Optional short silent web clip for hover previews on published reels.';
+
