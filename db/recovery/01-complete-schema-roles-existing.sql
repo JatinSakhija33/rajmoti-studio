@@ -1,5 +1,5 @@
 -- RAJMOTI STUDIO — GUARDED COMPLETE SCHEMA RECOVERY
--- Generated from the 41 actual ordered migration files in this GitHub repository.
+-- Based on the 41 ordered source migrations. TWO unsafe/test-only migrations are deliberately omitted (details below).
 -- Appropriate ONLY for a nearly empty Rajmoti Supabase project where the earlier
 -- manual setup created public.app_role, public.user_roles and public.has_role,
 -- and NO other business tables were created yet.
@@ -12,6 +12,7 @@
 -- This script has NOT been executed against your live Supabase database.
 --
 -- ONE TRANSACTION: If any required DDL fails, the entire transaction rolls back.
+-- WARNING: Historical source includes a policy rewrite that makes any signed-in user admin-like; it is SKIPPED.
 BEGIN;
 SET LOCAL statement_timeout = '5min';
 SET LOCAL lock_timeout = '10s';
@@ -1393,25 +1394,7 @@ FOR EACH ROW EXECUTE FUNCTION public.images_enforce_public_id();
 -- Original migrations 23-33.
 
 -- SOURCE: supabase/migrations/20260818095631_85f1b66f-8ec9-4927-a3b2-38e6ec2a9483.sql
-DO $$
-DECLARE cat uuid; rid uuid; sid text; sid2 text; ok boolean := false;
-BEGIN
-  SELECT id INTO cat FROM public.categories LIMIT 1;
-  INSERT INTO public.images (image_url, category_id, theme, hidden)
-  VALUES ('https://example.com/test.webp', cat, 'Princess Theme', false)
-  RETURNING id, short_id INTO rid, sid;
-  RAISE NOTICE 'generated short_id: %', sid;
-  UPDATE public.images SET short_id = 'hacked', title = 'renamed', category_id = cat WHERE id = rid;
-  SELECT short_id INTO sid2 FROM public.images WHERE id = rid;
-  IF sid2 <> sid THEN RAISE EXCEPTION 'public id changed! % -> %', sid, sid2; END IF;
-  BEGIN
-    INSERT INTO public.images (image_url, category_id, hidden) VALUES ('https://example.com/bad.webp', NULL, false);
-  EXCEPTION WHEN others THEN ok := true;
-  END;
-  IF NOT ok THEN RAISE EXCEPTION 'published photo without category was allowed'; END IF;
-  DELETE FROM public.images WHERE id = rid;
-  RAISE NOTICE 'verification passed';
-END $$;
+-- SKIPPED FOR PRODUCTION SECURITY: historical validation-only block inserts/deletes temporary images and relies on seed category data.
 
 -- SOURCE: supabase/migrations/20260819045115_217bdb8c-c73b-4682-a3f9-4ad2467d5f7b.sql
 ALTER TABLE public.customers ADD COLUMN IF NOT EXISTS service_slug text;
@@ -1760,29 +1743,7 @@ CREATE POLICY "staff read reminder offers" ON public.reminder_offers FOR SELECT 
 CREATE POLICY "staff read message templates" ON public.message_templates FOR SELECT TO authenticated USING (true);
 
 -- SOURCE: supabase/migrations/20260826152147_e11666bd-5634-4369-940c-ad4dc709ec4e.sql
--- Studio-internal tool: any signed-in account is studio staff.
-DO $$
-DECLARE p record; q text; wc text;
-BEGIN
-  FOR p IN
-    SELECT schemaname, tablename, policyname, cmd, roles::text AS roles, qual, with_check
-      FROM pg_policies
-     WHERE (schemaname = 'public' OR (schemaname = 'storage' AND tablename = 'objects'))
-       AND (qual ILIKE '%has_role%' OR with_check ILIKE '%has_role%')
-  LOOP
-    q := replace(coalesce(p.qual, ''), 'has_role(auth.uid(), ''admin''::app_role)', '(auth.uid() IS NOT NULL)');
-    wc := replace(coalesce(p.with_check, ''), 'has_role(auth.uid(), ''admin''::app_role)', '(auth.uid() IS NOT NULL)');
-    EXECUTE format('DROP POLICY %I ON %I.%I', p.policyname, p.schemaname, p.tablename);
-    EXECUTE format(
-      'CREATE POLICY %I ON %I.%I AS PERMISSIVE FOR %s TO %s %s %s',
-      p.policyname, p.schemaname, p.tablename,
-      CASE p.cmd WHEN 'ALL' THEN 'ALL' ELSE p.cmd END,
-      trim(both '{}' from p.roles),
-      CASE WHEN p.qual IS NULL THEN '' ELSE 'USING (' || q || ')' END,
-      CASE WHEN p.with_check IS NULL THEN '' ELSE 'WITH CHECK (' || wc || ')' END
-    );
-  END LOOP;
-END $$;
+-- SKIPPED FOR PRODUCTION SECURITY: historical SQL broadens all admin policies to any authenticated user. Keep admin-only RLS.
 
 -- SOURCE: supabase/migrations/20261112090000_gifts_and_studio_workflow.sql
 -- Rajmoti Studio independent-hosting extension (2026-11-12)
