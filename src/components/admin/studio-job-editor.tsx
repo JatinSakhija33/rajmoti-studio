@@ -54,10 +54,16 @@ export function StudioJobEditor({
 
   useEffect(() => {
     let active = true;
+    const objectUrls = new Set<string>();
     const preview = async (stage: "original" | "edited", path: string) => {
       try {
         const url = await getJobPhotoUrl(path);
-        if (active) setPreviews((p) => ({ ...p, [stage]: url }));
+        if (active) {
+          if (url.startsWith("blob:")) objectUrls.add(url);
+          setPreviews((p) => ({ ...p, [stage]: url }));
+        } else if (url.startsWith("blob:")) {
+          URL.revokeObjectURL(url);
+        }
       } catch {
         /* Preview will be unavailable until online. */
       }
@@ -66,6 +72,7 @@ export function StudioJobEditor({
     if (draft.edited_path && online) void preview("edited", draft.edited_path);
     return () => {
       active = false;
+      for (const url of objectUrls) URL.revokeObjectURL(url);
     };
   }, [draft.original_path, draft.edited_path, online]);
 

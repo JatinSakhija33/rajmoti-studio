@@ -1,0 +1,30 @@
+name: Verify hybrid Cloudflare Supabase
+on:
+  push:
+    branches: [feature/hybrid-cloudflare-supabase-no-duplicate-20261123]
+  pull_request:
+    paths:
+      - 'src/lib/hybrid-portfolio.ts'
+      - 'src/lib/queries.ts'
+      - 'src/lib/studio-jobs.ts'
+      - 'src/lib/image-migration.ts'
+      - 'src/routes/admin.storage.tsx'
+      - 'src/components/admin/studio-job-editor.tsx'
+      - 'functions/api/owner/studio-files.js'
+      - 'tests/hybrid-private-r2.test.mjs'
+      - '.github/workflows/verify-hybrid.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run build
+      - run: bun run test

@@ -125,10 +125,42 @@ export async function writeJob(job: StudioJob): Promise<void> {
   const { error } = await supabase.from("studio_jobs" as any).upsert(toWritable(job) as any, { onConflict: "id" });
   if (error) throw error;
 }
+const r2MediaEnabled = import.meta.env.VITE_STUDIO_MEDIA_PROVIDER === "r2";
+
+async function studioBearer() {
+  const { data, error } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (error || !token) throw new Error("Sign in as a studio administrator to open private photos.");
+  return { Authorization: `Bearer ${token}` };
+}
+
+async function r2Error(response: Response): Promise<Error> {
+  const result = await response.json().catch(() => null) as { error?: string } | null;
+  return new Error(result?.error || `Cloudflare private storage error (HTTP ${response.status})`);
+}
+
 export async function uploadJobPhoto(jobId: string, type: "original" | "edited", file: File): Promise<string> {
   if (file.size > 20 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp", "image/tiff"].includes(file.type)) {
     throw new Error("Choose an original JPG, PNG, WebP or TIFF photo under 20 MB.");
   }
+  if (r2MediaEnabled) {
+    const form = new FormData();
+    form.set("jobId", jobId);
+    form.set("kind", type);
+    form.set("photo", file);
+    const response = await fetch("/api/owner/studio-files", {
+      method: "POST",
+      headers: await studioBearer(),
+      body: form,
+      cache: "no-store",
+    });
+    if (!response.ok) throw await r2Error(response);
+    const result = await response.json() as { path?: string };
+    if (!result.path?.startsWith("r2://studio-jobs/"))
+      throw new Error("Cloudflare upload response is missing a valid private file path.");
+    return result.path;
+  }
+
   const ext = file.type === "image/jpeg" ? "jpg" : file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "tiff";
   // Always use a new object key: never overwrite the source original or an earlier edit.
   const path = `${jobId}/${type}/${crypto.randomUUID()}.${ext}`;
@@ -137,6 +169,20 @@ export async function uploadJobPhoto(jobId: string, type: "original" | "edited",
   return path;
 }
 export async function getJobPhotoUrl(path: string): Promise<string> {
+  if (path.startsWith("r2://")) {
+    const key = path.slice("r2://".length);
+    const response = await fetch(`/api/owner/studio-files?key=${encodeURIComponent(key)}`, {
+      headers: await studioBearer(),
+      cache: "no-store",
+    });
+    if (!response.ok) throw await r2Error(response);
+    // Private R2 photos are fetched with a real admin bearer token.
+    // Do not publish R2 bucket URLs or expose private files via <img src>.
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+  }
+  // Existing original and edited paths remain in Supabase Storage.
+  // Switching the new-upload provider never requires moving old files.
   const { data, error } = await supabase.storage.from("studio-job-files").createSignedUrl(path, 300);
   if (error || !data) throw error ?? new Error("Could not open preview");
   return data.signedUrl;

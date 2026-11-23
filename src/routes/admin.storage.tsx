@@ -4,6 +4,7 @@ import { useState } from "react";
 import { HardDrive, ImageIcon, TrendingUp, AlertTriangle, ExternalLink, Sparkles, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatBytes, isOptimized, variantUrl } from "@/lib/images";
+import { CLOUD_GALLERY_COUNT, CLOUD_VARIANTS_COUNT } from "@/lib/hybrid-portfolio";
 import {
   emptyReport,
   fetchMigratableImages,
@@ -30,9 +31,11 @@ function AdminStorage() {
   const { data: rows, isLoading } = useQuery({
     queryKey: ["admin", "storage"],
     queryFn: fetchMigratableImages,
+    retry: false,
   });
 
-  if (isLoading || !rows) return <div className="text-muted-foreground">Loading…</div>;
+  if (isLoading) return <div role="status" className="text-muted-foreground">Loading Supabase gallery records…</div>;
+  if (!rows) return <div role="alert" className="text-amber-800">Cannot load Supabase gallery records. Cloudflare published photos are unaffected. Check the database schema.</div>;
 
   const summary = storageSummary(rows);
   const pending = pendingImages(rows);
@@ -62,8 +65,7 @@ function AdminStorage() {
       }
       setProgress({ done: pending.length, total: pending.length, label: "Finishing" });
       setReport({ ...acc, skipped: rows!.length - pending.length });
-      const saved = acc.bytesBefore - acc.bytesAfter;
-      toast.success(`Optimized ${acc.processed} photograph(s) — saved ${formatBytes(Math.max(0, saved))}`);
+      toast.success(`Created web-ready versions of ${acc.processed} photograph(s). Original files were retained.`);
       qc.invalidateQueries();
     } finally {
       setRunning(false);
@@ -76,8 +78,15 @@ function AdminStorage() {
       <header className="mb-8">
         <p className="eyebrow text-gold mb-2">Storage</p>
         <h1 className="font-display text-4xl">Studio storage overview</h1>
-        <p className="text-sm text-muted-foreground mt-2">Everything the studio has uploaded. Watch usage grow, optimize older photographs, and clean up oversized files here.</p>
+        <p className="text-sm text-muted-foreground mt-2">Cloudflare Pages keeps the published portfolio. Supabase holds studio records; optional R2 stores new private workflow files. The figures below include only Supabase image metadata.</p>
       </header>
+
+      <section className="border border-onyx/10 bg-white p-5 mb-6 space-y-2 text-sm">
+        <h2 className="font-display text-xl">Cloudflare published portfolio</h2>
+        <p><strong>{CLOUD_GALLERY_COUNT} approved photographs</strong> and {CLOUD_VARIANTS_COUNT} web variants already live on Cloudflare Pages.</p>
+        <p className="text-xs text-muted-foreground">No copy into Supabase Storage is needed. New private R2 job photos are excluded from the Supabase totals shown below.</p>
+        <p className="text-xs text-amber-900">These files remain public until they are removed from the deployed website. Hiding a database row cannot unpublish an existing Cloudflare asset.</p>
+      </section>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <Stat icon={ImageIcon} label="Photographs" value={summary.count.toLocaleString()} />
@@ -93,14 +102,14 @@ function AdminStorage() {
 
       <section className="bg-white border border-onyx/10 p-6 mb-8">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="font-display text-xl">Free-tier usage</h2>
+          <h2 className="font-display text-xl">Supabase gallery metadata (estimate)</h2>
           <span className={`text-xs ${warn ? "text-destructive" : "text-muted-foreground"}`}>{formatBytes(summary.totalBytes)} of {formatBytes(FREE_TIER_BYTES)} indicative</span>
         </div>
         <div className="h-2 bg-onyx/10 overflow-hidden">
           <div className={`h-full transition-all ${warn ? "bg-destructive" : "bg-gold"}`} style={{ width: `${pct}%` }} />
         </div>
         <p className="text-xs text-muted-foreground mt-3">
-          Storage is provided by Lovable Cloud. When the studio approaches the free quota, an upgrade adds more room without changing anything in this panel.
+          This is an estimate from image database rows, not a measured total for Supabase Storage or R2. Check both dashboards for actual quota usage.
         </p>
       </section>
 
@@ -110,7 +119,7 @@ function AdminStorage() {
             <h2 className="font-display text-xl mb-1">Optimize the library</h2>
             <p className="text-sm text-muted-foreground max-w-xl">
               Older photographs are stored at full camera size. Optimizing converts each one into four web-ready sizes,
-              keeps the largest at 2560px, and removes the heavy original once the new versions are verified.
+              keeps the largest derivative at 2560px, and retains the source original unchanged.
             </p>
           </div>
           <button
@@ -149,7 +158,7 @@ function AdminStorage() {
               <li>Optimized: <span className="text-onyx">{report.processed}</span></li>
               <li>Already optimized: <span className="text-onyx">{report.skipped}</span></li>
               <li>Before: <span className="text-onyx">{formatBytes(report.bytesBefore)}</span> → After: <span className="text-onyx">{formatBytes(report.bytesAfter)}</span></li>
-              <li>Saved: <span className="text-onyx">{formatBytes(Math.max(0, report.bytesBefore - report.bytesAfter))}</span></li>
+              <li>Source originals: <span className="text-onyx">Retained, not deleted</span></li>
             </ul>
             {report.failed.length > 0 && (
               <div className="mt-4">
