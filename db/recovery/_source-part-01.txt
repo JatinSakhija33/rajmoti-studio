@@ -1,0 +1,565 @@
+-- INTERNAL SOURCE PART 1, DO NOT RUN BY ITSELF.
+-- Original migrations 1-11. The existing profiles / roles setup is handled in the full guarded installer.
+
+-- SOURCE: supabase/migrations/20260622050420_35f6172f-f7a5-4529-957b-fb115969c72b.sql
+-- ============ CATEGORIES ============
+CREATE TABLE public.categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  description TEXT,
+  cover_image_url TEXT,
+  display_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.categories TO authenticated;
+GRANT SELECT ON public.categories TO anon;
+GRANT ALL ON public.categories TO service_role;
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "categories public read" ON public.categories FOR SELECT USING (true);
+CREATE POLICY "admins write categories" ON public.categories FOR ALL TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
+CREATE TRIGGER categories_updated BEFORE UPDATE ON public.categories FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+
+CREATE TABLE public.subcategories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  category_id UUID NOT NULL REFERENCES public.categories(id) ON DELETE CASCADE,
+  slug TEXT NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  display_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (category_id, slug)
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.subcategories TO authenticated;
+GRANT SELECT ON public.subcategories TO anon;
+GRANT ALL ON public.subcategories TO service_role;
+ALTER TABLE public.subcategories ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "subcategories public read" ON public.subcategories FOR SELECT USING (true);
+CREATE POLICY "admins write subcategories" ON public.subcategories FOR ALL TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
+CREATE TRIGGER subcategories_updated BEFORE UPDATE ON public.subcategories FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+
+-- ============ IMAGES ============
+CREATE TABLE public.images (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT,
+  description TEXT,
+  category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
+  subcategory_id UUID REFERENCES public.subcategories(id) ON DELETE SET NULL,
+  image_url TEXT NOT NULL,
+  thumbnail_url TEXT,
+  width INT,
+  height INT,
+  featured BOOLEAN NOT NULL DEFAULT false,
+  hidden BOOLEAN NOT NULL DEFAULT false,
+  display_order INT NOT NULL DEFAULT 0,
+  -- AI-ready
+  tags TEXT[] DEFAULT '{}',
+  dominant_color TEXT,
+  embedding JSONB,
+  ai_metadata JSONB DEFAULT '{}'::JSONB,
+  uploaded_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX images_category_idx ON public.images(category_id);
+CREATE INDEX images_subcategory_idx ON public.images(subcategory_id);
+CREATE INDEX images_featured_idx ON public.images(featured) WHERE featured = true;
+CREATE INDEX images_visible_order_idx ON public.images(display_order) WHERE hidden = false;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.images TO authenticated;
+GRANT SELECT ON public.images TO anon;
+GRANT ALL ON public.images TO service_role;
+ALTER TABLE public.images ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "images public read visible" ON public.images FOR SELECT USING (hidden = false OR public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "admins write images" ON public.images FOR ALL TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
+CREATE TRIGGER images_updated BEFORE UPDATE ON public.images FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+
+-- ============ PACKAGES ============
+CREATE TABLE public.packages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
+  slug TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  description TEXT,
+  price NUMERIC(10,2),
+  currency TEXT NOT NULL DEFAULT 'INR',
+  cover_image_url TEXT,
+  featured BOOLEAN NOT NULL DEFAULT false,
+  display_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.packages TO authenticated;
+GRANT SELECT ON public.packages TO anon;
+GRANT ALL ON public.packages TO service_role;
+ALTER TABLE public.packages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "packages public read" ON public.packages FOR SELECT USING (true);
+CREATE POLICY "admins write packages" ON public.packages FOR ALL TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
+CREATE TRIGGER packages_updated BEFORE UPDATE ON public.packages FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+
+CREATE TABLE public.package_features (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  package_id UUID NOT NULL REFERENCES public.packages(id) ON DELETE CASCADE,
+  feature TEXT NOT NULL,
+  display_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX package_features_pkg_idx ON public.package_features(package_id);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.package_features TO authenticated;
+GRANT SELECT ON public.package_features TO anon;
+GRANT ALL ON public.package_features TO service_role;
+ALTER TABLE public.package_features ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "package features public read" ON public.package_features FOR SELECT USING (true);
+CREATE POLICY "admins write package features" ON public.package_features FOR ALL TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
+
+-- ============ INQUIRIES ============
+CREATE TYPE public.inquiry_status AS ENUM ('new', 'contacted', 'booked', 'closed');
+
+CREATE TABLE public.inquiries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  phone TEXT,
+  whatsapp TEXT,
+  email TEXT,
+  event_date DATE,
+  category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
+  category_label TEXT,
+  message TEXT,
+  status public.inquiry_status NOT NULL DEFAULT 'new',
+  admin_notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.inquiries TO authenticated;
+GRANT INSERT ON public.inquiries TO anon;
+GRANT ALL ON public.inquiries TO service_role;
+ALTER TABLE public.inquiries ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "anyone can submit inquiry" ON public.inquiries FOR INSERT WITH CHECK (true);
+CREATE POLICY "admins read inquiries" ON public.inquiries FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "admins update inquiries" ON public.inquiries FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "admins delete inquiries" ON public.inquiries FOR DELETE TO authenticated USING (public.has_role(auth.uid(), 'admin'));
+CREATE TRIGGER inquiries_updated BEFORE UPDATE ON public.inquiries FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+
+-- ============ TESTIMONIALS ============
+CREATE TABLE public.testimonials (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  author TEXT NOT NULL,
+  role TEXT,
+  content TEXT NOT NULL,
+  rating INT CHECK (rating BETWEEN 1 AND 5),
+  featured BOOLEAN NOT NULL DEFAULT false,
+  display_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.testimonials TO authenticated;
+GRANT SELECT ON public.testimonials TO anon;
+GRANT ALL ON public.testimonials TO service_role;
+ALTER TABLE public.testimonials ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "testimonials public read" ON public.testimonials FOR SELECT USING (true);
+CREATE POLICY "admins write testimonials" ON public.testimonials FOR ALL TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
+CREATE TRIGGER testimonials_updated BEFORE UPDATE ON public.testimonials FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+
+-- ============ SETTINGS ============
+CREATE TABLE public.settings (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.settings TO authenticated;
+GRANT SELECT ON public.settings TO anon;
+GRANT ALL ON public.settings TO service_role;
+ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "settings public read" ON public.settings FOR SELECT USING (true);
+CREATE POLICY "admins write settings" ON public.settings FOR ALL TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
+CREATE TRIGGER settings_updated BEFORE UPDATE ON public.settings FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+
+-- ============ SEED CATEGORIES ============
+INSERT INTO public.categories (slug, name, description, display_order) VALUES
+  ('baby', 'Baby Photography', 'Tender frames of new life — themed shoots, cake smashes, and timeless newborn portraits.', 1),
+  ('family', 'Family Portraits', 'Heirloom portraits that hold a generation together in a single frame.', 2),
+  ('maternity', 'Maternity Photography', 'The sculptural beauty of becoming — quiet, luminous, deeply personal.', 3),
+  ('wedding', 'Wedding Photography', 'Pre-wedding, ceremony, and reception coverage with an editorial eye.', 4);
+
+INSERT INTO public.subcategories (category_id, slug, name, display_order) VALUES
+  ((SELECT id FROM public.categories WHERE slug='baby'), 'krishna', 'Krishna Theme', 1),
+  ((SELECT id FROM public.categories WHERE slug='baby'), 'princess', 'Princess Theme', 2),
+  ((SELECT id FROM public.categories WHERE slug='baby'), 'boss-baby', 'Boss Baby', 3),
+  ((SELECT id FROM public.categories WHERE slug='baby'), 'cake-smash', 'Cake Smash', 4),
+  ((SELECT id FROM public.categories WHERE slug='baby'), 'traditional', 'Traditional', 5),
+  ((SELECT id FROM public.categories WHERE slug='baby'), 'twins', 'Twins', 6),
+  ((SELECT id FROM public.categories WHERE slug='family'), 'studio', 'Studio Family', 1),
+  ((SELECT id FROM public.categories WHERE slug='family'), 'traditional', 'Traditional Family', 2),
+  ((SELECT id FROM public.categories WHERE slug='family'), 'generational', 'Generational Portraits', 3),
+  ((SELECT id FROM public.categories WHERE slug='maternity'), 'indoor', 'Indoor', 1),
+  ((SELECT id FROM public.categories WHERE slug='maternity'), 'outdoor', 'Outdoor', 2),
+  ((SELECT id FROM public.categories WHERE slug='maternity'), 'couple', 'Couple', 3),
+  ((SELECT id FROM public.categories WHERE slug='wedding'), 'pre-wedding', 'Pre Wedding', 1),
+  ((SELECT id FROM public.categories WHERE slug='wedding'), 'engagement', 'Engagement', 2),
+  ((SELECT id FROM public.categories WHERE slug='wedding'), 'wedding-day', 'Wedding Day', 3),
+  ((SELECT id FROM public.categories WHERE slug='wedding'), 'reception', 'Reception', 4);
+
+INSERT INTO public.packages (category_id, slug, name, description, price, currency, featured, display_order) VALUES
+  ((SELECT id FROM public.categories WHERE slug='baby'), 'baby-essence', 'Essence', '90-minute studio session with one theme setup, 15 hand-edited frames delivered digitally.', 8500, 'INR', false, 1),
+  ((SELECT id FROM public.categories WHERE slug='baby'), 'baby-heritage', 'Heritage', 'Three theme setups, 50 edited frames, premium linen photo book.', 22000, 'INR', true, 2),
+  ((SELECT id FROM public.categories WHERE slug='maternity'), 'maternity-classic', 'Maternity Classic', 'Indoor or outdoor session, 25 edited frames, online gallery.', 12000, 'INR', true, 1),
+  ((SELECT id FROM public.categories WHERE slug='family'), 'family-portrait', 'Family Portrait', 'Studio or location session, 30 edited frames, framed signature print.', 15000, 'INR', false, 1),
+  ((SELECT id FROM public.categories WHERE slug='wedding'), 'wedding-legacy', 'Wedding Legacy', 'Full-day coverage, two photographers, 400+ frames, heirloom album.', 145000, 'INR', true, 1);
+
+INSERT INTO public.package_features (package_id, feature, display_order) VALUES
+  ((SELECT id FROM public.packages WHERE slug='baby-essence'), '90-minute studio session', 1),
+  ((SELECT id FROM public.packages WHERE slug='baby-essence'), '1 theme setup', 2),
+  ((SELECT id FROM public.packages WHERE slug='baby-essence'), '15 hand-edited digital frames', 3),
+  ((SELECT id FROM public.packages WHERE slug='baby-heritage'), '3 theme setups', 1),
+  ((SELECT id FROM public.packages WHERE slug='baby-heritage'), '50 hand-edited frames', 2),
+  ((SELECT id FROM public.packages WHERE slug='baby-heritage'), 'Premium linen photo book', 3),
+  ((SELECT id FROM public.packages WHERE slug='baby-heritage'), 'Online private gallery', 4),
+  ((SELECT id FROM public.packages WHERE slug='maternity-classic'), 'Indoor or outdoor location', 1),
+  ((SELECT id FROM public.packages WHERE slug='maternity-classic'), '25 hand-edited frames', 2),
+  ((SELECT id FROM public.packages WHERE slug='maternity-classic'), 'Wardrobe consultation', 3),
+  ((SELECT id FROM public.packages WHERE slug='family-portrait'), 'Studio or location session', 1),
+  ((SELECT id FROM public.packages WHERE slug='family-portrait'), '30 hand-edited frames', 2),
+  ((SELECT id FROM public.packages WHERE slug='family-portrait'), 'Framed signature print', 3),
+  ((SELECT id FROM public.packages WHERE slug='wedding-legacy'), 'Full-day coverage', 1),
+  ((SELECT id FROM public.packages WHERE slug='wedding-legacy'), 'Two photographers', 2),
+  ((SELECT id FROM public.packages WHERE slug='wedding-legacy'), '400+ edited frames', 3),
+  ((SELECT id FROM public.packages WHERE slug='wedding-legacy'), 'Heirloom linen album', 4),
+  ((SELECT id FROM public.packages WHERE slug='wedding-legacy'), 'Private cinematic teaser reel', 5);
+
+-- Named testimonial seed rows omitted from the source export.
+
+INSERT INTO public.settings (key, value) VALUES
+  ('site', '{"studio_name":"Rajmoti Studio","tagline":"Capturing Life''s Most Beautiful Moments","email":"rajmotistudio@gmail.com","phone":"+91 00000 00000","whatsapp":"+910000000000","address":"India","instagram":"https://instagram.com/rajmotistudio"}'::jsonb),
+  ('hero', '{"title_line_1":"Capturing Life''s Most","title_line_2":"Beautiful Moments","subtitle":"Bespoke photography for the milestones that define your legacy."}'::jsonb);
+
+
+-- SOURCE: supabase/migrations/20260622050444_2c4f34cc-80a2-4ae0-9f94-3f08db1ece9d.sql
+
+DROP POLICY IF EXISTS "anyone can submit inquiry" ON public.inquiries;
+CREATE POLICY "anyone can submit inquiry" ON public.inquiries FOR INSERT
+  WITH CHECK (
+    length(coalesce(name,'')) BETWEEN 1 AND 200
+    AND length(coalesce(message,'')) <= 5000
+    AND length(coalesce(phone,'')) <= 50
+    AND length(coalesce(whatsapp,'')) <= 50
+    AND length(coalesce(email,'')) <= 320
+  );
+
+REVOKE EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.tg_set_updated_at() FROM PUBLIC, anon, authenticated;
+
+
+-- SOURCE: supabase/migrations/20260622050531_f4ed116b-027f-4cbc-a95c-913771c03247.sql
+
+CREATE POLICY "gallery public read" ON storage.objects FOR SELECT USING (bucket_id = 'gallery');
+CREATE POLICY "gallery admin insert" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'gallery' AND public.has_role(auth.uid(),'admin'));
+CREATE POLICY "gallery admin update" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'gallery' AND public.has_role(auth.uid(),'admin')) WITH CHECK (bucket_id = 'gallery' AND public.has_role(auth.uid(),'admin'));
+CREATE POLICY "gallery admin delete" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'gallery' AND public.has_role(auth.uid(),'admin'));
+
+
+-- SOURCE: supabase/migrations/20260622050558_063bd1f7-dd54-40a4-95a2-6338d47add6e.sql
+
+CREATE OR REPLACE FUNCTION public.handle_new_user() RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  INSERT INTO public.profiles (id, display_name, avatar_url)
+  VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'display_name', split_part(NEW.email, '@', 1)), NEW.raw_user_meta_data->>'avatar_url')
+  ON CONFLICT (id) DO NOTHING;
+
+  IF lower(NEW.email) = 'rajmotistudio@gmail.com' THEN
+    INSERT INTO public.user_roles (user_id, role) VALUES (NEW.id, 'admin')
+    ON CONFLICT (user_id, role) DO NOTHING;
+  END IF;
+
+  RETURN NEW;
+END; $$;
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
+
+
+-- SOURCE: supabase/migrations/20260622052051_a7b98266-f681-4a05-adf8-df5498126209.sql
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO anon, authenticated;
+
+-- SOURCE: supabase/migrations/20260622055511_7a7958c4-b373-4b8d-93a9-04133178b7d7.sql
+
+-- Restrict profiles read to authenticated users
+DROP POLICY IF EXISTS "profiles readable by all" ON public.profiles;
+REVOKE SELECT ON public.profiles FROM anon;
+CREATE POLICY "profiles readable by authenticated" ON public.profiles
+  FOR SELECT TO authenticated USING (true);
+
+-- Restrict settings read to authenticated users
+DROP POLICY IF EXISTS "settings public read" ON public.settings;
+REVOKE SELECT ON public.settings FROM anon;
+CREATE POLICY "settings readable by authenticated" ON public.settings
+  FOR SELECT TO authenticated USING (true);
+
+
+-- SOURCE: supabase/migrations/20260622060513_dd3065f1-6763-4809-9f5d-e78a82058ee5.sql
+
+-- 1. follow_up status
+ALTER TYPE public.inquiry_status ADD VALUE IF NOT EXISTS 'follow_up' BEFORE 'booked';
+
+-- 2. packages: duration and edited photo count
+ALTER TABLE public.packages
+  ADD COLUMN IF NOT EXISTS duration TEXT,
+  ADD COLUMN IF NOT EXISTS photos_count INT;
+
+-- 3. inquiries → optional package link
+ALTER TABLE public.inquiries
+  ADD COLUMN IF NOT EXISTS package_id UUID REFERENCES public.packages(id) ON DELETE SET NULL;
+
+-- 4. Seed categories + subcategories
+INSERT INTO public.categories (slug, name, description, display_order) VALUES
+  ('baby', 'Baby Photography', 'Newborn, themed and milestone shoots crafted with patience and care.', 1),
+  ('family', 'Family Portraits', 'Timeless portraits across generations, in studio or on location.', 2),
+  ('maternity', 'Maternity Photography', 'Editorial and traditional portraiture for the months that matter.', 3),
+  ('wedding', 'Wedding Photography', 'From the first look to the last dance — documented with cinema-grade craft.', 4)
+ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description, display_order = EXCLUDED.display_order;
+
+-- Helper CTE pattern: insert subcategories by joining on category slug
+WITH cat AS (SELECT id, slug FROM public.categories)
+INSERT INTO public.subcategories (category_id, slug, name, display_order)
+SELECT cat.id, sub.slug, sub.name, sub.display_order
+FROM cat
+JOIN (VALUES
+  -- Baby
+  ('baby','newborn-0-1-month','Newborn (0–1 Month)',1),
+  ('baby','3-month-baby-shoot','3 Month Baby Shoot',2),
+  ('baby','6-month-baby-shoot','6 Month Baby Shoot',3),
+  ('baby','9-month-baby-shoot','9 Month Baby Shoot',4),
+  ('baby','1-year-baby-shoot','1 Year Baby Shoot',5),
+  ('baby','krishna-theme','Krishna Theme',6),
+  ('baby','radha-krishna-theme','Radha Krishna Theme',7),
+  ('baby','princess-theme','Princess Theme',8),
+  ('baby','prince-theme','Prince Theme',9),
+  ('baby','boss-baby','Boss Baby',10),
+  ('baby','traditional-theme','Traditional Theme',11),
+  ('baby','cake-smash','Cake Smash',12),
+  ('baby','twins','Twins',13),
+  ('baby','family-with-baby','Family With Baby',14),
+  -- Family
+  ('family','studio-family-portrait','Studio Family Portrait',1),
+  ('family','traditional-family-portrait','Traditional Family Portrait',2),
+  ('family','three-generation-portrait','Three Generation Portrait',3),
+  ('family','couple-portrait','Couple Portrait',4),
+  ('family','anniversary-portrait','Anniversary Portrait',5),
+  -- Maternity
+  ('maternity','indoor-maternity','Indoor Maternity',1),
+  ('maternity','outdoor-maternity','Outdoor Maternity',2),
+  ('maternity','couple-maternity','Couple Maternity',3),
+  ('maternity','traditional-maternity','Traditional Maternity',4),
+  ('maternity','luxury-maternity','Luxury Maternity',5),
+  -- Wedding
+  ('wedding','pre-wedding','Pre Wedding',1),
+  ('wedding','engagement','Engagement',2),
+  ('wedding','wedding-day','Wedding Day',3),
+  ('wedding','reception','Reception',4),
+  ('wedding','couple-portraits','Couple Portraits',5)
+) AS sub(cat_slug, slug, name, display_order) ON cat.slug = sub.cat_slug
+ON CONFLICT (category_id, slug) DO UPDATE SET name = EXCLUDED.name, display_order = EXCLUDED.display_order;
+
+-- 5. Maps embed setting (admin-editable)
+INSERT INTO public.settings (key, value) VALUES
+  ('maps_embed_url', '""'::jsonb)
+ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO public.settings (key, value) VALUES
+  ('site', jsonb_build_object(
+    'name','Rajmoti Studio',
+    'tagline','Capturing Life''s Most Beautiful Moments',
+    'email','rajmotistudio@gmail.com',
+    'whatsapp','+919429070317',
+    'location','Jetpur, Gujarat, India'
+  ))
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+
+-- 6. AI readiness: favorites
+CREATE TABLE IF NOT EXISTS public.image_favorites (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  image_id UUID NOT NULL REFERENCES public.images(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  session_id TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CHECK (user_id IS NOT NULL OR session_id IS NOT NULL)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS image_favorites_user_unique ON public.image_favorites(image_id, user_id) WHERE user_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS image_favorites_session_unique ON public.image_favorites(image_id, session_id) WHERE session_id IS NOT NULL;
+GRANT SELECT, INSERT, DELETE ON public.image_favorites TO anon, authenticated;
+GRANT ALL ON public.image_favorites TO service_role;
+ALTER TABLE public.image_favorites ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "users manage own favorites" ON public.image_favorites
+  FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "anon manage session favorites" ON public.image_favorites
+  FOR ALL TO anon USING (user_id IS NULL) WITH CHECK (user_id IS NULL);
+CREATE POLICY "admins read favorites" ON public.image_favorites
+  FOR SELECT TO authenticated USING (public.has_role(auth.uid(),'admin'));
+
+-- 7. AI readiness: faces
+CREATE TABLE IF NOT EXISTS public.image_faces (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  image_id UUID NOT NULL REFERENCES public.images(id) ON DELETE CASCADE,
+  bbox JSONB NOT NULL,                -- {x,y,w,h} normalized 0..1
+  face_embedding JSONB,
+  person_label TEXT,
+  confidence REAL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.image_faces TO authenticated;
+GRANT ALL ON public.image_faces TO service_role;
+ALTER TABLE public.image_faces ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "admins manage faces" ON public.image_faces
+  FOR ALL TO authenticated USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
+
+-- 8. AI readiness: similarity clusters
+CREATE TABLE IF NOT EXISTS public.image_similar_groups (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  label TEXT,
+  centroid JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS public.image_similar_members (
+  group_id UUID NOT NULL REFERENCES public.image_similar_groups(id) ON DELETE CASCADE,
+  image_id UUID NOT NULL REFERENCES public.images(id) ON DELETE CASCADE,
+  score REAL,
+  PRIMARY KEY (group_id, image_id)
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.image_similar_groups TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.image_similar_members TO authenticated;
+GRANT SELECT ON public.image_similar_groups TO anon;
+GRANT SELECT ON public.image_similar_members TO anon;
+GRANT ALL ON public.image_similar_groups TO service_role;
+GRANT ALL ON public.image_similar_members TO service_role;
+ALTER TABLE public.image_similar_groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.image_similar_members ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "similar groups public read" ON public.image_similar_groups FOR SELECT USING (true);
+CREATE POLICY "similar groups admin write" ON public.image_similar_groups
+  FOR ALL TO authenticated USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
+CREATE POLICY "similar members public read" ON public.image_similar_members FOR SELECT USING (true);
+CREATE POLICY "similar members admin write" ON public.image_similar_members
+  FOR ALL TO authenticated USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
+
+
+-- SOURCE: supabase/migrations/20260622060546_042f7e2b-edad-4195-9abb-2c2af0f81da4.sql
+
+GRANT SELECT ON public.settings TO anon;
+CREATE POLICY "settings public read allow-list" ON public.settings
+  FOR SELECT TO anon
+  USING (key IN ('maps_embed_url'));
+
+
+-- SOURCE: supabase/migrations/20260623145420_aafcf11b-d6ac-4efc-af5d-8b9325e249c3.sql
+DROP POLICY IF EXISTS "settings readable by authenticated" ON public.settings;
+
+CREATE POLICY "settings readable by authenticated allowlist"
+ON public.settings
+FOR SELECT
+TO authenticated
+USING (key IN ('maps_embed_url', 'site'));
+
+
+-- SOURCE: supabase/migrations/20260703053707_6a822fe8-f9fc-4138-923a-00c30abdb0e9.sql
+
+-- 1) site_content: one row per section, JSON blob
+CREATE TABLE IF NOT EXISTS public.site_content (
+  section_key text PRIMARY KEY,
+  data jsonb NOT NULL DEFAULT '{}'::jsonb,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+GRANT SELECT ON public.site_content TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.site_content TO authenticated;
+GRANT ALL ON public.site_content TO service_role;
+
+ALTER TABLE public.site_content ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "site_content public read" ON public.site_content
+  FOR SELECT USING (true);
+
+CREATE POLICY "site_content admin write" ON public.site_content
+  FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(), 'admin'::app_role))
+  WITH CHECK (public.has_role(auth.uid(), 'admin'::app_role));
+
+CREATE TRIGGER site_content_updated
+  BEFORE UPDATE ON public.site_content
+  FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+
+-- 2) images: alt_text, caption, short_id, bytes for storage dashboard
+ALTER TABLE public.images
+  ADD COLUMN IF NOT EXISTS alt_text text,
+  ADD COLUMN IF NOT EXISTS caption text,
+  ADD COLUMN IF NOT EXISTS bytes bigint,
+  ADD COLUMN IF NOT EXISTS storage_path text,
+  ADD COLUMN IF NOT EXISTS short_id text UNIQUE;
+
+-- Backfill short_id with a compact random slug for any existing rows
+UPDATE public.images
+  SET short_id = substring(replace(gen_random_uuid()::text, '-', '') FROM 1 FOR 10)
+  WHERE short_id IS NULL;
+
+-- 3) Seed initial site_content section keys (empty blobs; app has fallbacks)
+INSERT INTO public.site_content (section_key, data) VALUES
+  ('hero', '{}'::jsonb),
+  ('about', '{}'::jsonb),
+  ('contact', '{}'::jsonb),
+  ('seo', '{}'::jsonb),
+  ('footer', '{}'::jsonb)
+ON CONFLICT (section_key) DO NOTHING;
+
+
+-- SOURCE: supabase/migrations/20260706045151_b12c8dcd-bd48-4b2b-8c34-e1c924b5e60a.sql
+-- Extend inquiries with booking fields (all nullable for back-compat)
+ALTER TABLE public.inquiries
+  ADD COLUMN IF NOT EXISTS service_type text,
+  ADD COLUMN IF NOT EXISTS session_date date,
+  ADD COLUMN IF NOT EXISTS session_slot text,
+  ADD COLUMN IF NOT EXISTS family_name text,
+  ADD COLUMN IF NOT EXISTS child_name text,
+  ADD COLUMN IF NOT EXISTS package_id uuid,
+  ADD COLUMN IF NOT EXISTS answers jsonb NOT NULL DEFAULT '{}'::jsonb,
+  ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'new',
+  ADD COLUMN IF NOT EXISTS total_price numeric,
+  ADD COLUMN IF NOT EXISTS advance_amount numeric;
+
+CREATE INDEX IF NOT EXISTS idx_inquiries_session_date ON public.inquiries (session_date);
+CREATE INDEX IF NOT EXISTS idx_inquiries_status ON public.inquiries (status);
+
+-- Booking slots
+CREATE TABLE IF NOT EXISTS public.booking_slots (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  label text NOT NULL,
+  start_time time NOT NULL,
+  end_time time NOT NULL,
+  sort_order int NOT NULL DEFAULT 0,
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+GRANT SELECT ON public.booking_slots TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.booking_slots TO authenticated;
+GRANT ALL ON public.booking_slots TO service_role;
+
+ALTER TABLE public.booking_slots ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view active slots" ON public.booking_slots
+  FOR SELECT USING (active OR public.has_role(auth.uid(), 'admin'));
+
+CREATE POLICY "Admins manage slots" ON public.booking_slots
+  FOR ALL TO authenticated
+  USING (public.has_role(auth.uid(), 'admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'admin'));
+
+CREATE TRIGGER trg_booking_slots_updated_at
+  BEFORE UPDATE ON public.booking_slots
+  FOR EACH ROW EXECUTE FUNCTION public.tg_set_updated_at();
+
+INSERT INTO public.booking_slots (label, start_time, end_time, sort_order) VALUES
+  ('10:00 AM – 11:30 AM', '10:00', '11:30', 1),
+  ('12:30 PM – 2:00 PM', '12:30', '14:00', 2),
+  ('3:00 PM – 4:30 PM', '15:00', '16:30', 3),
+  ('6:00 PM – 7:30 PM', '18:00', '19:30', 4),
+  ('8:00 PM – 9:30 PM', '20:00', '21:30', 5)
+ON CONFLICT DO NOTHING;
+
