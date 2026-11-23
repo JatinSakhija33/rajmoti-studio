@@ -1,0 +1,29 @@
+name: Verify Rajmoti admin OS
+on:
+  pull_request:
+    paths:
+      - "src/routes/admin*"
+      - "src/components/admin/**"
+      - "src/lib/admin-system-health.ts"
+      - ".github/workflows/verify-admin-os.yml"
+  push:
+    branches:
+      - "feature/rajmoti-admin-os-health-20261123"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Build route tree and client
+        run: bun run build
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Run current tests
+        run: bun run test

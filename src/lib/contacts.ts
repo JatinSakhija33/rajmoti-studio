@@ -75,6 +75,9 @@ export async function fetchContactStats() {
     base().is("service_slug", null),
     base().not("google_contact_resource_name", "is", null),
   ]);
+  for (const response of [total, withMobile, unclassified, fromGoogle]) {
+    if (response.error) throw response.error;
+  }
   return {
     total: total.count ?? 0,
     withMobile: withMobile.count ?? 0,
@@ -108,7 +111,7 @@ export async function createContact(input: {
   const { data, error } = await supabase
     .from("customers")
     .insert({
-      customer_name: input.name?.trim() || null,
+      customer_name: input.name?.trim() || `Contact ${input.phone.trim()}`,
       phone: input.phone.trim(),
       service_slug: input.service_slug || null,
       notes: input.notes?.trim() || null,
