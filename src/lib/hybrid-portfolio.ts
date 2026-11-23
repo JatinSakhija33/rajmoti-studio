@@ -12,6 +12,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { studioConnected } from "@/lib/backend-mode";
+import type { GalleryImageLike } from "@/lib/images";
 import { loadPublishedPhotos, publishedCategories, publishedCounts } from "@/lib/published-portfolio";
 
 export const isPublishedId = (id: string) => id.startsWith("published:");
@@ -72,7 +73,7 @@ export async function hybridImagePage(
   page: number,
   pageSize: number,
   fields: string
-) {
+): Promise<GalleryImageLike[]> {
   const start = page * pageSize;
   if (!isPublishedId(categoryId)) {
     let q = supabase.from("images").select(fields)
@@ -82,7 +83,7 @@ export async function hybridImagePage(
     if (subcategoryId) q = q.eq("subcategory_id", subcategoryId);
     const { data, error } = await q;
     if (error) throw error;
-    return data ?? [];
+    return (data ?? []) as unknown as GalleryImageLike[];
   }
 
   const categorySlug = categoryId.slice("published:".length);
@@ -122,7 +123,7 @@ export async function hybridImagePage(
     if (remoteSubId) q = q.eq("subcategory_id", remoteSubId);
     const { data, error } = await q;
     // Database read errors do not erase existing publicly bundled assets.
-    return error ? bundledPage : [...bundledPage, ...(data ?? [])];
+    return error ? bundledPage : [...bundledPage, ...((data ?? []) as unknown as GalleryImageLike[])];
   } catch {
     return bundledPage;
   }
