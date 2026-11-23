@@ -1,31 +1,28 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Database, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import { ADMIN_SPECIAL_MODULES, checkAdminSystem, moduleHealth } from "@/lib/admin-system-health";
 
-export function useAdminSystemHealth() {
+export function useAdminSystemHealth(enabled = true) {
   return useQuery({
     queryKey: ["admin", "system-health", "v1"],
     queryFn: checkAdminSystem,
+    enabled,
     retry: false,
-    staleTime: 120_000,
+    staleTime: 300_000,
     refetchOnWindowFocus: false,
   });
 }
 
 export function AdminReadiness({ pathname }: { pathname: string }) {
-  const health = useAdminSystemHealth();
+  // Do not fire 30+ schema probes on every admin page visit. The full audit
+  // runs only when the owner opens /admin/system or explicitly rechecks.
+  const health = useAdminSystemHealth(false);
   const current = moduleHealth(pathname, health.data);
   const special = ADMIN_SPECIAL_MODULES.find((mod) => mod.path === pathname);
   if (pathname === "/admin/system") return null;
 
-  if (health.isPending) {
-    return (
-      <div role="status" className="mb-6 flex items-center gap-2 text-xs text-muted-foreground">
-        <Database className="size-4" aria-hidden /> Checking studio modules…
-      </div>
-    );
-  }
+  if (!health.data && !special) return null;
 
   if (health.isError) {
     return (
