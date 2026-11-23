@@ -1,5 +1,5 @@
 -- RAJMOTI STUDIO — GUARDED COMPLETE SCHEMA RECOVERY
--- Based on the 41 ordered source migrations. TWO unsafe/test-only migrations are deliberately omitted (details below).
+-- Based on the 41 ordered source migrations. FIVE insecure/test-only migrations are deliberately omitted (details below).
 -- Appropriate ONLY for a nearly empty Rajmoti Supabase project where the earlier
 -- manual setup created public.app_role, public.user_roles and public.has_role,
 -- and NO other business tables were created yet.
@@ -12,7 +12,7 @@
 -- This script has NOT been executed against your live Supabase database.
 --
 -- ONE TRANSACTION: If any required DDL fails, the entire transaction rolls back.
--- WARNING: Historical source includes a policy rewrite that makes any signed-in user admin-like; it is SKIPPED.
+-- WARNING: Historical migrations include unrestricted staff policies and email-based admin assignment; they are SKIPPED.
 BEGIN;
 SET LOCAL statement_timeout = '5min';
 SET LOCAL lock_timeout = '10s';
@@ -311,34 +311,7 @@ INSERT INTO public.subcategories (category_id, slug, name, display_order) VALUES
   ((SELECT id FROM public.categories WHERE slug='wedding'), 'wedding-day', 'Wedding Day', 3),
   ((SELECT id FROM public.categories WHERE slug='wedding'), 'reception', 'Reception', 4);
 
-INSERT INTO public.packages (category_id, slug, name, description, price, currency, featured, display_order) VALUES
-  ((SELECT id FROM public.categories WHERE slug='baby'), 'baby-essence', 'Essence', '90-minute studio session with one theme setup, 15 hand-edited frames delivered digitally.', 8500, 'INR', false, 1),
-  ((SELECT id FROM public.categories WHERE slug='baby'), 'baby-heritage', 'Heritage', 'Three theme setups, 50 edited frames, premium linen photo book.', 22000, 'INR', true, 2),
-  ((SELECT id FROM public.categories WHERE slug='maternity'), 'maternity-classic', 'Maternity Classic', 'Indoor or outdoor session, 25 edited frames, online gallery.', 12000, 'INR', true, 1),
-  ((SELECT id FROM public.categories WHERE slug='family'), 'family-portrait', 'Family Portrait', 'Studio or location session, 30 edited frames, framed signature print.', 15000, 'INR', false, 1),
-  ((SELECT id FROM public.categories WHERE slug='wedding'), 'wedding-legacy', 'Wedding Legacy', 'Full-day coverage, two photographers, 400+ frames, heirloom album.', 145000, 'INR', true, 1);
-
-INSERT INTO public.package_features (package_id, feature, display_order) VALUES
-  ((SELECT id FROM public.packages WHERE slug='baby-essence'), '90-minute studio session', 1),
-  ((SELECT id FROM public.packages WHERE slug='baby-essence'), '1 theme setup', 2),
-  ((SELECT id FROM public.packages WHERE slug='baby-essence'), '15 hand-edited digital frames', 3),
-  ((SELECT id FROM public.packages WHERE slug='baby-heritage'), '3 theme setups', 1),
-  ((SELECT id FROM public.packages WHERE slug='baby-heritage'), '50 hand-edited frames', 2),
-  ((SELECT id FROM public.packages WHERE slug='baby-heritage'), 'Premium linen photo book', 3),
-  ((SELECT id FROM public.packages WHERE slug='baby-heritage'), 'Online private gallery', 4),
-  ((SELECT id FROM public.packages WHERE slug='maternity-classic'), 'Indoor or outdoor location', 1),
-  ((SELECT id FROM public.packages WHERE slug='maternity-classic'), '25 hand-edited frames', 2),
-  ((SELECT id FROM public.packages WHERE slug='maternity-classic'), 'Wardrobe consultation', 3),
-  ((SELECT id FROM public.packages WHERE slug='family-portrait'), 'Studio or location session', 1),
-  ((SELECT id FROM public.packages WHERE slug='family-portrait'), '30 hand-edited frames', 2),
-  ((SELECT id FROM public.packages WHERE slug='family-portrait'), 'Framed signature print', 3),
-  ((SELECT id FROM public.packages WHERE slug='wedding-legacy'), 'Full-day coverage', 1),
-  ((SELECT id FROM public.packages WHERE slug='wedding-legacy'), 'Two photographers', 2),
-  ((SELECT id FROM public.packages WHERE slug='wedding-legacy'), '400+ edited frames', 3),
-  ((SELECT id FROM public.packages WHERE slug='wedding-legacy'), 'Heirloom linen album', 4),
-  ((SELECT id FROM public.packages WHERE slug='wedding-legacy'), 'Private cinematic teaser reel', 5);
-
--- Named testimonial seed rows omitted from the source export.
+-- Omitted historical demo package prices and features. Prices must be approved by owner.\n\n-- Named testimonial seed rows omitted from the source export.
 
 INSERT INTO public.settings (key, value) VALUES
   ('site', '{"studio_name":"Rajmoti Studio","tagline":"Capturing Life''s Most Beautiful Moments","email":"rajmotistudio@gmail.com","phone":"+91 00000 00000","whatsapp":"+910000000000","address":"India","instagram":"https://instagram.com/rajmotistudio"}'::jsonb),
@@ -371,25 +344,10 @@ CREATE POLICY "gallery admin delete" ON storage.objects FOR DELETE TO authentica
 
 
 -- SOURCE: supabase/migrations/20260622050558_063bd1f7-dd54-40a4-95a2-6338d47add6e.sql
-
-CREATE OR REPLACE FUNCTION public.handle_new_user() RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-BEGIN
-  INSERT INTO public.profiles (id, display_name, avatar_url)
-  VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'display_name', split_part(NEW.email, '@', 1)), NEW.raw_user_meta_data->>'avatar_url')
-  ON CONFLICT (id) DO NOTHING;
-
-  IF lower(NEW.email) = 'rajmotistudio@gmail.com' THEN
-    INSERT INTO public.user_roles (user_id, role) VALUES (NEW.id, 'admin')
-    ON CONFLICT (user_id, role) DO NOTHING;
-  END IF;
-
-  RETURN NEW;
-END; $$;
-REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
-
+-- EXCLUDED: hardcoded email-based auto-admin trigger; explicit trusted role assignment is mandatory.
 
 -- SOURCE: supabase/migrations/20260622052051_a7b98266-f681-4a05-adf8-df5498126209.sql
-GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO anon, authenticated;
+-- EXCLUDED: unnecessary anonymous role-check RPC grant.
 
 -- SOURCE: supabase/migrations/20260622055511_7a7958c4-b373-4b8d-93a9-04133178b7d7.sql
 
@@ -1690,15 +1648,7 @@ CREATE TRIGGER reels_enforce_short_id
 
 CREATE INDEX reels_published_order_idx ON public.reels (published, display_order, created_at DESC);
 
-INSERT INTO public.packages (name, slug, price, currency, description, duration, featured, display_order)
-VALUES
-  ('Studio Cinematic Reel', 'studio-cinematic-reel', 3500, 'INR',
-   'A cinematic reel created inside the Rajmoti Studio environment - directed, filmed and edited to music.',
-   '60 mins', true, 10),
-  ('Outdoor Cinematic Reel', 'outdoor-cinematic-reel', 6500, 'INR',
-   'A location-based cinematic experience with more movement, environment and storytelling.',
-   '120 mins', true, 11)
-ON CONFLICT (slug) DO NOTHING;
+-- Omitted unapproved sample cinematic-reel package prices.\n
 
 -- SOURCE: supabase/migrations/20260821121444_dca74e80-2e71-4264-bb79-0eaafca3fe21.sql
 REVOKE EXECUTE ON FUNCTION public.reels_enforce_short_id() FROM PUBLIC, anon, authenticated;
@@ -1725,22 +1675,7 @@ DROP POLICY IF EXISTS "settings readable by authenticated allowlist" ON public.s
 CREATE POLICY "settings readable by authenticated" ON public.settings FOR SELECT TO authenticated USING (true);
 
 -- SOURCE: supabase/migrations/20260826141001_f9e46413-11fc-45ef-8fad-d2ec3f8118c8.sql
--- Contacts: staff can read and update (mark contacted, favourite), not delete
-CREATE POLICY "staff read customers" ON public.customers FOR SELECT TO authenticated USING (true);
-CREATE POLICY "staff insert customers" ON public.customers FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "staff update customers" ON public.customers FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-
--- Notes and tasks: staff can fully manage
-CREATE POLICY "staff manage contact notes" ON public.contact_notes FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "staff manage contact tasks" ON public.contact_tasks FOR ALL TO authenticated USING (true) WITH CHECK (true);
-
--- Reminders: staff can read and update status
-CREATE POLICY "staff read reminders" ON public.reminders FOR SELECT TO authenticated USING (true);
-CREATE POLICY "staff update reminders" ON public.reminders FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
-
--- Read-only reference data used to render messages
-CREATE POLICY "staff read reminder offers" ON public.reminder_offers FOR SELECT TO authenticated USING (true);
-CREATE POLICY "staff read message templates" ON public.message_templates FOR SELECT TO authenticated USING (true);
+-- EXCLUDED: unrestricted staff policies with USING (true) would expose private contact and CRM data to any signed-in account.
 
 -- SOURCE: supabase/migrations/20260826152147_e11666bd-5634-4369-940c-ad4dc709ec4e.sql
 -- SKIPPED FOR PRODUCTION SECURITY: historical SQL broadens all admin policies to any authenticated user. Keep admin-only RLS.
