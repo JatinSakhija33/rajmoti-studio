@@ -8,6 +8,10 @@ import { loadPublishedPhotos, publishedCategories, publishedCounts } from "@/lib
 export const categoriesQuery = queryOptions({
   queryKey: ["categories"],
   queryFn: hybridPublicCategories,
+  // Render the 385 already published Cloudflare photos immediately while
+  // any optional new Supabase category records load in the background.
+  initialData: publishedCategories,
+  initialDataUpdatedAt: () => 0,
 });
 
 /** Admin taxonomy: everything, including hidden and archived rows. */
