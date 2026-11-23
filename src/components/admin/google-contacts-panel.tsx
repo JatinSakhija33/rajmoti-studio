@@ -1,129 +1,35 @@
-import { useEffect, useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@/demo/server-stub";
+import { useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { RefreshCw, Upload, Link2, Unlink } from "lucide-react";
+import { Upload } from "lucide-react";
 import {
-  googleContactsStatus,
-  startGoogleContactsConnect,
-  syncGoogleContacts,
-  disconnectGoogleContacts,
-} from "@/lib/google-contacts.functions";
-import { analyseCsvContacts, parseGoogleCsv, importCsvContacts, decodeCsvBuffer, type CsvAnalysis } from "@/lib/contacts-csv";
+  analyseCsvContacts, parseGoogleCsv, importCsvContacts,
+  decodeCsvBuffer, type CsvAnalysis
+} from "@/lib/contacts-csv";
 
-function relative(iso: string | null) {
-  if (!iso) return "never";
-  const d = new Date(iso);
-  const mins = Math.round((Date.now() - d.getTime()) / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins} min ago`;
-  return d.toLocaleString();
-}
-
+/**
+ * The exported app's original Google OAuth methods were server-only.
+ * Independent Vite/Cloudflare hosting currently imports throw-only stubs;
+ * calling them on mount causes unnecessary retries and a perpetual "Checking…"
+ * label. Keep the real, local-reviewed CSV importer until OAuth has a server
+ * implementation and security review.
+ */
 export function GoogleContactsPanel() {
-  const qc = useQueryClient();
-  const status = useServerFn(googleContactsStatus);
-  const start = useServerFn(startGoogleContactsConnect);
-  const sync = useServerFn(syncGoogleContacts);
-  const disconnect = useServerFn(disconnectGoogleContacts);
   const [csvOpen, setCsvOpen] = useState(false);
-
-  const q = useQuery({ queryKey: ["google-contacts-status"], queryFn: () => status({ data: undefined as never }) });
-
-  useEffect(() => {
-    const p = new URLSearchParams(window.location.search);
-    if (p.get("google") === "connected") {
-      toast.success("Google Contacts connected");
-      qc.invalidateQueries({ queryKey: ["google-contacts-status"] });
-      window.history.replaceState({}, "", window.location.pathname);
-    } else if (p.get("google") === "error") {
-      toast.error("Google Contacts could not be connected. Please try again.");
-      window.history.replaceState({}, "", window.location.pathname);
-    }
-  }, [qc]);
-
-  const connect = useMutation({
-    mutationFn: async () => start({ data: { origin: window.location.origin } }),
-    onSuccess: (r) => { window.location.href = r.url; },
-    onError: () => toast.error("Google Contacts is not set up yet."),
-  });
-
-  const syncNow = useMutation({
-    mutationFn: async () => sync({ data: {} }),
-    onSuccess: (r) => {
-      const bits: string[] = [];
-      if (r.newContacts) bits.push(`${r.newContacts} new`);
-      if (r.updated) bits.push(`${r.updated} updated`);
-      if (r.matched) bits.push(`${r.matched} matched`);
-      if (r.removedInGoogle) bits.push(`${r.removedInGoogle} removed in Google — kept in Rajmoti`);
-      toast.success(bits.length ? bits.join(" · ") : "You're up to date.");
-      qc.invalidateQueries({ queryKey: ["contacts"] });
-      qc.invalidateQueries({ queryKey: ["contact-stats"] });
-      qc.invalidateQueries({ queryKey: ["google-contacts-status"] });
-    },
-    onError: (e: any) => toast.error(e?.message ?? "Google Contacts could not be synced."),
-  });
-
-  const cut = useMutation({
-    mutationFn: async () => disconnect({ data: undefined as never }),
-    onSuccess: () => {
-      toast.success("Google disconnected. Your Rajmoti contacts are unchanged.");
-      qc.invalidateQueries({ queryKey: ["google-contacts-status"] });
-    },
-  });
-
-  const s = q.data;
-
   return (
-    <div className="bg-white border border-onyx/10 px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-      <div className="flex-1 min-w-[220px]">
-        <p className="font-semibold flex items-center gap-2">
-          Google Contacts
-          {s?.connected && <span className="text-[11px] text-emerald-600">● Connected</span>}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {!s
-            ? "Checking…"
-            : s.connected
-              ? `${s.email ?? "Google account"} · ${s.contactsCount} synced · last sync ${relative(s.lastSyncAt)}`
-              : s.configured
-                ? "Import your existing Google contacts."
-                : "Google sign-in isn't set up yet — you can still import a Google CSV export."}
+    <section aria-label="Google Contacts import" className="bg-white border border-onyx/10 px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+      <div>
+        <p className="font-semibold">Import Google Contacts</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Direct Google sync is not connected. Import a Google CSV export and review duplicates before saving.
         </p>
       </div>
-      <div className="flex items-center gap-2">
-        {s?.connected ? (
-          <>
-            <button
-              onClick={() => syncNow.mutate()}
-              disabled={syncNow.isPending}
-              className="eyebrow px-3 py-2 border border-onyx/15 hover:border-gold inline-flex items-center gap-2 disabled:opacity-50"
-            >
-              <RefreshCw className={`size-3.5 ${syncNow.isPending ? "animate-spin" : ""}`} />
-              {syncNow.isPending ? "Syncing…" : "Sync now"}
-            </button>
-            <button
-              onClick={() => { if (confirm("Disconnecting Google Contacts will stop synchronisation. Existing Rajmoti contacts will remain.")) cut.mutate(); }}
-              className="eyebrow px-3 py-2 border border-onyx/15 hover:border-destructive inline-flex items-center gap-2"
-            >
-              <Unlink className="size-3.5" /> Disconnect
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={() => connect.mutate()}
-            disabled={!s?.configured || connect.isPending}
-            className="eyebrow px-3 py-2 bg-onyx text-cream hover:bg-gold hover:text-onyx inline-flex items-center gap-2 disabled:opacity-40"
-          >
-            <Link2 className="size-3.5" /> Connect Google
-          </button>
-        )}
-        <button onClick={() => setCsvOpen(true)} className="eyebrow px-3 py-2 border border-onyx/15 hover:border-gold inline-flex items-center gap-2">
-          <Upload className="size-3.5" /> Import CSV
-        </button>
-      </div>
+      <button type="button" onClick={() => setCsvOpen(true)}
+        className="eyebrow px-3 py-2.5 border border-onyx/15 hover:border-gold inline-flex items-center gap-2">
+        <Upload className="size-3.5" aria-hidden /> Import CSV
+      </button>
       {csvOpen && <CsvImportDialog onClose={() => setCsvOpen(false)} />}
-    </div>
+    </section>
   );
 }
 
