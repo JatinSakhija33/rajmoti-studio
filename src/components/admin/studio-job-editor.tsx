@@ -594,7 +594,7 @@ export function StudioJobEditor({
             <p className="text-[11px] text-muted-foreground max-w-md">
               {online
                 ? liveBackend
-                  ? "Job changes save to your configured Supabase project."
+                  ? "Save keeps a browser copy first. Check the workflow sync status to confirm the change reaches Supabase. Use a private, trusted device."
                   : "Demonstration changes stay in this browser. No data is sent to Supabase."
                 : "Offline mode: metadata saves to this browser; photos require internet."}
             </p>
