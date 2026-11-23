@@ -49,9 +49,11 @@ function StudioWorkflow() {
       const queue = readPending(id);
       const combined = mergePending(remote, queue);
       setJobs(combined);
-      saveCache(id, combined);
       setBackendReady(true);
       setError("");
+      // A private-browser storage quota must not masquerade as a DB outage.
+      try { saveCache(id, combined); }
+      catch { setError("Studio data loaded from Supabase, but this browser cannot save an offline copy. Keep the network connected."); }
     } catch (e) {
       setBackendReady(false);
       setError(e instanceof Error ? `Database unavailable: ${e.message}. Showing browser-saved jobs.` : "Database unavailable. Showing browser-saved jobs.");
@@ -111,7 +113,7 @@ function StudioWorkflow() {
     pendingRef.current = nextPending;
     setPending(nextPending);
     setJobs(updated);
-    toast.success(navigator.onLine ? "Job saved on this device. Syncing changes…" : "Job queued safely on this browser (offline)");
+    toast.info(navigator.onLine ? "Job saved on this browser. Waiting for Supabase confirmation…" : "Job queued on this browser only (offline). It is not yet visible on other devices.");
     if (navigator.onLine) void syncQueue(userId);
   };
 
@@ -155,6 +157,19 @@ function StudioWorkflow() {
     void saveJob({ ...job, job_status: next, delivery_status: next === "ready" ? "ready" : job.delivery_status })
       .catch((e: Error) => toast.error(e.message));
   }
+  function downloadPendingBackup() {
+    const unsynced = readPending(userId);
+    if (!unsynced.length) return toast.info("There are no unsynced jobs to back up.");
+    if (!confirm("Export a plaintext copy of unsynced customer/job details to this device? Store the file privately and delete it after syncing.")) return;
+    const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), jobs: unsynced }, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `rajmoti-unsynced-jobs-${today()}.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    toast.info("Private backup exported. Do not share this file.");
+  }
   function resetCache() {
     if (pending.length) { toast.error("Sync pending edits before clearing the browser cache."); return; }
     if (!confirm("Clear the saved local view of studio jobs on this device? Existing records are kept.")) return;
@@ -167,8 +182,9 @@ function StudioWorkflow() {
   return (
     <div className="space-y-7">
       <header className="flex flex-wrap items-start justify-between gap-5"><div><p className="eyebrow text-gold mb-3">Single-owner command centre</p><h1 className="font-display text-4xl md:text-5xl">Studio workflow</h1><p className="text-sm leading-6 text-muted-foreground mt-3">Every walk-in, edit, print and delivery in one place.</p></div><div className="flex flex-wrap items-center gap-2"><Link to="/admin/gifts" className="border border-onyx/20 px-3 py-3 text-xs flex gap-2 items-center"><Gift className="size-4" /> Gift inbox</Link><button onClick={() => setEditor(emptyJob())} className="bg-onyx text-cream px-5 py-3 text-xs flex gap-2 items-center font-semibold"><Plus className="size-4" /> New walk-in job</button></div></header>
-      <div className="flex flex-wrap gap-3 items-center text-xs"><span className={`inline-flex items-center gap-2 px-3 py-2 border ${online && backendReady ? "border-green-200 bg-green-50 text-green-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}>{online && backendReady ? <Wifi className="size-4" /> : <WifiOff className="size-4" />}{loading ? "Checking storage…" : online && backendReady ? (studioConnected ? "Connected to the studio database" : "Demo records · saved in this browser") : online ? "Database paused or unavailable · local mode" : "Offline · local mode"}</span>{pending.length > 0 && <span className="px-3 py-2 bg-[#fff1df] text-[#825b31] border border-[#ebcf9a]">{pending.length} unsynced edit(s) · kept on this browser</span>}<button disabled={!online || syncing} onClick={() => void syncQueue(userId).then(() => { if (pendingRef.current.length === 0) void load(userId); })} className="inline-flex items-center gap-2 border border-onyx/20 px-3 py-2 disabled:opacity-40"><RefreshCw className={`size-3.5 ${syncing ? "animate-spin" : ""}`} /> Sync changes</button>{pending.length === 0 && <button onClick={resetCache} className="underline text-muted-foreground ml-auto">Clear local cache</button>}</div>
-      {error && <div role="alert" className="bg-amber-50 border border-amber-200 text-amber-900 text-xs px-4 py-3 flex gap-2 items-start"><AlertTriangle className="size-4 shrink-0" />{error}</div>}
+      <div className="flex flex-wrap gap-3 items-center text-xs"><span className={`inline-flex items-center gap-2 px-3 py-2 border ${online && backendReady ? "border-green-200 bg-green-50 text-green-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}>{online && backendReady ? <Wifi className="size-4" /> : <WifiOff className="size-4" />}{loading ? "Checking storage…" : online && backendReady ? (studioConnected ? "Connected to the studio database" : "Demo records · saved in this browser") : online ? "Database paused or unavailable · local mode" : "Offline · local mode"}</span>{pending.length > 0 && <span className="px-3 py-2 bg-[#fff1df] text-[#825b31] border border-[#ebcf9a]">{pending.length} unsynced edit(s) · browser only</span>}{pending.length > 0 && <button type="button" onClick={downloadPendingBackup} className="underline text-amber-900">Export private unsynced backup</button>}<button disabled={!online || syncing} onClick={() => void syncQueue(userId).then(() => { if (pendingRef.current.length === 0) void load(userId); })} className="inline-flex items-center gap-2 border border-onyx/20 px-3 py-2 disabled:opacity-40"><RefreshCw className={`size-3.5 ${syncing ? "animate-spin" : ""}`} /> Sync changes</button>{pending.length === 0 && <button onClick={resetCache} className="underline text-muted-foreground ml-auto">Clear local cache</button>}</div>
+      {error && <div role="alert" className="bg-amber-50 border border-amber-200 text-amber-900 text-xs px-4 py-3 flex gap-2 items-start"><AlertTriangle className="size-4 shrink-0" /><span>{error} <Link to="/admin/system" className="font-semibold underline">Check database setup</Link></span></div>}
+      {!backendReady && !loading && <p className="text-xs text-amber-800">Counts in this view may come from browser-saved records. They are not confirmed on other devices until syncing succeeds.</p>}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
         {[{ label: "Jobs in progress", value: active.length, sub: "not yet delivered", icon: ClipboardList }, { label: "Due today", value: due, sub: formatDate(today()), icon: Clock3 }, { label: "Overdue", value: late, sub: "needs attention", icon: AlertTriangle }, { label: "Payment follow-up", value: unpaid, sub: "not fully paid", icon: CircleDollarSign }].map(({ label, value, sub, icon: Icon }) => <div key={label} className="border border-onyx/10 bg-white px-5 py-5"><div className="flex items-center justify-between gap-2 text-muted-foreground mb-4"><span className="text-xs">{label}</span><Icon className="size-5 text-[#aa8955]" /></div><p className="font-display text-4xl leading-none">{value}</p><p className="text-[11px] text-muted-foreground mt-3">{sub}</p></div>)}
       </div>
