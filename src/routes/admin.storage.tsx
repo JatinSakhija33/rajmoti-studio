@@ -65,8 +65,7 @@ function AdminStorage() {
       }
       setProgress({ done: pending.length, total: pending.length, label: "Finishing" });
       setReport({ ...acc, skipped: rows!.length - pending.length });
-      const saved = acc.bytesBefore - acc.bytesAfter;
-      toast.success(`Optimized ${acc.processed} photograph(s) — saved ${formatBytes(Math.max(0, saved))}`);
+      toast.success(`Created web-ready versions of ${acc.processed} photograph(s). Original files were retained.`);
       qc.invalidateQueries();
     } finally {
       setRunning(false);
@@ -81,6 +80,13 @@ function AdminStorage() {
         <h1 className="font-display text-4xl">Studio storage overview</h1>
         <p className="text-sm text-muted-foreground mt-2">Cloudflare Pages keeps the published portfolio. Supabase holds studio records; optional R2 stores new private workflow files. The figures below include only Supabase image metadata.</p>
       </header>
+
+      <section className="border border-onyx/10 bg-white p-5 mb-6 space-y-2 text-sm">
+        <h2 className="font-display text-xl">Cloudflare published portfolio</h2>
+        <p><strong>{CLOUD_GALLERY_COUNT} approved photographs</strong> and {CLOUD_VARIANTS_COUNT} web variants already live on Cloudflare Pages.</p>
+        <p className="text-xs text-muted-foreground">No copy into Supabase Storage is needed. New private R2 job photos are excluded from the Supabase totals shown below.</p>
+        <p className="text-xs text-amber-900">These files remain public until they are removed from the deployed website. Hiding a database row cannot unpublish an existing Cloudflare asset.</p>
+      </section>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <Stat icon={ImageIcon} label="Photographs" value={summary.count.toLocaleString()} />
