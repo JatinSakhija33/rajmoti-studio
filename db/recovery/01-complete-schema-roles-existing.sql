@@ -225,7 +225,7 @@ CREATE POLICY "package features public read" ON public.package_features FOR SELE
 CREATE POLICY "admins write package features" ON public.package_features FOR ALL TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
 
 -- ============ INQUIRIES ============
-CREATE TYPE public.inquiry_status AS ENUM ('new', 'contacted', 'booked', 'closed');
+CREATE TYPE public.inquiry_status AS ENUM ('new', 'contacted', 'follow_up', 'booked', 'closed', 'confirmed', 'completed', 'cancelled');
 
 CREATE TABLE public.inquiries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
