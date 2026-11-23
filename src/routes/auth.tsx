@@ -98,7 +98,7 @@ function AuthPage() {
       <main className="min-h-dvh bg-cream grid place-items-center p-6">
         <section className="max-w-md text-center">
           <h1 className="font-display text-3xl mb-4">Studio access</h1>
-          <p className="text-sm">Studio sign-in is temporarily unavailable.</p>
+          <p className="text-sm text-muted-foreground">Studio sign-in is not configured for this deployment. The studio administrator needs to connect the production Supabase project and redeploy the website.</p>
           <Link to="/" className="mt-6 inline-block underline">
             Return to the website
           </Link>
@@ -177,9 +177,6 @@ function AuthPage() {
               <>
                 <button onClick={() => setMode("reset")} className="hover:text-gold block">
                   Forgot password?
-                </button>
-                <button onClick={() => setMode("signup")} className="hover:text-gold block">
-                  Create studio account
                 </button>
               </>
             )}
