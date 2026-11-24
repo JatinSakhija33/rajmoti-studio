@@ -1,7 +1,7 @@
 name: Verify hybrid Cloudflare Supabase
 on:
   push:
-    branches: [feature/hybrid-cloudflare-supabase-no-duplicate-20261123]
+    branches: [feature/hybrid-cloudflare-supabase-no-duplicate-20261123, feature/curated-home-gallery-20261124]
   pull_request:
     paths:
       - 'src/lib/hybrid-portfolio.ts'
@@ -13,6 +13,13 @@ on:
       - 'functions/api/owner/studio-files.js'
       - 'tests/hybrid-private-r2.test.mjs'
       - '.github/workflows/verify-hybrid.yml'
+      - 'src/routes/index.tsx'
+      - 'src/lib/homepage-gallery.ts'
+      - 'src/lib/published-portfolio-taxonomy.json'
+      - 'src/components/home-photo-carousel.tsx'
+      - 'src/components/home-gallery-marquee.tsx'
+      - 'src/features/editorial/home-gallery.css'
+      - 'tests/editorial-gallery.test.mjs'
 
 permissions:
   contents: read
