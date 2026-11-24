@@ -1,4 +1,5 @@
 // Studio-approved public photographs shipped with the site for offline gallery reads.
+import { queryOptions } from "@tanstack/react-query";
 import taxonomy from "./published-portfolio-taxonomy.json";
 
 const categoryId = (slug: string) => `published:${slug}`;
@@ -62,9 +63,18 @@ async function readPublishedPhotos() {
   });
 }
 
-let photoCatalog: Awaited<ReturnType<typeof readPublishedPhotos>> | undefined;
+let photoCatalog: ReturnType<typeof readPublishedPhotos> | undefined;
 
-export async function loadPublishedPhotos() {
-  photoCatalog ??= await readPublishedPhotos();
+export function loadPublishedPhotos() {
+  photoCatalog ??= readPublishedPhotos().catch((error) => {
+    photoCatalog = undefined;
+    throw error;
+  });
   return photoCatalog;
 }
+
+export const publishedPhotoLibraryQuery = queryOptions({
+  queryKey: ["published-photo-library"],
+  queryFn: loadPublishedPhotos,
+  staleTime: Infinity,
+});

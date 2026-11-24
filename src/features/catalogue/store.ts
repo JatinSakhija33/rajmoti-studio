@@ -1,6 +1,5 @@
 import seed from "./seed.json";
 import extras from "./gift-extras.json";
-import supplierProducts from "./supplier-products.json";
 import { useCataloguePrices } from "./catalogue-prices";
 import type { GiftDesign } from "./gift-design";
 import { useSyncExternalStore } from "react";
@@ -55,7 +54,7 @@ export function useLocal<T>(key: string, fallback: T): [T, (data: T) => void] {
   } catch {}
   return [value, (v: T) => write(key, v)];
 }
-export const seedProducts: Product[] = [...seed.products, ...extras.products, ...supplierProducts];
+export const seedProducts: Product[] = [...seed.products, ...extras.products];
 
 export function useProducts(): [Product[], (products: Product[]) => void] {
   const [local, setLocal] = useLocal<Product[]>(keys.catalogue, seedProducts);

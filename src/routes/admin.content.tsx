@@ -2,9 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, Upload, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { optimizeSiteImage } from "@/lib/images";
+import { GalleryPhotoPicker } from "@/components/admin/gallery-photo-picker";
 import { adminCategoriesQuery, siteContentQuery } from "@/lib/queries";
 import { InstagramFeed, lightwidgetUrl, type InstagramCms } from "@/components/instagram-feed";
 import { instagramHandle } from "@/lib/site";
@@ -55,7 +55,7 @@ function AdminContent() {
       <header>
         <p className="eyebrow text-gold mb-2">Site Content</p>
         <h1 className="font-display text-4xl">Edit every section</h1>
-        <p className="text-sm text-muted-foreground mt-2">Manage studio content. The editorial homepage uses the first hero photograph; some editorial sections retain their own demonstration content.</p>
+        <p className="text-sm text-muted-foreground mt-2">Choose existing library photographs for the homepage and category covers. Add a new original through the gallery manager once.</p>
       </header>
 
       <HeroEditor initial={content.hero ?? {}} onSave={(v) => save("hero", v)} />
@@ -80,7 +80,7 @@ function HeroEditor({ initial, onSave }: { initial: Hero; onSave: (v: Hero) => P
       <HeroImageManager images={v.images ?? []} onChange={(images) => update({ images })} />
 
       <div className="mt-6">
-        <SingleImage label="Fallback hero image (shown if no slideshow images above)" url={v.fallback_image ?? ""} onChange={(x) => update({ fallback_image: x })} folder="site/hero" />
+        <SingleImage label="Fallback hero image (shown if no slideshow images above)" url={v.fallback_image ?? ""} onChange={(x) => update({ fallback_image: x })} size="large" />
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4 mt-6">
@@ -104,12 +104,12 @@ function HeroEditor({ initial, onSave }: { initial: Hero; onSave: (v: Hero) => P
           <span className="text-xs text-muted-foreground">{v.overlay_opacity ?? 30}%</span>
         </label>
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={!!v.slideshow} onChange={(e) => update({ slideshow: e.target.checked })} />
+          <input type="checkbox" checked={v.slideshow !== false} onChange={(e) => update({ slideshow: e.target.checked })} />
           <span>Enable slideshow (cycles hero images)</span>
         </label>
         <label className="block text-sm">
           <span className="eyebrow text-muted-foreground block mb-1">Slideshow seconds</span>
-          <input type="number" min={2} max={30} value={v.slideshow_seconds ?? 6} onChange={(e) => update({ slideshow_seconds: Number(e.target.value) })} className="w-full border border-onyx/15 px-3 py-2" />
+          <input type="number" min={2} max={30} value={v.slideshow_seconds ?? 10} onChange={(e) => update({ slideshow_seconds: Number(e.target.value) })} className="w-full border border-onyx/15 px-3 py-2" />
         </label>
       </div>
 
@@ -142,23 +142,6 @@ function HeroEditor({ initial, onSave }: { initial: Hero; onSave: (v: Hero) => P
 }
 
 function HeroImageManager({ images, onChange }: { images: string[]; onChange: (v: string[]) => void }) {
-  const [uploading, setUploading] = useState(false);
-
-  async function upload(fs: FileList | null) {
-    if (!fs || fs.length === 0) return;
-    setUploading(true);
-    const urls: string[] = [];
-    for (const file of Array.from(fs)) {
-      try {
-        urls.push(await optimizeSiteImage(file, "site/hero"));
-      } catch (err) {
-        toast.error(`${file.name}: ${err instanceof Error ? err.message : "upload failed"}`);
-      }
-    }
-    onChange([...images, ...urls]);
-    setUploading(false);
-  }
-
   function move(from: number, to: number) {
     if (to < 0 || to >= images.length) return;
     const next = [...images];
@@ -170,15 +153,13 @@ function HeroImageManager({ images, onChange }: { images: string[]; onChange: (v
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <p className="eyebrow text-muted-foreground">Hero images (drag order using arrows)</p>
-        <label className="cursor-pointer inline-flex items-center gap-2 border border-onyx/15 px-3 py-2 text-xs uppercase tracking-widest hover:border-gold">
-          {uploading ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
-          {uploading ? "Uploading" : "Add images"}
-          <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => upload(e.target.files)} />
-        </label>
+        <p className="eyebrow text-muted-foreground">Hero photographs</p>
+        <GalleryPhotoPicker size="large" onSelect={(url) => {
+          if (!images.includes(url)) onChange([...images, url]);
+        }} />
       </div>
       {images.length === 0 ? (
-        <p className="text-xs text-muted-foreground border border-dashed border-onyx/15 py-6 text-center">No hero images yet — add one or more.</p>
+        <p className="text-xs text-muted-foreground border border-dashed border-onyx/15 py-6 text-center">The homepage uses studio-selected photographs until you select your own.</p>
       ) : (
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
           {images.map((url, i) => (
@@ -222,7 +203,6 @@ function CategoryDefaultsEditor({ initial, onSave }: { initial: Record<string, s
                 label={`Default cover for ${c.slug}`}
                 url={v[c.slug] ?? ""}
                 onChange={(url) => setV({ ...v, [c.slug]: url })}
-                folder={`site/category-defaults/${c.slug}`}
                 size="medium"
               />
             </div>
@@ -248,7 +228,7 @@ function AboutEditor({ initial, onSave }: { initial: About; onSave: (v: About) =
         <textarea value={v.body ?? ""} onChange={(e) => setV({ ...v, body: e.target.value })} rows={5} className="w-full border border-onyx/15 px-3 py-2" />
       </label>
       <div className="mt-4">
-        <SingleImage label="About image" url={v.image ?? ""} onChange={(x) => setV({ ...v, image: x })} folder="site/about" />
+        <SingleImage label="About image" url={v.image ?? ""} onChange={(x) => setV({ ...v, image: x })} size="large" />
       </div>
       <SaveBar onSave={() => onSave(v)} />
     </Section>
@@ -281,7 +261,7 @@ function SeoEditor({ initial, onSave }: { initial: Seo; onSave: (v: Seo) => Prom
         <F label="Meta description" value={v.description ?? ""} onChange={(x) => setV({ ...v, description: x })} />
       </div>
       <div className="mt-4">
-        <SingleImage label="Social share image (og:image)" url={v.og_image ?? ""} onChange={(x) => setV({ ...v, og_image: x })} folder="site/seo" />
+        <SingleImage label="Social share image (og:image)" url={v.og_image ?? ""} onChange={(x) => setV({ ...v, og_image: x })} size="large" />
       </div>
       <SaveBar onSave={() => onSave(v)} />
     </Section>
@@ -421,34 +401,21 @@ function Repeater<T>({ label, items, onChange, render, empty }: { label: string;
   );
 }
 
-function SingleImage({ label, url, onChange, folder, size }: { label: string; url: string; onChange: (v: string) => void; folder: string; size?: "medium" }) {
-  const [busy, setBusy] = useState(false);
-  async function upload(f: File | undefined) {
-    if (!f) return;
-    setBusy(true);
-    try {
-      onChange(await optimizeSiteImage(f, folder, size));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Upload failed");
-    }
-    setBusy(false);
-  }
+function SingleImage({ label, url, onChange, size }: {
+  label: string;
+  url: string;
+  onChange: (value: string) => void;
+  size?: "medium" | "large";
+}) {
   return (
     <div>
       <p className="eyebrow text-muted-foreground mb-2">{label}</p>
       <div className="flex items-center gap-4">
-        {url ? (
-          <img src={url} alt="" className="w-28 h-20 object-cover border border-onyx/10" />
-        ) : (
-          <div className="w-28 h-20 border border-dashed border-onyx/20 grid place-items-center text-xs text-muted-foreground">None</div>
-        )}
-        <label className="cursor-pointer inline-flex items-center gap-2 border border-onyx/15 px-3 py-2 text-xs uppercase tracking-widest hover:border-gold">
-          {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
-          {busy ? "Uploading" : url ? "Replace" : "Upload"}
-          <input type="file" accept="image/*" className="hidden" onChange={(e) => upload(e.target.files?.[0])} />
-        </label>
-        {url && <button onClick={() => onChange("")} className="text-xs text-destructive hover:underline">Remove</button>}
+        {url && <img src={url} alt="" className="h-20 w-28 border border-onyx/10 object-contain" />}
+        {url && <button type="button" onClick={() => onChange("")}
+          className="text-xs text-destructive hover:underline">Remove selection</button>}
       </div>
+      <GalleryPhotoPicker size={size} onSelect={onChange} />
     </div>
   );
 }

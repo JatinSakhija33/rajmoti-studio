@@ -1,14 +1,79 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Pause, Play } from "lucide-react";
 import { homeHeroSlides } from "@/lib/homepage-gallery";
+import { publishedPhotoLibraryQuery } from "@/lib/published-portfolio";
 import { usePrefersReducedMotion } from "@/lib/motion";
 
-// Match the original studio slideshow’s ten-second pace.
-const rotationMs = 10_000;
-const totalSlides = homeHeroSlides.length;
-const changeIndex = (current: number, offset: number) => (current + offset + totalSlides) % totalSlides;
+type HeroContent = {
+  images?: unknown;
+  fallback_image?: unknown;
+  slideshow?: boolean;
+  slideshow_seconds?: number;
+};
 
-export function HomePhotoCarousel({ children }: { children: ReactNode }) {
+function isPhotoUrl(value: unknown): value is string {
+  return typeof value === "string" &&
+    (/^\/(?![\/\\]|demo\/)/.test(value) || value.startsWith("https://"));
+}
+
+export function HomePhotoCarousel({
+  children,
+  content,
+}: {
+  children: ReactNode;
+  content?: HeroContent;
+}) {
+  const photos = Array.isArray(content?.images) ? [...new Set(content.images.filter(isPhotoUrl))] : [];
+  if (!photos.length && isPhotoUrl(content?.fallback_image)) photos.push(content.fallback_image);
+
+  const library = useQuery({
+    ...publishedPhotoLibraryQuery,
+    enabled: photos.some((url) => url.startsWith("/portfolio/")),
+  });
+  const slides = photos.length ? photos.map((url) => {
+    const curated = homeHeroSlides.find((photo) => photo.src === url || photo.medium === url);
+    if (curated) return curated;
+    const published = library.data?.find((photo) =>
+      Object.values(photo.variants).some((variant) => variant.url === url));
+    return {
+      id: url,
+      src: published?.variants.large.url ?? url,
+      medium: published?.variants.medium.url ?? url,
+      category: published?.categories.name ?? "Studio photography",
+      alt: published?.alt_text || published?.title || "Rajmoti Studio photograph",
+      portrait: !!published && published.height > published.width,
+    };
+  }) : homeHeroSlides;
+  const seconds = content?.slideshow_seconds ?? 10;
+  const interval = Number.isFinite(seconds) && seconds >= 2 && seconds <= 30 ? seconds * 1_000 : 10_000;
+  return (
+    <PhotoCarousel key={JSON.stringify(photos)} slides={slides} interval={interval}
+      autoplay={content?.slideshow !== false}>
+      {children}
+    </PhotoCarousel>
+  );
+}
+
+type CarouselSlide = {
+  id: string;
+  src: string;
+  medium: string;
+  category: string;
+  alt: string;
+  portrait: boolean;
+};
+
+const changeIndex = (current: number, offset: number, count: number) =>
+  (current + offset + count) % count;
+
+function PhotoCarousel({ slides, interval, autoplay, children }: {
+  slides: readonly CarouselSlide[];
+  interval: number;
+  autoplay: boolean;
+  children: ReactNode;
+}) {
+  const totalSlides = slides.length;
   const [requested, setRequested] = useState(0);
   const [visible, setVisible] = useState({ current: 0, previous: -1 });
   const [loaded, setLoaded] = useState<number[]>([]);
@@ -24,18 +89,19 @@ export function HomePhotoCarousel({ children }: { children: ReactNode }) {
   }, [requested, loaded, visible.current]);
 
   useEffect(() => {
-    if (paused || hovering || focused || reducedMotion || requested !== visible.current) return;
+    if (!autoplay || totalSlides < 2 || paused || hovering || focused || reducedMotion ||
+        requested !== visible.current) return;
     const timer = window.setInterval(() => {
-      if (!document.hidden) setRequested((current) => changeIndex(current, 1));
-    }, rotationMs);
+      if (!document.hidden) setRequested((current) => changeIndex(current, 1, totalSlides));
+    }, interval);
     return () => window.clearInterval(timer);
-  }, [paused, hovering, focused, reducedMotion, requested, visible.current]);
+  }, [autoplay, totalSlides, interval, paused, hovering, focused, reducedMotion, requested, visible.current]);
 
-  const slide = homeHeroSlides[visible.current];
+  const slide = slides[visible.current];
   // Keep the visible image until the selected one has loaded. Only warm one future slide.
   const rendered = new Set([visible.current, visible.previous, requested]);
-  if (loaded.includes(visible.current) && !paused && !reducedMotion) {
-    rendered.add(changeIndex(visible.current, 1));
+  if (totalSlides > 1 && autoplay && loaded.includes(visible.current) && !paused && !reducedMotion) {
+    rendered.add(changeIndex(visible.current, 1, totalSlides));
   }
 
   return (
@@ -50,7 +116,7 @@ export function HomePhotoCarousel({ children }: { children: ReactNode }) {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false);
       }}
     >
-      {homeHeroSlides.map((item, index) => {
+      {slides.map((item, index) => {
         if (!rendered.has(index)) return null;
         const current = index === visible.current;
         return (
@@ -81,25 +147,25 @@ export function HomePhotoCarousel({ children }: { children: ReactNode }) {
         <div className="home-carousel-copy">{children}</div>
         <div className="home-carousel-bar">
           <p className="home-carousel-credit">Rajmoti Studio · {slide.category}</p>
-          <div className="home-carousel-controls" aria-label="Slideshow controls">
-            <button type="button" onClick={() => setRequested((index) => changeIndex(index, -1))}
+          {totalSlides > 1 && <div className="home-carousel-controls" aria-label="Slideshow controls">
+            <button type="button" onClick={() => setRequested((index) => changeIndex(index, -1, totalSlides))}
               aria-label="Previous photograph">
               <ArrowLeft size={17} aria-hidden />
             </button>
             <span className="home-carousel-counter" aria-hidden="true">
               {String(visible.current + 1).padStart(2, "0")} / {String(totalSlides).padStart(2, "0")}
             </span>
-            <button type="button" onClick={() => setRequested((index) => changeIndex(index, 1))}
+            <button type="button" onClick={() => setRequested((index) => changeIndex(index, 1, totalSlides))}
               aria-label="Next photograph">
               <ArrowRight size={17} aria-hidden />
             </button>
-            {!reducedMotion && (
+            {autoplay && !reducedMotion && (
               <button type="button" onClick={() => setPaused((current) => !current)}
                 aria-label={paused ? "Resume automatic slideshow" : "Pause automatic slideshow"}>
                 {paused ? <Play size={16} aria-hidden /> : <Pause size={16} aria-hidden />}
               </button>
             )}
-          </div>
+          </div>}
         </div>
       </div>
     </section>

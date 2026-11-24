@@ -1,3 +1,4 @@
+import { GalleryPhotoPicker } from "@/components/admin/gallery-photo-picker";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -356,8 +357,9 @@ function CategoryEditor({
           <Field label="Cover image URL">
             <input value={form.cover_image_url} onChange={(e) => set("cover_image_url", e.target.value)} placeholder="https://…" className="field-input" />
           </Field>
+          <GalleryPhotoPicker onSelect={(url) => set("cover_image_url", url)} />
           {form.cover_image_url && (
-            <img src={form.cover_image_url} alt="" className="w-full aspect-[3/1] object-cover border border-onyx/10" />
+            <img src={form.cover_image_url} alt="" className="w-full aspect-[3/1] object-contain border border-onyx/10" />
           )}
 
           <Field label="Display name">
@@ -568,6 +570,7 @@ function SubcategoryForm({ sub, photos, onDone }: { sub: Row; photos: number; on
       <Field label="Slug"><input value={form.slug} onChange={(e) => set("slug", e.target.value)} className="field-input" /></Field>
       <Field label="Description"><textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={2} className="field-input" /></Field>
       <Field label="Cover image URL"><input value={form.cover_image_url} onChange={(e) => set("cover_image_url", e.target.value)} className="field-input" /></Field>
+      <GalleryPhotoPicker onSelect={(url) => set("cover_image_url", url)} />
       <Field label="SEO title"><input value={form.seo_title} onChange={(e) => set("seo_title", e.target.value)} className="field-input" /></Field>
       <Field label="SEO description"><textarea value={form.seo_description} onChange={(e) => set("seo_description", e.target.value)} rows={2} className="field-input" /></Field>
       <button

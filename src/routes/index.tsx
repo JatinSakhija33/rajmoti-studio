@@ -30,7 +30,7 @@ function Home() {
     <div className="editorial">
       <SiteNav />
       <main>
-        <HomePhotoCarousel>
+        <HomePhotoCarousel content={content.hero}>
           <p className="ed-kicker">Jetpur, Gujarat · Since 1982</p>
           <h1>
             Little moments.

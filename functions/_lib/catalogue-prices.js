@@ -1,8 +1,7 @@
 import seed from "../../src/features/catalogue/seed.json";
 import extras from "../../src/features/catalogue/gift-extras.json";
-import supplierProducts from "../../src/features/catalogue/supplier-products.json";
 
-export const catalogueProducts = [...seed.products, ...extras.products, ...supplierProducts];
+export const catalogueProducts = [...seed.products, ...extras.products];
 const products = new Map(catalogueProducts.map((product) => [
   product.id, new Set(product.variants.map(({ id }) => id)),
 ]));

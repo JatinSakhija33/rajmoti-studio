@@ -5,7 +5,6 @@ export const Route = createFileRoute("/gifts")({
   validateSearch: (s: Record<string, unknown>) => ({
     product: typeof s.product === "string" ? s.product : undefined,
     variant: typeof s.variant === "string" ? s.variant : undefined,
-    collection: typeof s.collection === "string" ? s.collection : undefined,
   }),
   head: () => ({
     meta: [{ title: "Photo gifts & product directory — Rajmoti Studio" }, canonicalFor("/gifts").ogUrl],
@@ -14,6 +13,6 @@ export const Route = createFileRoute("/gifts")({
   component: Page,
 });
 function Page() {
-  const { product, variant, collection } = Route.useSearch();
-  return <Catalogue key={collection ?? "all"} productId={product} preferredVariantId={variant} collectionId={collection} />;
+  const { product, variant } = Route.useSearch();
+  return <Catalogue productId={product} preferredVariantId={variant} />;
 }

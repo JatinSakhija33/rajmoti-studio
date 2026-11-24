@@ -1,6 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
-import { giftCollections } from "@/features/catalogue/gift-collections";
+import { seedProducts } from "@/features/catalogue/store";
+
+const featuredProductIds = ["PRT-004", "SHP-012", "MUG-001", "SHP-006", "SHP-002", "SHP-001", "TEC-001", "MAG-001"];
+const featuredProducts = featuredProductIds.flatMap((id) => {
+  const product = seedProducts.find((item) => item.id === id);
+  return product?.image ? [product] : [];
+});
 
 export function HomeGiftCollections() {
   return (
@@ -12,17 +18,17 @@ export function HomeGiftCollections() {
         </Link>
       </div>
       <ul className="home-gifts-grid">
-        {giftCollections.map(({ id, name }) => (
+        {featuredProducts.map(({ id, name, image }) => (
           <li key={id}>
-            <Link to="/gifts" search={{ collection: id }} hash="directory">
-              <img src={"/products/collections/" + id + ".webp"} alt="" width={360} height={360}
+            <Link to="/gifts" search={{ product: id }}>
+              <img src={image} alt="" width={360} height={360}
                 loading="lazy" decoding="async" />
               <span>{name}</span>
             </Link>
           </li>
         ))}
       </ul>
-      <p className="home-gifts-caption">Illustrative collection images</p>
+      <p className="home-gifts-caption">Illustrative product images</p>
     </section>
   );
 }
