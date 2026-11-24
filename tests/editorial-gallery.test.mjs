@@ -42,3 +42,8 @@ test("all 385 Cloudflare photos feed the loop with only 14 tiles mounted", () =>
   assert.ok(home.indexOf("<HomeGalleryMarquee />") < home.indexOf("<StudioMap />"));
   assert.match(read("src/features/editorial/home-gallery.css"), /prefers-reduced-motion: reduce/);
 });
+
+test("landscape family cover is displayed without cropping the group", () => {
+  assert.match(read("src/components/photography-chapters.tsx"), /objectFit: "contain"/);
+  assert.match(read("src/routes/portfolios.index.tsx"), /card.slug === "family" \? "object-contain"/);
+});
