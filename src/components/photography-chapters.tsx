@@ -72,12 +72,30 @@ function ChapterCard({
   const srcSet = !selectedCover && photograph
     ? variantSrcSet(photograph, ["thumbnail", "medium"])
     : undefined;
+  const coverSrc = selectedCover || galleryCover || bundledCover || fallback;
 
   return (
     <Link to="/portfolios/$category" params={{ category: session.slug }} className="chapter-card">
       <div className="chapter-image">
+        {familyConcept && (
+          <img
+            src={coverSrc}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+            style={{
+              position: "absolute",
+              inset: 0,
+              objectFit: "cover",
+              transform: "scale(1.1)",
+              filter: "blur(22px)",
+              opacity: 0.65,
+            }}
+          />
+        )}
         <img
-          src={selectedCover || galleryCover || bundledCover || fallback}
+          src={coverSrc}
           srcSet={srcSet}
           sizes={srcSet ? "(max-width: 850px) 50vw, 25vw" : undefined}
           alt=""
@@ -85,6 +103,7 @@ function ChapterCard({
           height="1500"
           loading="lazy"
           decoding="async"
+          style={familyConcept ? { objectFit: "contain", position: "relative", zIndex: 1 } : undefined}
         />
         {!selectedCover && !galleryCover && !bundledCover && (
           <span>{familyConcept ? "Concept image" : "Photography pending"}</span>
