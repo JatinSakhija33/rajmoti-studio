@@ -1,11 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { categoriesQuery, siteContentQuery } from "@/lib/queries";
+import { siteContentQuery } from "@/lib/queries";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, ArrowUpRight, Heart, Check, MessageCircle } from "lucide-react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { PhotographyChapters } from "@/components/photography-chapters";
 import { StudioMap } from "@/components/studio-map";
+import { HomePhotoCarousel } from "@/components/home-photo-carousel";
+import { HomeGalleryMarquee } from "@/components/home-gallery-marquee";
+import "@/features/editorial/home-gallery.css";
 import { useStyles } from "@/features/catalogue/store";
 import { directionsLink, SITE, whatsappLink } from "@/lib/site";
 import { canonicalFor } from "@/lib/seo";
@@ -18,15 +21,8 @@ export const Route = createFileRoute("/")({
 });
 function Home() {
   const { data: content = {} } = useQuery(siteContentQuery);
-  const { data: galleries = [] } = useQuery(categoriesQuery);
   const contact = (content.contact ?? {}) as { address?: string; hours?: string };
   const address = contact.address?.trim() || SITE.location;
-  const familyCover = galleries.find((gallery) =>
-    ["baby", "family"].includes(gallery.slug) && gallery.cover_image_url &&
-      !gallery.cover_image_url.startsWith("/demo/"),
-  )?.cover_image_url;
-  const candidate = content.hero?.images?.[0] || familyCover || content.hero?.fallback_image;
-  const customHero = candidate && !candidate.startsWith("/demo/") ? candidate : null;
   const [styles, setStyles] = useStyles();
   const saved = styles.some((s) => s.id === "demo-family-story");
   return (
@@ -57,35 +53,7 @@ function Home() {
               <span className="signature-line" />A family studio. A lifetime of memories.
             </div>
           </div>
-          <figure className="home-hero-image">
-            <picture>
-              <source
-                media="(max-width: 700px)"
-                srcSet={customHero || "/editorial/family-hero-mobile.webp"}
-              />
-              <img
-                src={customHero || "/editorial/family-hero.webp"}
-                width="1536"
-                height="1024"
-                fetchPriority="high"
-                alt={
-                  customHero
-                    ? "Rajmoti Studio portfolio photograph"
-                    : "Illustrative Indian family portrait in a warm studio"
-                }
-              />
-            </picture>
-            <figcaption>
-              {customHero
-                ? "Studio-selected photograph"
-                : "Illustrative AI concept · not Rajmoti client work"}
-            </figcaption>
-            <div className="photo-note">
-              The everyday.
-              <br />
-              <em>Made unforgettable.</em>
-            </div>
-          </figure>
+          <HomePhotoCarousel />
         </section>
         <div className="ed-wrap heritage-line">
           <span>Photographing generations since 1982</span>
@@ -97,13 +65,13 @@ function Home() {
           <div className="ed-wrap story-feature-inner">
             <figure>
               <img
-                src="/editorial/family-hero.webp"
+                src="/portfolio/family/8078c206caa42114f4da-large-03fae45dbaa3.webp"
                 width="1536"
                 height="1024"
                 loading="lazy"
-                alt="Illustrative family photography"
+                alt="Rajmoti Studio family portrait with a young child"
               />
-              <figcaption>Illustrative portrait</figcaption>
+              <figcaption>Rajmoti Studio · Real family photography</figcaption>
             </figure>
             <div>
               <p className="ed-kicker">More than a single frame</p>
@@ -131,8 +99,8 @@ function Home() {
                             ...styles,
                             {
                               id: "demo-family-story",
-                              title: "Family story concept",
-                              image: "/editorial/family-hero.webp",
+                              title: "Family portraits",
+                              image: "/portfolio/family/8078c206caa42114f4da-large-03fae45dbaa3.webp",
                             },
                           ],
                     )
@@ -230,6 +198,7 @@ function Home() {
           </Link>
           <p className="ed-footnote">ગુજરાતીમાં વાત કરવી છે? અમે મદદ કરીશું.</p>
         </section>
+        <HomeGalleryMarquee />
         <section className="ed-wrap pb-16 sm:pb-24">
           <div className="flex flex-wrap items-end justify-between gap-4 border-t border-onyx/10 pt-10">
             <div>
