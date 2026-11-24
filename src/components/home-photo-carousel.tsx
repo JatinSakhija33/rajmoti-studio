@@ -1,117 +1,107 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ArrowLeft, ArrowRight, Pause, Play } from "lucide-react";
 import { homeHeroSlides } from "@/lib/homepage-gallery";
+import { usePrefersReducedMotion } from "@/lib/motion";
 
-/** Curated real Rajmoti photos; motion is optional and never alters source images. */
-export function HomePhotoCarousel() {
-  const [active, setActive] = useState(0);
+// Match the original studio slideshow’s ten-second pace.
+const rotationMs = 10_000;
+const totalSlides = homeHeroSlides.length;
+const changeIndex = (current: number, offset: number) => (current + offset + totalSlides) % totalSlides;
+
+export function HomePhotoCarousel({ children }: { children: ReactNode }) {
+  const [requested, setRequested] = useState(0);
+  const [visible, setVisible] = useState({ current: 0, previous: -1 });
+  const [loaded, setLoaded] = useState<number[]>([]);
   const [paused, setPaused] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const [hovering, setHovering] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReducedMotion(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
+    if (loaded.includes(requested) && requested !== visible.current) {
+      setVisible({ current: requested, previous: visible.current });
+    }
+  }, [requested, loaded, visible.current]);
 
   useEffect(() => {
-    if (paused || reducedMotion) return;
+    if (paused || hovering || focused || reducedMotion || requested !== visible.current) return;
     const timer = window.setInterval(() => {
-      if (!document.hidden) setActive((current) => (current + 1) % homeHeroSlides.length);
-    }, 6500);
+      if (!document.hidden) setRequested((current) => changeIndex(current, 1));
+    }, rotationMs);
     return () => window.clearInterval(timer);
-  }, [active, paused, reducedMotion]);
+  }, [paused, hovering, focused, reducedMotion, requested, visible.current]);
 
-  const slide = homeHeroSlides[active];
+  const slide = homeHeroSlides[visible.current];
+  // Keep the visible image until the selected one has loaded. Only warm one future slide.
+  const rendered = new Set([visible.current, visible.previous, requested]);
+  if (loaded.includes(visible.current) && !paused && !reducedMotion) {
+    rendered.add(changeIndex(visible.current, 1));
+  }
+
   return (
-    <figure
-      className="home-hero-image home-carousel"
+    <section
+      className="home-carousel home-carousel-stage"
       aria-roledescription="carousel"
-      aria-label="Rajmoti Studio selected photography"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocusCapture={() => setPaused(true)}
+      aria-label="Rajmoti Studio featured photography"
+      onPointerEnter={(event) => { if (event.pointerType === "mouse") setHovering(true); }}
+      onPointerLeave={() => setHovering(false)}
+      onFocusCapture={() => setFocused(true)}
       onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setPaused(false);
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false);
       }}
     >
-      <div className="home-carousel-stage">
-        {homeHeroSlides.map((item, index) => (
+      {homeHeroSlides.map((item, index) => {
+        if (!rendered.has(index)) return null;
+        const current = index === visible.current;
+        return (
           <div
             key={item.id}
             className={"home-carousel-slide" + (item.portrait ? " is-portrait" : "") +
-              (index === active ? " is-active" : "")}
-            aria-hidden={index !== active}
+              (current ? " is-active" : index === visible.previous ? " is-previous" : "")}
+            aria-hidden={!current}
           >
-            <div
-              className="home-carousel-ambient"
-              style={{ backgroundImage: "url('" + item.medium + "')" }}
-              aria-hidden="true"
-            />
-            <img
-              src={item.src}
-              width={item.portrait ? 1280 : 1920}
-              height={item.portrait ? 1920 : 1280}
-              alt={index === active ? item.alt : ""}
-              loading={index === 0 ? "eager" : "lazy"}
-              fetchPriority={index === 0 ? "high" : "auto"}
-              decoding="async"
-            />
+            <picture>
+              <source media="(max-width: 640px)" srcSet={item.medium} />
+              <img
+                src={item.src}
+                width={item.portrait ? 1280 : 1920}
+                height={item.portrait ? 1920 : 1280}
+                alt={current ? item.alt : ""}
+                fetchPriority={index === 0 ? "high" : index === requested ? "auto" : "low"}
+                decoding="async"
+                onLoad={() => setLoaded((ready) => ready.includes(index) ? ready : [...ready, index])}
+                onError={() => setRequested((target) => target === index ? visible.current : target)}
+              />
+            </picture>
           </div>
-        ))}
-        <div className="home-carousel-shade" aria-hidden="true" />
-        <div className="home-carousel-caption" aria-live="off">
-          <span className="home-carousel-eyebrow">{slide.eyebrow}</span>
-          <span className="home-carousel-headline">{slide.headline}</span>
-        </div>
-        <div className="home-carousel-controls" aria-label="Slideshow controls">
-          <button
-            type="button"
-            onClick={() => setActive((current) =>
-              (current - 1 + homeHeroSlides.length) % homeHeroSlides.length)}
-            aria-label="Previous photograph"
-          >
-            <ArrowLeft size={16} aria-hidden="true" />
-          </button>
-          <span className="home-carousel-counter" aria-hidden="true">
-            {String(active + 1).padStart(2, "0")} / {String(homeHeroSlides.length).padStart(2, "0")}
-          </span>
-          <button
-            type="button"
-            onClick={() => setActive((current) => (current + 1) % homeHeroSlides.length)}
-            aria-label="Next photograph"
-          >
-            <ArrowRight size={16} aria-hidden="true" />
-          </button>
-          {!reducedMotion && (
-            <button
-              type="button"
-              onClick={() => setPaused((current) => !current)}
-              aria-label={paused ? "Resume automatic slideshow" : "Pause automatic slideshow"}
-              aria-pressed={paused}
-            >
-              {paused ? <Play size={15} aria-hidden="true" /> : <Pause size={15} aria-hidden="true" />}
+        );
+      })}
+      <div className="home-carousel-shade" aria-hidden="true" />
+      <div className="ed-wrap home-carousel-layout">
+        <div className="home-carousel-copy">{children}</div>
+        <div className="home-carousel-bar">
+          <p className="home-carousel-credit">Rajmoti Studio · {slide.category}</p>
+          <div className="home-carousel-controls" aria-label="Slideshow controls">
+            <button type="button" onClick={() => setRequested((index) => changeIndex(index, -1))}
+              aria-label="Previous photograph">
+              <ArrowLeft size={17} aria-hidden />
             </button>
-          )}
+            <span className="home-carousel-counter" aria-hidden="true">
+              {String(visible.current + 1).padStart(2, "0")} / {String(totalSlides).padStart(2, "0")}
+            </span>
+            <button type="button" onClick={() => setRequested((index) => changeIndex(index, 1))}
+              aria-label="Next photograph">
+              <ArrowRight size={17} aria-hidden />
+            </button>
+            {!reducedMotion && (
+              <button type="button" onClick={() => setPaused((current) => !current)}
+                aria-label={paused ? "Resume automatic slideshow" : "Pause automatic slideshow"}>
+                {paused ? <Play size={16} aria-hidden /> : <Pause size={16} aria-hidden />}
+              </button>
+            )}
+          </div>
         </div>
       </div>
-      <figcaption className="home-carousel-credit">
-        Rajmoti Studio · {slide.category} · Original studio work
-      </figcaption>
-      <div className="home-carousel-dots" role="group" aria-label="Choose a featured photograph">
-        {homeHeroSlides.map((item, index) => (
-          <button
-            type="button"
-            key={item.id}
-            className={index === active ? "is-active" : ""}
-            aria-label={"Show photograph " + (index + 1) + ": " + item.category}
-            aria-current={index === active ? "true" : undefined}
-            onClick={() => setActive(index)}
-          />
-        ))}
-      </div>
-    </figure>
+    </section>
   );
 }

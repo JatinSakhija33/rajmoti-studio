@@ -1312,6 +1312,24 @@
   background: #34342b;
   color: #fff8ec;
 }
+.package-category-nav a {
+  border: 1px solid var(--ed-line);
+  padding: 10px 13px;
+  font-size: 13px;
+}
+.package-category-nav a:hover,
+.package-category-nav a:focus-visible { border-color: currentColor; }
+.package-section { scroll-margin-top: 120px; margin: 48px 0; }
+.package-section-heading { margin-bottom: 17px; border-bottom: 1px solid var(--ed-line); padding-bottom: 12px; }
+.package-section-heading h2 { font-size: clamp(26px, 4vw, 40px); }
+.package-section-heading p { font-size: 13px; color: var(--ed-muted); }
+.package-section .collection-card { display: flex; flex-direction: column; gap: 10px; }
+.package-section .collection-card h3 { font-size: clamp(23px, 2.4vw, 31px); line-height: 1.14; }
+.package-duration { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ed-muted); }
+.package-section .collection-card .package-inclusions { list-style: disc; padding-inline-start: 17px; }
+.package-section .collection-card .package-inclusions li { display: list-item; }
+.package-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: auto; padding-top: 8px; }
+.package-section .collection-card .package-card-actions .ed-button { width: auto; }
 .package-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

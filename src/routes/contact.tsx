@@ -24,6 +24,7 @@ const services = [
   ["Maternity", "મેટરનિટી ફોટોગ્રાફી"],
   ["Family", "પરિવારની ફોટોગ્રાફી"],
   ["Wedding", "લગ્નની ફોટોગ્રાફી"],
+  ["Cinematic reels", "સિનેમેટિક રીલ્સ"],
   ["Photo gifting", "ફોટો ભેટ"],
   ["Corporate / bulk gifts", "કોર્પોરેટ / મોટી સંખ્યામાં ભેટ"],
   ["Passport photos", "પાસપોર્ટ ફોટા"],

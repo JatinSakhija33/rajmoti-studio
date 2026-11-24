@@ -29,32 +29,26 @@ function Home() {
     <div className="editorial">
       <SiteNav />
       <main>
-        <section className="ed-wrap home-hero">
-          <div className="home-hero-copy">
-            <p className="ed-kicker">Jetpur, Gujarat · Since 1982</p>
-            <h1>
-              Little moments.
-              <br />
-              <em>Lasting stories.</em>
-            </h1>
-            <p className="ed-copy">
-              Baby, maternity, family and wedding photography. Thoughtfully made, for the people who
-              mean everything.
-            </p>
-            <div className="ed-actions">
-              <Link to="/portfolios" className="ed-button">
-                View photography <ArrowRight size={17} />
-              </Link>
-              <Link to="/gifts" className="ed-text-button">
-                Shop photo gifts <ArrowUpRight size={16} />
-              </Link>
-            </div>
-            <div className="hero-signature">
-              <span className="signature-line" />A family studio. A lifetime of memories.
-            </div>
+        <HomePhotoCarousel>
+          <p className="ed-kicker">Jetpur, Gujarat · Since 1982</p>
+          <h1>
+            Little moments.
+            <br />
+            <em>Lasting stories.</em>
+          </h1>
+          <p className="ed-copy">
+            Baby, maternity, family and wedding photography. Thoughtfully made, for the people who
+            mean everything.
+          </p>
+          <div className="ed-actions">
+            <Link to="/portfolios" className="ed-button">
+              View photography <ArrowRight size={17} />
+            </Link>
+            <Link to="/gifts" className="ed-text-button">
+              Shop photo gifts <ArrowUpRight size={16} />
+            </Link>
           </div>
-          <HomePhotoCarousel />
-        </section>
+        </HomePhotoCarousel>
         <div className="ed-wrap heritage-line">
           <span>Photographing generations since 1982</span>
           <span>Personal guidance, from session to print</span>

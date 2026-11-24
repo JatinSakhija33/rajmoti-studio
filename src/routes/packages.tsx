@@ -1,99 +1,109 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, Clock3, MessageCircle } from "lucide-react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { canonicalFor } from "@/lib/seo";
 import { packagesQuery } from "@/lib/queries";
+import { formatPrice, waMessage, whatsappLink } from "@/lib/site";
+import { publishedPackages, type PublicPackage } from "@/lib/published-packages";
 
 export const Route = createFileRoute("/packages")({
   head: () => ({
-    meta: [{ title: "Photography session collections — Rajmoti Studio" }],
+    meta: [{ title: "Photography packages & pricing in Jetpur — Rajmoti Studio" },
+      { name: "description", content: "Explore Rajmoti Studio’s baby, maternity, family, wedding and cinematic reel packages in Jetpur." }],
     links: canonicalFor("/packages").links,
   }),
   component: Packages,
 });
-const services = ["Baby", "Maternity", "Family", "Wedding"] as const;
+
+const primary = [
+  { slug: "baby", title: "Baby photography", session: "Baby" },
+  { slug: "maternity", title: "Maternity photography", session: "Maternity" },
+  { slug: "family", title: "Family portraits", session: "Family" },
+  { slug: "wedding", title: "Wedding photography", session: "Wedding" },
+  { slug: "cinematic-reels", title: "Cinematic reels", session: "Cinematic reels" },
+];
 
 function Packages() {
-  const [service, setService] = useState<(typeof services)[number]>("Baby");
-  const { data = [], isPending } = useQuery(packagesQuery);
-  const packages = data.filter(
-    (item) =>
-      item.categories?.name?.toLowerCase() === service.toLowerCase() ||
-      item.categories?.slug === service.toLowerCase(),
-  );
+  const { data } = useQuery(packagesQuery);
+  const catalogue: PublicPackage[] = data?.length ? data : publishedPackages;
+  const sections = new Map(primary.map((entry) => [entry.slug, { ...entry, items: [] as PublicPackage[] }]));
+  for (const item of catalogue) {
+    const category = item.categories ?? (item.slug.endsWith("-cinematic-reel")
+      ? { slug: "cinematic-reels", name: "Cinematic reels" }
+      : { slug: "other", name: "Other collections" });
+    const section = sections.get(category.slug) ?? {
+      slug: category.slug, title: category.name, session: category.name, items: [],
+    };
+    section.items.push(item);
+    sections.set(category.slug, section);
+  }
+  const collections = Array.from(sections.values()).filter((section) => section.items.length > 0);
+
   return (
     <div className="editorial">
       <SiteNav />
       <main className="ed-wrap packages-page">
         <p className="ed-kicker">Photography sessions · Jetpur</p>
-        <h1>
-          Plan a session
-          <br />
-          <em>that feels like you.</em>
-        </h1>
+        <h1>Photography packages & pricing</h1>
         <p className="ed-copy">
-          Choose a session type to see current collections or discuss a plan with the studio.
+          Compare what’s included, then share your dates with the studio. We’ll confirm availability and
+          any details that depend on your session.
         </p>
-        <div className="session-tabs" role="group" aria-label="Photography category">
-          {services.map((item) => (
-            <button
-              key={item}
-              aria-pressed={service === item}
-              className={service === item ? "active" : ""}
-              onClick={() => setService(item)}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-        {isPending ? (
-          <p role="status">Loading current collections…</p>
-        ) : packages.length ? (
-          <div className="package-grid">
-            {packages.map((item) => (
-              <article className="collection-card" key={item.id}>
-                <p className="ed-kicker">{service}</p>
-                <h2>{item.name}</h2>
-                {!!item.description && <p className="collection-subtitle">{item.description}</p>}
-                <strong className="collection-price">
-                  {typeof item.price === "number" && item.price > 0
-                    ? `₹${item.price.toLocaleString("en-IN")}`
-                    : "Ask for a quotation"}
-                </strong>
-                {!!item.package_features?.length && (
-                  <ul>
-                    {item.package_features.map((feature) => (
-                      <li key={feature.id}>{feature.feature}</li>
-                    ))}
-                  </ul>
-                )}
-                <Link
-                  className="ed-button outline"
-                  to="/contact"
-                  search={{ session: service, package: item.name }}
-                >
-                  Discuss this collection <ArrowRight size={16} />
-                </Link>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="wedding-collection">
-            <h2>Tell us about your {service.toLowerCase()} session.</h2>
-            <p>
-              The studio can help you choose coverage, photographs and keepsakes and confirm an
-              individual quotation.
-            </p>
-            <Link className="ed-button" to="/contact" search={{ session: service }}>
-              Discuss a session <ArrowRight size={16} />
-            </Link>
-          </div>
-        )}
+        <nav aria-label="Jump to a package category" className="session-tabs package-category-nav">
+          {collections.map(({ slug, title }) => <a key={slug} href={"#" + slug}>{title}</a>)}
+        </nav>
+        {collections.map(({ slug, title, session, items }) => (
+          <section id={slug} key={slug} className="package-section" aria-labelledby={slug + "-title"}>
+            <div className="package-section-heading">
+              <h2 id={slug + "-title"}>{title}</h2>
+              <p>{items.length} {items.length === 1 ? "package" : "packages"}</p>
+            </div>
+            <div className="package-grid">
+              {items.map((item) => <PackageCard key={item.slug} item={item} session={session} />)}
+            </div>
+          </section>
+        ))}
+        <section className="wedding-collection">
+          <h2>Need a custom session?</h2>
+          <p>Tell us what you’re planning and we can discuss a package that fits.</p>
+          <Link className="ed-button" to="/contact">
+            Ask the studio <ArrowRight size={16} aria-hidden />
+          </Link>
+        </section>
       </main>
       <SiteFooter />
     </div>
+  );
+}
+
+function PackageCard({ item, session }: { item: PublicPackage; session: string }) {
+  const features = [...item.package_features].sort((a, b) => a.display_order - b.display_order);
+  return (
+    <article className="collection-card">
+      <h3>{item.name.trim()}</h3>
+      <strong className="collection-price">
+        {typeof item.price === "number" && item.price > 0
+          ? formatPrice(item.price, item.currency)
+          : "Ask for a quotation"}
+      </strong>
+      {item.duration && <p className="package-duration"><Clock3 size={14} aria-hidden /> {item.duration}</p>}
+      {item.description?.trim() && <p className="collection-subtitle">{item.description.trim()}</p>}
+      {features.length > 0 && (
+        <ul className="package-inclusions">
+          {features.map(({ feature }, index) => <li key={index}>{feature}</li>)}
+        </ul>
+      )}
+      <div className="package-card-actions">
+        <Link className="ed-button outline" to="/contact" search={{ session, package: item.name.trim() }}>
+          Check availability <ArrowRight size={16} aria-hidden />
+        </Link>
+        <a className="ed-text-button" href={whatsappLink(waMessage.package(item.name.trim()))}
+          target="_blank" rel="noopener noreferrer">
+          <MessageCircle size={15} aria-hidden /> Ask on WhatsApp
+        </a>
+      </div>
+    </article>
   );
 }
