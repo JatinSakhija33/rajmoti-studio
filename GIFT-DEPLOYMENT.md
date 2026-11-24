@@ -46,3 +46,7 @@ Use Node 22.12 or newer (pinned `.node-version`), then `npm ci`, `npm run typech
 `node --import ./tests/json-imports.mjs tests/gift-browser.mjs` serves the production build against the actual Pages handlers, a migrated SQLite database and in-memory private object storage. It uses Edge by default (`EDGE_PATH` can override the executable). Only external Turnstile and authentication responses are simulated. It creates no live order or payment. Screenshots/report go to the sibling `integration-audit/browser` folder. Live Supabase sign-in, deployed D1/R2 permissions and real bank reconciliation still require a configured deployment and owner access.
 
 Functions use plain JSON imports compatible with Cloudflare's Wrangler 3.114.17. The test-only preload supplies Node's required JSON import attributes; it is never imported by production Functions. Reproduce the deployed bundler with `npx wrangler@3.114.17 pages functions build --outdir ../integration-audit/worker-wrangler3`. The frontend build and Functions build are separate checks.
+
+## Public catalogue prices
+
+Bind a private R2 bucket as `CATALOGUE_STORE` in the Pages environment. If that binding is absent, the price API uses the existing private `STUDIO_PRIVATE_FILES` binding under a separate key prefix. In Admin → Product catalogue → Edit, publish prices for the registered variants. Blank values mean “Price on request.” The same server-side owner verification protects publishing.

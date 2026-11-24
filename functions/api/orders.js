@@ -1,3 +1,4 @@
+import { catalogueStore, readCataloguePrices } from "../_lib/catalogue-prices.js";
 import { json, failure, cleanOrder, verifyTurnstile, assertOrigin, signUpload, signTracking, buildUpiUri, UPI_CONFIG } from "../_lib/security.js";
 function result(order, env) {
   const total=Number(order.total_amount_paise), due=Math.max(0,total-Number(order.verified_paid_paise||0));
@@ -18,7 +19,8 @@ export async function onRequestPost({request,env}) {
     while(true){const {done,value}=await reader.read();if(done)break;length+=value.length;if(length>256000){await reader.cancel();return failure("Order instructions are too large",413);}chunks.push(value);}
     const bytes=new Uint8Array(length);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}
     const raw=JSON.parse(new TextDecoder().decode(bytes));
-    let order;try{order=cleanOrder(raw);}catch(error){return failure(error.message,400);}
+    const { prices } = await readCataloguePrices(catalogueStore(env));
+    let order;try{order=cleanOrder(raw,prices);}catch(error){return failure(error.message,400);}
     if(raw.expectedTotalPaise!==order.totalAmountPaise)return failure("The cart price has changed. Please review your selected variants before ordering.",409);
     await verifyTurnstile(request,env,raw.turnstileToken);
     const existing=await env.ORDER_DB.prepare("SELECT * FROM orders WHERE request_key=?").bind(order.clientRequestId).first();

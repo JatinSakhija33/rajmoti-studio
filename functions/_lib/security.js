@@ -1,5 +1,4 @@
-import seed from "../../src/features/catalogue/seed.json";
-import extras from "../../src/features/catalogue/gift-extras.json";
+import { catalogueProducts } from "./catalogue-prices.js";
 const MIME = {"image/jpeg":".jpg","image/png":".png","image/webp":".webp"};
 export const STAGES = ["received","editing","review","printing","framing","ready","delivered","cancelled"];
 
@@ -99,7 +98,7 @@ export function phoneNumber(s) {
  const ten=digits.startsWith("91") && digits.length===12 ? digits.slice(2) : digits;
  return /^[6-9]\d{9}$/.test(ten)?ten:null;
 }
-export function cleanOrder(raw={}) {
+export function cleanOrder(raw = {}, prices = {}) {
  if(!raw || typeof raw!=="object" || Array.isArray(raw)) throw Error("Invalid form");
  const name=clean(raw.name,120),phone=phoneNumber(raw.phone),kind=clean(raw.type,60);
  if(name.length<2 || !phone || !kind)throw Error("Enter a name, 10-digit phone and service");
@@ -129,17 +128,20 @@ export function cleanOrder(raw={}) {
  }
 
  if(Array.isArray(raw.quote) && raw.quote.length>12)throw Error("Too many selected gifts");
- const catalogue=[...seed.products,...extras.products];
  const quote=(Array.isArray(raw.quote)?raw.quote:[]).map(item=>{
-   const p=catalogue.find(p=>p.id===item?.productId);
+   const p=catalogueProducts.find(p=>p.id===item?.productId);
    const v=p?.variants.find(v=>v.id===item?.variantId);
    if(!p || !v || p.availability==='Discontinued')throw Error('A selected product or variant is unavailable');
+   if (item.quoteOnly === true) throw Error('This item requires a studio quotation before payment');
    const quantity=Number(item.quantity);
    if(!Number.isSafeInteger(quantity) || quantity<1 || quantity>50)throw Error('Choose a whole quantity from 1 to 50');
    if(!p.personalisation.includes(item.personalisation) || !p.packaging.includes(item.packaging) || !p.orderTypes.includes(item.orderType))throw Error('Invalid product options');
    let unitPaise;
-   if(v.price!=null)unitPaise=Math.round(Number(v.price)*100);
-   else if(['frames','acrylic','led','drinkware','canvas','gods-collection','magazines'].includes(p.category))unitPaise=calculateVariantPricePaise(p.id,v.size,v.finish);
+   if (Object.hasOwn(prices, v.id)) {
+     if (prices[v.id] === null) throw Error('This item requires a studio quotation before payment');
+     unitPaise = prices[v.id];
+   } else if(v.price!=null)unitPaise=Math.round(Number(v.price)*100);
+   else if(!p.id.startsWith('SHP-') && ['frames','acrylic','led','drinkware','canvas','gods-collection','magazines'].includes(p.category))unitPaise=calculateVariantPricePaise(p.id,v.size,v.finish);
    else throw Error('This item requires a studio quotation before payment');
    if(!Number.isSafeInteger(unitPaise) || unitPaise<=0)throw Error('A price must be confirmed before payment');
    let design;

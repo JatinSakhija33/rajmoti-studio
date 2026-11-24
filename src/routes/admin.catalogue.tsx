@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { CataloguePriceEditor } from "@/components/admin/catalogue-price-editor";
 import { Plus, Save, Download, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -10,7 +11,7 @@ import {
   type Product,
 } from "@/features/catalogue/store";
 export const Route = createFileRoute("/admin/catalogue")({
-  head: () => ({ meta: [{ title: "Catalogue manager — Rajmoti Studio demo" }] }),
+  head: () => ({ meta: [{ title: "Catalogue manager — Rajmoti Studio" }] }),
   component: Manager,
 });
 function Manager() {
@@ -18,6 +19,7 @@ function Manager() {
   const [search, setSearch] = useState("");
   const [draft, setDraft] = useState<Product | null>(null);
   const [error, setError] = useState("");
+  const priceProduct = seedProducts.find((product) => product.id === draft?.id);
   const matches = products.filter((p) =>
     `${p.id} ${p.name}`.toLowerCase().includes(search.toLowerCase()),
   );
@@ -44,7 +46,7 @@ function Manager() {
       setProducts([...products.filter((p) => p.id !== draft.id), draft]);
       setDraft(null);
       setError("");
-      toast.success("Demo catalogue updated in this browser");
+      toast.success("Product draft saved in this browser");
     } catch {
       setError("Could not save. Check browser storage.");
     }
@@ -72,13 +74,13 @@ function Manager() {
   }
   return (
     <div className="editorial catalogue-admin">
-      <p className="ed-kicker">Owner workspace · demonstration only</p>
+      <p className="ed-kicker">Studio catalogue</p>
       <div className="ed-section-heading">
         <div>
           <h1>Product catalogue</h1>
           <p>
             {products.length} products · {products.reduce((n, p) => n + p.variants.length, 0)}{" "}
-            variants · browser-local data
+            variants
           </p>
         </div>
         <div className="ed-actions">
@@ -93,13 +95,14 @@ function Manager() {
         </div>
       </div>
       <p className="ed-notice">
-        Edits appear in the public demo directory on this browser. They do not confirm supplier
-        stock or publish a live catalogue. Product photography, prices and timings still need
-        verification.
+        Use “Publish prices to site” to update prices for customers. Product details edited below
+        are browser-local drafts.
       </p>
       {draft ? (
         <div className="admin-product-editor">
           <h2>{draft.name}</h2>
+          {priceProduct && <CataloguePriceEditor key={priceProduct.id} product={priceProduct} />}
+          <h3>Product details draft</h3>
           <div className="admin-fields">
             {(
               [
@@ -272,7 +275,7 @@ function Manager() {
           <div className="ed-actions">
             <button className="ed-button" onClick={save}>
               <Save size={16} />
-              Save demonstration product
+              Save local product draft
             </button>
             <button className="ed-button outline" onClick={() => setDraft(null)}>
               Cancel

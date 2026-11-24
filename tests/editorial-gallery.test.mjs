@@ -43,7 +43,11 @@ test("all 385 Cloudflare photos feed the loop with only 14 tiles mounted", () =>
   assert.match(read("src/features/editorial/home-gallery.css"), /prefers-reduced-motion: reduce/);
 });
 
-test("landscape family cover is displayed without cropping the group", () => {
-  assert.match(read("src/components/photography-chapters.tsx"), /objectFit: "contain"/);
-  assert.match(read("src/routes/portfolios.index.tsx"), /card.slug === "family" \? "object-contain"/);
+test("hero, chapters, portfolios and gallery show the entire foreground photo", () => {
+  const editorial = read("src/features/editorial/editorial.css");
+  const gallery = read("src/features/editorial/home-gallery.css");
+  assert.match(editorial, /\.chapter-image img\s*\{[^}]*object-fit:\s*contain/);
+  assert.match(gallery, /\.home-carousel-slide img\s*\{[^}]*object-fit:\s*contain/);
+  assert.match(gallery, /\.home-gallery-tile img\s*\{[^}]*object-fit:\s*contain/);
+  assert.match(read("src/routes/portfolios.index.tsx"), /size-full object-contain/);
 });

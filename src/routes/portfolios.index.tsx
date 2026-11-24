@@ -79,21 +79,11 @@ function PortfoliosIndex() {
               >
                 {card.cover && (
                   <>
-                    {card.slug === "family" && (
-                      <img
-                        src={card.cover}
-                        alt=""
-                        aria-hidden="true"
-                        loading={index < 2 ? "eager" : "lazy"}
-                        className="absolute inset-0 size-full object-cover blur-2xl scale-110 opacity-60"
-                      />
-                    )}
                     <img
                       src={card.cover}
                       alt=""
                       loading={index < 2 ? "eager" : "lazy"}
-                      className={"absolute inset-0 size-full transition-transform duration-[1200ms] group-hover:scale-105 motion-reduce:transform-none " +
-                        (card.slug === "family" ? "object-contain" : "object-cover")}
+                      className="absolute inset-0 size-full object-contain"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-onyx/85 via-onyx/25 to-transparent" />
                   </>

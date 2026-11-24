@@ -1,5 +1,7 @@
 import seed from "./seed.json";
 import extras from "./gift-extras.json";
+import supplierProducts from "./supplier-products.json";
+import { useCataloguePrices } from "./catalogue-prices";
 import type { GiftDesign } from "./gift-design";
 import { useSyncExternalStore } from "react";
 type SeedProduct = (typeof seed.products)[number];
@@ -53,13 +55,23 @@ export function useLocal<T>(key: string, fallback: T): [T, (data: T) => void] {
   } catch {}
   return [value, (v: T) => write(key, v)];
 }
-export function useProducts() {
-  return useLocal<Product[]>(keys.catalogue, [...seed.products, ...extras.products]);
+export const seedProducts: Product[] = [...seed.products, ...extras.products, ...supplierProducts];
+
+export function useProducts(): [Product[], (products: Product[]) => void] {
+  const [local, setLocal] = useLocal<Product[]>(keys.catalogue, seedProducts);
+  const { data } = useCataloguePrices();
+  const products = new Map(seedProducts.map((product) => [product.id, product]));
+  local.forEach((product) => products.set(product.id, product));
+  const prices = data?.prices;
+  return [[...products.values()].map((product) => prices ? {
+    ...product,
+    variants: product.variants.map((variant) => {
+      if (!Object.hasOwn(prices, variant.id)) return variant;
+      const paise = prices[variant.id];
+      return { ...variant, price: paise === null ? null : paise / 100 };
+    }),
+  } : product), setLocal];
 }
-export function getProducts() {
-  return read<Product[]>(keys.catalogue, [...seed.products, ...extras.products]);
-}
-export const seedProducts: Product[] = [...seed.products, ...extras.products];
 export function useQuote() {
   return useLocal<QuoteLine[]>(keys.quote, []);
 }
@@ -111,7 +123,7 @@ export function exportCatalogue(products: Product[]) {
       p.orderTypes.join(" / "),
       p.packaging.join(" / "),
       p.availability,
-      "Not confirmed",
+      v.price ?? "On request",
       p.production,
       p.delivery.join(" / "),
       "DEMONSTRATION — proposed specifications",

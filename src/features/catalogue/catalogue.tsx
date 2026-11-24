@@ -3,6 +3,7 @@ import { GiftDiscovery, giftSample } from "./GiftDiscovery";
 import { giftPrice, minimumGiftPrice } from "./gift-pricing";
 import { rememberCartPhotos, type GiftDraft } from "./gift-design";
 import { GiftCart } from "./GiftCart";
+import { getGiftCollection, giftCollectionProductImage } from "./gift-collections";
 import { useMemo, useState, useRef } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -59,7 +60,8 @@ function normal(s: string) {
     .replace(/\s+/g, "")
     .replace(/inches|inch/g, "in");
 }
-export function Catalogue({ productId, preferredVariantId }: { productId?: string; preferredVariantId?: string }) {
+export function Catalogue({ productId, preferredVariantId, collectionId }: { productId?: string; preferredVariantId?: string; collectionId?: string }) {
+  const collection = getGiftCollection(collectionId);
   const [products] = useProducts();
   const [quote, setQuote] = useQuote();
   const navigate = useNavigate();
@@ -94,6 +96,7 @@ export function Catalogue({ productId, preferredVariantId }: { productId?: strin
             ].join(" "),
           );
           return (
+            (!collection || collection.products.includes(p.id)) &&
             (!q || hay.includes(term)) &&
             (budget == null || (minimumGiftPrice(p) != null && minimumGiftPrice(p)! <= budget)) &&
             (!filters.category || p.category === filters.category || (filters.category === "magazines" && p.category === "albums")) &&
@@ -116,7 +119,7 @@ export function Catalogue({ productId, preferredVariantId }: { productId?: strin
               ? b.variants.length - a.variants.length
               : 0,
         ),
-    [products, q, filters, sort, budget],
+    [products, q, filters, sort, budget, collection],
   );
   const update = (key: keyof Filters, value: string) => {
     setFilters((f) => ({ ...f, [key]: value }));
@@ -125,7 +128,7 @@ export function Catalogue({ productId, preferredVariantId }: { productId?: strin
   const open = (id?: string) => {
     const variant = products.find((p) => p.id === id)?.variants
       .find((v) => v.size === filters.size)?.id;
-    return navigate({ to: "/gifts", search: { product: id, variant }, resetScroll: false });
+    return navigate({ to: "/gifts", search: { product: id, variant, collection: collectionId }, resetScroll: false });
   };
   function toggleCompare(id: string) {
     setCompare((list) => {
@@ -218,7 +221,8 @@ export function Catalogue({ productId, preferredVariantId }: { productId?: strin
           <div className="ed-section-heading">
             <div>
               <p className="ed-kicker">A thoughtful choice, down to the detail</p>
-              <h2>Find your keepsake.</h2>
+              <h2>{collection?.name ?? "Find your keepsake."}</h2>
+              {collection && <Link to="/gifts" hash="directory" className="ed-text-button">See all products</Link>}
             </div>
             <div className="ed-actions">
               <button className="ed-button outline" onClick={() => setShowQuote(true)}>
@@ -369,8 +373,10 @@ export function Catalogue({ productId, preferredVariantId }: { productId?: strin
                 </div>
               ) : (
                 <div className="product-grid">
-                  {matching.slice(0, shown).map((p, i) => (
-                    <article className="product-card" key={p.id}>
+                  {matching.slice(0, shown).map((p) => {
+                    const illustratedProduct = giftCollectionProductImage(p.id);
+                    const image = illustratedProduct || (!p.id.startsWith("SHP-") ? giftSample(p.category, p.id) : "");
+                    return <article className="product-card" key={p.id}>
                       <button
                         className={"compare-toggle " + (compare.includes(p.id) ? "selected" : "")}
                         onClick={() => toggleCompare(p.id)}
@@ -380,7 +386,12 @@ export function Catalogue({ productId, preferredVariantId }: { productId?: strin
                         {compare.includes(p.id) ? <Check size={15} /> : <Plus size={15} />}
                       </button>
                       <button className="product-card-main" onClick={() => open(p.id)}>
-                        <div className={"gift-product-photograph gift-family-"+p.category}><img src={giftSample(p.category,p.id)} alt={p.name+" sample photo artwork"} loading="lazy"/><span>Interactive preview</span><small>Sample artwork</small></div>
+                        {image && (
+                          <div className={"gift-product-photograph gift-family-" + p.category}>
+                            <img src={image} alt="" loading="lazy" />
+                            <small>{illustratedProduct ? "Illustrative product image" : "Sample artwork"}</small>
+                          </div>
+                        )}
                         <div className="product-card-copy">
                           <p className="ed-kicker">
                             {p.material} · {p.shape}
@@ -399,8 +410,8 @@ export function Catalogue({ productId, preferredVariantId }: { productId?: strin
                           </div>
                         </div>
                       </button>
-                    </article>
-                  ))}
+                    </article>;
+                  })}
                 </div>
               )}
               {shown < matching.length && (
@@ -721,7 +732,7 @@ function Compare({ products, size }: { products: Product[]; size: string }) {
                   Personalisation: p.personalisation.join(", "),
                   Packaging: p.packaging.join(", "),
                   Availability: p.availability,
-                  Price: "To be quoted",
+                  Price: giftPrice(p, v) == null ? "Price on request" : "₹" + giftPrice(p, v)?.toLocaleString("en-IN"),
                 };
                 return <td key={p.id}>{data[key]}</td>;
               })}

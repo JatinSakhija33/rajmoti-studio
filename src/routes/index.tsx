@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { PhotographyChapters } from "@/components/photography-chapters";
 import { StudioMap } from "@/components/studio-map";
 import { HomePhotoCarousel } from "@/components/home-photo-carousel";
+import { HomeGiftCollections } from "@/components/home-gift-collections";
 import { HomeGalleryMarquee } from "@/components/home-gallery-marquee";
 import "@/features/editorial/home-gallery.css";
 import { useStyles } from "@/features/catalogue/store";
@@ -54,6 +55,7 @@ function Home() {
           <span>Personal guidance, from session to print</span>
           <span>A studio in the heart of Jetpur</span>
         </div>
+        <HomeGiftCollections />
         <PhotographyChapters showCollectionsLink />
         <section className="story-feature">
           <div className="ed-wrap story-feature-inner">
