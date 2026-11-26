@@ -27,6 +27,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import searchPages from "@/lib/search-pages.json";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import {
@@ -174,22 +175,18 @@ export function Catalogue({ productId, preferredVariantId }: { productId?: strin
           <div>
             <p className="ed-kicker">The Rajmoti gift collection</p>
             <h1>
-              Keep a little
+              Personalised photo gifts
               <br />
-              <em>of what matters.</em>
+              <em>in Jetpur.</em>
             </h1>
             <p className="ed-copy">
-              From a favourite photograph to something you can hold. Find the right material, size
-              and finish for your story.
+              Turn a favourite photograph into a custom mug, wooden frame, acrylic print or keychain.
+              Ask Rajmoti Studio for a quote, or try a design with your own photo.
             </p>
             <a className="ed-button" href="#directory">
               Explore the directory <ArrowRight size={16} />
             </a>
-            <div className="ed-inline-facts">
-              <span>18 product families</span>
-              <span>{products.length} product concepts</span>
-              <span>Made personal</span>
-            </div>
+
           </div>
           <figure className="gift-intro-image">
             <img
@@ -213,6 +210,14 @@ export function Catalogue({ productId, preferredVariantId }: { productId?: strin
             </p>
           </div>
         </div>
+        <section className="ed-wrap ed-section">
+          <h2>Explore popular personalised gifts</h2>
+          <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-3">
+            {searchPages.products.map((item) => <li key={item.slug}>
+              <Link to="/gifts/$productSlug" params={{ productSlug: item.slug }} className="ed-text-button">{item.heading} <ArrowRight size={15} /></Link>
+            </li>)}
+          </ul>
+        </section>
         <GiftDiscovery onCategory={value => { update("category", value); document.getElementById("directory")?.scrollIntoView({ behavior: "smooth" }); }} onOccasion={value => update("occasion", value)} onRecipient={value => update("recipient", value)} onBudget={value => { setBudget(value); setShown(12); }} onProduct={id => open(id)} />
         <section id="directory" className="ed-wrap directory-section">
           <div className="ed-section-heading">

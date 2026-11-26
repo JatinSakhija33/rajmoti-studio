@@ -12,11 +12,12 @@ import { HomeGalleryMarquee } from "@/components/home-gallery-marquee";
 import "@/features/editorial/home-gallery.css";
 import { useStyles } from "@/features/catalogue/store";
 import { directionsLink, SITE, whatsappLink } from "@/lib/site";
-import { canonicalFor } from "@/lib/seo";
+import { searchPageHead, localBusinessJsonLd } from "@/lib/seo";
+import searchPages from "@/lib/search-pages.json";
 export const Route = createFileRoute("/")({
   head: () => ({
-    meta: [{ title: "Rajmoti Studio — Little moments. Lasting stories. | Jetpur" }, canonicalFor("/").ogUrl],
-    links: canonicalFor("/").links,
+    ...searchPageHead(searchPages.home),
+    scripts: [{ type: "application/ld+json", children: JSON.stringify(localBusinessJsonLd()) }],
   }),
   component: Home,
 });
@@ -46,12 +47,12 @@ function Home() {
         <HomePhotoCarousel content={content.hero}>
           <p className="ed-kicker">{heroText("eyebrow") || "Jetpur, Gujarat · Since 1982"}</p>
           <h1>
-            {heroText("heading") || "Little moments."}
+            {heroText("heading") || "Photo studio"}
             <br />
-            <em>{heroText("heading_italic") || "Lasting stories."}</em>
+            <em>{heroText("heading_italic") || "in Jetpur."}</em>
           </h1>
           <p className="ed-copy">
-            {heroText("description") || "Baby, maternity, family and wedding photography. Thoughtfully made, for the people who mean everything."}
+            {heroText("description") || "Baby, maternity, family and wedding photography in Jetpur, plus passport photos, old photo restoration and personalised gifts."}
           </p>
           <div className="ed-actions">
             <a href={heroLink("cta_primary_href", "/portfolios")} className="ed-button">
@@ -69,6 +70,15 @@ function Home() {
         </div>
         <HomeGiftCollections />
         <PhotographyChapters showCollectionsLink />
+        <section className="ed-wrap ed-section">
+          <h2>Photo services at our Jetpur studio</h2>
+          <p className="ed-copy">Visit Rajmoti Studio for passport photos, restoration of old photographs or a Gujarati memorial portrait.</p>
+          <ul className="mt-5 space-y-3">
+            {searchPages.services.map((service) => <li key={service.slug}>
+              <Link to="/studio-services/$service" params={{ service: service.slug }} className="ed-text-button">{service.heading} <ArrowRight size={16} /></Link>
+            </li>)}
+          </ul>
+        </section>
         <section className="story-feature">
           <div className="ed-wrap story-feature-inner">
             <figure>

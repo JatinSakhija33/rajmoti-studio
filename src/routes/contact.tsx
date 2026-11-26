@@ -5,7 +5,8 @@ import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { StudioMap } from "@/components/studio-map";
 import { directionsLink, SITE, whatsappLink } from "@/lib/site";
-import { canonicalFor } from "@/lib/seo";
+import searchPages from "@/lib/search-pages.json";
+import { localBusinessJsonLd, searchPageHead } from "@/lib/seo";
 import { useStyles, useQuote, useProducts } from "@/features/catalogue/store";
 import { giftPrice } from "@/features/catalogue/gift-pricing";
 export const Route = createFileRoute("/contact")({
@@ -14,8 +15,8 @@ export const Route = createFileRoute("/contact")({
     session: typeof s.session === "string" ? s.session : undefined,
   }),
   head: () => ({
-    meta: [{ title: "Contact Rajmoti Studio — Sessions & Photo Gifts" }, canonicalFor("/contact").ogUrl],
-    links: canonicalFor("/contact").links,
+    ...searchPageHead(searchPages.pages.find((page) => page.path === "/contact")!),
+    scripts: [{ type: "application/ld+json", children: JSON.stringify(localBusinessJsonLd()) }],
   }),
   component: Contact,
 });
@@ -43,7 +44,7 @@ function serviceFor(session: string | undefined, hasGifts: boolean) {
 const texts = {
   en: {
     kicker: "Let’s make a little room for your story",
-    title: "Tell us what you have in mind.",
+    title: "Contact Rajmoti Studio in Jetpur",
     intro:
       "A few details are all we need to begin. Your selected styles and gifts stay with your enquiry.",
     type: "What are you planning?",
@@ -169,17 +170,7 @@ function Contact() {
           <>
             <div className="enquiry-heading">
               <p className="ed-kicker">{t.kicker}</p>
-              <h1>
-                {gu ? (
-                  t.title
-                ) : (
-                  <>
-                    A little conversation.
-                    <br />
-                    <em>A lovely beginning.</em>
-                  </>
-                )}
-              </h1>
+              <h1>{t.title}</h1>
               <p className="ed-copy">{t.intro}</p>
               <button type="button" lang={gu ? "en" : "gu"} onClick={() => setGu(!gu)} className="ed-text-button">
                 {t.language}

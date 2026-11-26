@@ -1,15 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Catalogue } from "@/features/catalogue/catalogue";
-import { canonicalFor } from "@/lib/seo";
+import searchPages from "@/lib/search-pages.json";
+import { searchPageHead } from "@/lib/seo";
 export const Route = createFileRoute("/gifts")({
   validateSearch: (s: Record<string, unknown>) => ({
     product: typeof s.product === "string" ? s.product : undefined,
     variant: typeof s.variant === "string" ? s.variant : undefined,
   }),
-  head: () => ({
-    meta: [{ title: "Photo gifts & product directory — Rajmoti Studio" }, canonicalFor("/gifts").ogUrl],
-    links: canonicalFor("/gifts").links,
-  }),
+  head: () => searchPageHead(searchPages.pages.find((page) => page.path === "/gifts")!),
   component: Page,
 });
 function Page() {

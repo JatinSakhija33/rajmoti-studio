@@ -1,0 +1,50 @@
+{
+  "home": {
+    "path": "/",
+    "title": "Photo Studio in Jetpur | Rajmoti Studio",
+    "heading": "Photo studio in Jetpur",
+    "description": "Rajmoti Studio in Jetpur, Gujarat offers baby, maternity, family and wedding photography, passport photos, photo restoration and personalised photo gifts.",
+    "image": "/portfolio/family/8078c206caa42114f4da-large-03fae45dbaa3.webp"
+  },
+  "pages": [
+    {"path":"/portfolios","title":"Photography Portfolios in Jetpur | Rajmoti Studio","heading":"Photography portfolios","description":"Browse baby, maternity, family and wedding photography from Rajmoti Studio in Jetpur, Gujarat."},
+    {"path":"/portfolios/baby","title":"Baby & Newborn Photography in Jetpur | Rajmoti Studio","heading":"Baby photography in Jetpur","description":"See newborn portraits, baby milestone photos and first-birthday cake smash ideas at Rajmoti Studio in Jetpur."},
+    {"path":"/portfolios/maternity","title":"Maternity Photoshoots in Jetpur | Rajmoti Studio","heading":"Maternity photography in Jetpur","description":"Explore maternity portraits and couple photoshoots at Rajmoti Studio in Jetpur. Ask about studio and outdoor sessions."},
+    {"path":"/portfolios/family","title":"Family Photography in Jetpur | Rajmoti Studio","heading":"Family photography in Jetpur","description":"Explore family portraits with children, parents and grandparents at Rajmoti Studio in Jetpur, Gujarat."},
+    {"path":"/portfolios/wedding","title":"Wedding Photography in Jetpur | Rajmoti Studio","heading":"Wedding photography in Jetpur","description":"Ask Rajmoti Studio about candid and traditional wedding photography, couple portraits and pre-wedding sessions in and around Jetpur."},
+    {"path":"/cinematic-reels","title":"Cinematic Reels & Video in Jetpur | Rajmoti Studio","heading":"Cinematic reels","description":"Explore cinematic reel shoots for couples, families and celebrations with Rajmoti Studio in Jetpur."},
+    {"path":"/packages","title":"Photography Packages in Jetpur | Rajmoti Studio","heading":"Photography packages","description":"Explore photography collections and ask Rajmoti Studio in Jetpur to confirm session options, inclusions and pricing."},
+    {"path":"/about","title":"About Rajmoti Studio | Photography in Jetpur Since 1982","heading":"About Rajmoti Studio","description":"Meet Rajmoti Studio, a photography and photo-printing studio serving Jetpur families since 1982."},
+    {"path":"/contact","title":"Contact & Directions | Rajmoti Studio, Jetpur","heading":"Contact Rajmoti Studio in Jetpur","description":"Get directions to Rajmoti Studio in Jetpur, Gujarat, or contact us for photography, passport photos, prints and personalised gifts."},
+    {"path":"/gifts","title":"Personalised Photo Gifts in Jetpur | Rajmoti Studio","heading":"Personalised photo gifts in Jetpur","description":"Explore custom photo mugs, wooden frames, acrylic prints and photo keychains. Request a quote from Rajmoti Studio in Jetpur."}
+  ],
+  "services": [
+    {
+      "slug":"passport-photos","path":"/studio-services/passport-photos","title":"Passport Photos in Jetpur | Rajmoti Studio","heading":"Passport photos in Jetpur",
+      "description":"Visit Rajmoti Studio in Jetpur for passport, visa and other ID photos. Tell us which application your photo is for so we can check the requested size and background.",
+      "question":"What should I bring for a passport photo?",
+      "answer":"Bring the photo instructions from the authority accepting your application, especially for visas or online forms. Tell us if you need printed photos, a digital file, or both.",
+      "button":"Ask about passport photos","enquiry":"Passport photos"
+    },
+    {
+      "slug":"photo-restoration","path":"/studio-services/photo-restoration","title":"Old Photo Restoration in Jetpur | Rajmoti Studio","heading":"Old photo restoration in Jetpur",
+      "description":"Bring an old, faded, scratched or damaged photograph to Rajmoti Studio in Jetpur. We assess the original and discuss how it can be restored and printed.",
+      "question":"Can a blurry or damaged old photo be restored?",
+      "answer":"It depends on the surviving detail. Bring the original or your clearest scan. We can assess fading, scratches and blur and explain what can be recovered while keeping the person’s likeness.",
+      "button":"Ask for a restoration quote","enquiry":"Photo restoration"
+    },
+    {
+      "slug":"gujarati-memorial-portraits","path":"/studio-services/gujarati-memorial-portraits","title":"Gujarati Memorial Photo Frames in Jetpur | Rajmoti Studio","heading":"Gujarati memorial photo frames in Jetpur",
+      "description":"Rajmoti Studio in Jetpur prepares Gujarati memorial portraits and framed prints. Bring the photograph and confirm the exact name, date and tithi you want printed.",
+      "question":"What do you need for a Gujarati memorial portrait?",
+      "answer":"Bring the clearest photo you have, the person’s name in Gujarati, and any date or tithi you want included. Tell us your preferred frame size and verify the Gujarati text before printing.",
+      "button":"Ask about a memorial portrait","enquiry":"Memorial photos"
+    }
+  ],
+  "products": [
+    {"slug":"ceramic-photo-mug","path":"/gifts/ceramic-photo-mug","sku":"MUG-001","title":"Personalised Ceramic Photo Mug in Jetpur | Rajmoti Studio","heading":"Personalised ceramic photo mug","description":"Put your own photo on a ceramic mug for a birthday, anniversary or family gift. Ask Rajmoti Studio in Jetpur for a quote and artwork options.","image":"/products/mug-sample-couple.jpg","alt":"Example of a ceramic mug personalised with a couple’s photograph"},
+    {"slug":"wooden-photo-frame","path":"/gifts/wooden-photo-frame","sku":"FRM-001","title":"Custom Wooden Photo Frame in Jetpur | Rajmoti Studio","heading":"Custom wooden photo frame","description":"Frame a family, wedding or baby photograph in a wooden photo frame. Ask Rajmoti Studio in Jetpur about print sizes and finishes.","image":"/products/frame-sample-family.jpg","alt":"Example of a framed family photograph"},
+    {"slug":"acrylic-photo-print","path":"/gifts/acrylic-photo-print","sku":"ACR-001","title":"Custom Acrylic Photo Print in Jetpur | Rajmoti Studio","heading":"Custom acrylic photo print","description":"Turn your photograph into a clear acrylic print for home display or a personalised gift. Ask Rajmoti Studio in Jetpur about sizes and artwork preparation."},
+    {"slug":"acrylic-photo-keychain","path":"/gifts/acrylic-photo-keychain","sku":"KEY-001","title":"Personalised Acrylic Photo Keychain in Jetpur | Rajmoti Studio","heading":"Personalised acrylic photo keychain","description":"Make a small keepsake with your photograph. Ask Rajmoti Studio in Jetpur about acrylic photo keychain shapes, crop options and quotes."}
+  ]
+}
