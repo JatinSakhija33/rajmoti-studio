@@ -146,7 +146,7 @@ export async function hybridPublicCounts() {
     const [categories, subs, images] = await Promise.all([
       supabase.from("categories").select("id,slug"),
       supabase.from("subcategories").select("id,slug,category_id"),
-      supabase.from("images").select("category_id,subcategory_id,featured,image_url").limit(1000),
+      supabase.from("images").select("category_id,subcategory_id,featured,image_url").eq("hidden", false).limit(1000),
     ]);
     if (categories.error || subs.error || images.error) return base;
     const catSlugs = new Map((categories.data ?? []).map((x) => [x.id, x.slug]));

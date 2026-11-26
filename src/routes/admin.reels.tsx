@@ -18,7 +18,7 @@ type Draft = Partial<Reel> & { id?: string };
 
 function AdminReels() {
   const qc = useQueryClient();
-  const { data: reels = [], isLoading } = useQuery(adminReelsQuery);
+  const { data: reels = [], isLoading, isError, refetch } = useQuery(adminReelsQuery);
   const { data: categories = [] } = useQuery(adminCategoriesQuery);
   const { data: packages = [] } = useQuery(packagesQuery);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -33,6 +33,7 @@ function AdminReels() {
 
   const save = useMutation({
     mutationFn: async (d: Draft) => {
+      if (d.published && !d.video_url) throw new Error("Upload a playable video before publishing.");
       const payload = {
         title: d.title?.trim() || "Untitled reel",
         description: d.description ?? null,
@@ -131,7 +132,7 @@ function AdminReels() {
 
   return (
     <div className="max-w-5xl">
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-3xl">Cinematic Reels</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -141,14 +142,16 @@ function AdminReels() {
         </div>
         <button
           onClick={() => setDraft({ aspect_ratio: "9:16", published: false })}
-          className="flex items-center gap-2 px-5 py-2.5 bg-onyx text-cream text-[10px] uppercase tracking-[0.2em]"
+          className="studio-primary"
         >
           <Plus className="size-4" /> New reel
         </button>
       </div>
 
-      {isLoading ? (
-        <p className="text-muted-foreground">Loading…</p>
+      {isError ? (
+        <p role="alert" className="text-sm text-destructive">Reels couldn’t load. <button className="underline" onClick={() => void refetch()}>Try again</button></p>
+      ) : isLoading ? (
+        <p className="text-muted-foreground" role="status">Loading reels…</p>
       ) : sorted.length === 0 ? (
         <div className="border border-dashed border-onyx/20 p-12 text-center text-muted-foreground">
           <Film className="size-6 mx-auto mb-3 opacity-50" />
@@ -157,7 +160,7 @@ function AdminReels() {
       ) : (
         <ul className="space-y-3">
           {sorted.map((r) => (
-            <li key={r.id} className="flex items-center gap-4 border border-onyx/10 p-3">
+            <li key={r.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-onyx/10 bg-white p-3">
               <div className="w-16 h-20 bg-onyx/5 overflow-hidden shrink-0">
                 {r.poster_url && <img src={r.poster_url} alt="" className="size-full object-cover" />}
               </div>
@@ -167,8 +170,9 @@ function AdminReels() {
                   /reel/{r.short_id}
                   {r.categories?.name ? ` · ${r.categories.name}` : ""}
                   {r.packages?.name ? ` · ${r.packages.name}` : ""}
-                  {r.video_url ? "" : " · no video yet"}
+                  {r.video_url ? "" : " · needs video"}
                 </p>
+                {r.video_url && <p className="mt-1 text-xs text-muted-foreground">{r.poster_url ? "Poster ready" : "No poster"} · {r.preview_url ? "Hover clip ready" : "No hover clip"}</p>}
               </div>
               <button
                 onClick={() => patch(r.id, { featured: !r.featured })}
@@ -179,6 +183,7 @@ function AdminReels() {
               </button>
               <button
                 onClick={() => patch(r.id, { published: !r.published })}
+                disabled={!r.published && !r.video_url}
                 className={`text-[10px] uppercase tracking-[0.2em] px-3 py-2 border ${
                   r.published ? "border-gold text-gold" : "border-onyx/20 text-muted-foreground"
                 }`}

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CalendarDays, IndianRupee, MessageCircle, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -25,6 +25,10 @@ import { customerWhatsAppLink } from "@/lib/customer-directory";
 import { SITE } from "@/lib/site";
 
 export const Route = createFileRoute("/admin/bookings")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    create: search.create === "booking" ? "booking" as const : undefined,
+    booking: typeof search.booking === "string" && /^[a-f0-9-]{36}$/i.test(search.booking) ? search.booking : undefined,
+  }),
   component: AdminBookings,
 });
 
@@ -109,11 +113,29 @@ const emptyForm = (): FormState => ({
 
 function AdminBookings() {
   const qc = useQueryClient();
-  const { data: bookings = [], isLoading } = useQuery(bookingsQuery);
+  const { data: bookings = [], isLoading, isError, refetch } = useQuery(bookingsQuery);
   const [tab, setTab] = useState<"upcoming" | "today" | "past" | "money" | "all">("upcoming");
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<Booking | null>(null);
   const [creating, setCreating] = useState(false);
+
+  const { create, booking: bookingId } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  useEffect(() => {
+    if (create !== "booking") return;
+    setEditing(null); setCreating(true);
+    void navigate({ search: {}, replace: true });
+  }, [create, navigate]);
+  useEffect(() => {
+    if (!bookingId) return;
+    const match = bookings.find((booking) => booking.id === bookingId);
+    if (!match && isLoading) return;
+    if (match) {
+      setCreating(false);
+      setEditing(match);
+    }
+    void navigate({ search: {}, replace: true });
+  }, [bookingId, bookings, isLoading, navigate]);
 
   const today = todayKey();
 
@@ -150,6 +172,7 @@ function AdminBookings() {
 
   return (
     <div>
+      {isError && <p role="alert" className="mb-3 text-sm text-destructive">Bookings couldn’t load. <button className="underline" onClick={() => void refetch()}>Try again</button></p>}
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow text-gold mb-2">Bookings</p>

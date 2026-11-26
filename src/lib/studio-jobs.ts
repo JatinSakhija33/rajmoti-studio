@@ -63,13 +63,23 @@ export const JOB_TEMPLATES: JobTemplate[] = [
   { id: "gift", name: "Photo gifting", photoType: "Photo gift", size: "4×6", restoration: "Retouch conservatively; preserve original identity.", background: "Use supplied image as-is unless customer requests a change.", notes: "Confirm product, material, quantity, design proof and pricing before printing." },
 ];
 
-function localDay(offset = 0) {
-  const d = new Date();
-  d.setDate(d.getDate() + offset);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const studioDateFormat = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit",
+});
+
+export function studioDateKey(date = new Date(), dayOffset = 0) {
+  const parts = Object.fromEntries(studioDateFormat.formatToParts(date).map(({ type, value }) => [type, value]));
+  return new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day) + dayOffset))
+    .toISOString().slice(0, 10);
 }
-export const today = () => localDay();
-export const tomorrow = () => localDay(1);
+export const today = () => studioDateKey();
+export const tomorrow = () => studioDateKey(new Date(), 1);
+
+export function jobPaymentStatus(total: number | null, received: number, fallback: StudioJob["payment_status"]) {
+  if (total === null) return received > 0 && fallback === "unpaid" ? "advance" : fallback;
+  if (received >= total) return "paid";
+  return received > 0 ? "advance" : "unpaid";
+}
 
 export function emptyJob(template?: JobTemplate): StudioJob {
   return {

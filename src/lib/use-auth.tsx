@@ -21,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(liveBackend);
   const [checked, setChecked] = useState<string | null>(null);
   const [admin, setAdmin] = useState(false);
+  const userId = session?.user.id;
   useEffect(() => {
     if (!liveBackend) return;
     if (!backendConfigured) {
@@ -28,10 +29,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     let active = true;
+    let authEventSeen = false;
     const sub = supabase.auth.onAuthStateChange((_event, s) => {
       if (active) {
-        setAdmin(false);
-        setChecked(null);
+        authEventSeen = true;
         setSession(s);
         setLoading(false);
       }
@@ -39,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth
       .getSession()
       .then(({ data, error }) => {
-        if (active) {
+        if (active && !authEventSeen) {
           setSession(error ? null : data.session);
           setLoading(false);
         }
@@ -53,28 +54,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
   useEffect(() => {
-    if (!liveBackend || !session?.user) {
+    if (!liveBackend || !userId) {
       setAdmin(false);
+      setChecked(null);
       return;
     }
     let active = true;
-    Promise.resolve(supabase.rpc("has_role", { _user_id: session.user.id, _role: "admin" }))
+    Promise.resolve(supabase.rpc("has_role", { _user_id: userId, _role: "admin" }))
       .then(({ data, error }) => {
         if (active) {
           setAdmin(!error && data === true);
-          setChecked(session.user.id);
+          setChecked(userId);
         }
       })
       .catch(() => {
         if (active) {
           setAdmin(false);
-          setChecked(session.user.id);
+          setChecked(userId);
         }
       });
     return () => {
       active = false;
     };
-  }, [session]);
+  }, [userId]);
   const value: Auth = liveBackend
     ? {
         session,

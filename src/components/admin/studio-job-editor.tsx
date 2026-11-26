@@ -6,6 +6,10 @@ import {
   duplicateJobs,
   getJobPhotoUrl,
   isReviewed,
+  jobPaymentStatus,
+  JOB_TEMPLATES,
+  today,
+  tomorrow,
   NO_IDENTITY_CHANGE,
   PAYMENT_STATES,
   DELIVERY_STATES,
@@ -51,6 +55,36 @@ export function StudioJobEditor({
   const [matchingContacts, setMatchingContacts] = useState<KnownCustomer[]>([]);
   const matchPhone = draft.phone.replace(/\D/g, "").slice(-10);
   const duplicates = duplicateJobs(otherJobs, draft);
+  const isNew = !job.customer_name && !job.created_at;
+  const hasMemorial = draft.template_type === "memorial" || /memorial|સ્વર્ગવાસી/i.test(draft.photo_type) ||
+    Boolean(job.memorial_name || job.memorial_date || job.memorial_tithi || job.memorial_details);
+  const payment = jobPaymentStatus(draft.total_amount, draft.amount_received, draft.payment_status);
+
+  function applyTemplate(id: string) {
+    const template = JOB_TEMPLATES.find((entry) => entry.id === id);
+    if (!template) return;
+    setDraft((previous) => {
+      const before = JOB_TEMPLATES.find((entry) => entry.id === previous.template_type);
+      return {
+        ...previous,
+        template_type: template.id,
+        photo_type: template.photoType,
+        requested_size: previous.requested_size === "Not confirmed" || previous.requested_size === before?.size
+          ? template.size : previous.requested_size,
+        restoration_instructions: !previous.restoration_instructions || previous.restoration_instructions === before?.restoration
+          ? template.restoration : previous.restoration_instructions,
+        background_instructions: !previous.background_instructions || previous.background_instructions === before?.background
+          ? template.background : previous.background_instructions,
+        notes: !previous.notes || previous.notes === before?.notes ? template.notes : previous.notes,
+      };
+    });
+  }
+
+  function dismiss() {
+    if (busy || uploading) return;
+    if (JSON.stringify(job) !== JSON.stringify(draft) && !confirm("Close without saving these job changes?")) return;
+    onClose();
+  }
 
   useEffect(() => {
     let active = true;
@@ -131,7 +165,7 @@ export function StudioJobEditor({
     setBusy(true);
     setError("");
     try {
-      await onSave(draft);
+      await onSave({ ...draft, customer_name: draft.customer_name.trim(), payment_status: payment });
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save job");
@@ -145,7 +179,7 @@ export function StudioJobEditor({
       className="fixed inset-0 z-[130] bg-black/60 flex items-center justify-center px-0 sm:px-5 py-0 sm:py-5"
       role="presentation"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) dismiss();
       }}
     >
       <div
@@ -153,7 +187,7 @@ export function StudioJobEditor({
         role="dialog"
         aria-modal="true"
         aria-labelledby="job-modal-title"
-        className="w-full max-w-5xl max-h-dvh sm:max-h-[94dvh] overflow-y-auto bg-cream text-onyx shadow-2xl"
+        className="w-full max-w-4xl max-h-dvh sm:max-h-[94dvh] overflow-y-auto bg-cream text-onyx shadow-2xl sm:rounded-2xl"
       >
         <form onSubmit={(e) => void save(e)}>
           <div className="sticky top-0 z-20 bg-cream/95 backdrop-blur-md border-b border-onyx/10 px-5 sm:px-8 py-4 flex items-center justify-between gap-3">
@@ -166,30 +200,31 @@ export function StudioJobEditor({
             <button
               type="button"
               aria-label="Close job editor"
-              onClick={onClose}
+              onClick={dismiss}
               className="size-10 flex items-center justify-center border border-onyx/10"
             >
               <X className="size-5" />
             </button>
           </div>
           <div className="px-5 sm:px-8 py-7 space-y-9">
-            <div className="p-4 bg-[#f7f0e2] border border-[#e7d8bc] flex gap-3 items-start">
-              <ShieldCheck className="size-6 shrink-0 text-[#927342]" />
-              <div>
-                <strong className="text-xs uppercase tracking-wide">
-                  Non-negotiable identity-safe editing
-                </strong>
-                <p className="text-xs leading-6 mt-1">{NO_IDENTITY_CHANGE}</p>
-              </div>
-            </div>
+            {isNew && (
+              <label className="grid max-w-sm gap-1.5 text-sm font-semibold">
+                Start from a template
+                <select className={FIELD} value={draft.template_type} onChange={(event) => applyTemplate(event.target.value)}>
+                  <option value="custom" disabled>Choose a service template</option>
+                  {JOB_TEMPLATES.map((template) => <option key={template.id} value={template.id}>{template.name}</option>)}
+                </select>
+              </label>
+            )}
             <section>
-              <h3 className="font-display text-xl mb-5">Customer & order</h3>
+              <h3 className="font-display text-xl mb-5">Customer and job</h3>
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
                   {label("Customer name *", "job-name")}
                   <input
                     id="job-name"
                     required
+                    autoFocus={isNew}
                     value={draft.customer_name}
                     onChange={(e) => change("customer_name", e.target.value)}
                     className={FIELD}
@@ -249,6 +284,10 @@ export function StudioJobEditor({
                     onChange={(e) => change("due_on", e.target.value || null)}
                     className={FIELD}
                   />
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button type="button" className="studio-secondary" onClick={() => change("due_on", today())}>Today</button>
+                    <button type="button" className="studio-secondary" onClick={() => change("due_on", tomorrow())}>Tomorrow</button>
+                  </div>
                 </div>
               </div>
               {matchingContacts.length > 0 && (
@@ -292,9 +331,12 @@ export function StudioJobEditor({
                 </div>
               )}
             </section>
-            <section className="grid md:grid-cols-2 gap-5">
+            <details open={!isNew}>
+              <summary className="cursor-pointer text-lg font-semibold">Editing instructions</summary>
+              <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground"><ShieldCheck className="size-4 shrink-0" />{NO_IDENTITY_CHANGE}</p>
+              <div className="mt-4 grid gap-5 md:grid-cols-2">
               <div>
-                <h3 className="font-display text-xl mb-3">Restoration / retouching</h3>
+                <h3 className="text-sm font-semibold mb-2">Restoration / retouching</h3>
                 <textarea
                   rows={4}
                   value={draft.restoration_instructions}
@@ -313,12 +355,11 @@ export function StudioJobEditor({
                   placeholder="Keep current background or specify realistic replacement…"
                 />
               </div>
-            </section>
-            <section className="border border-onyx/10 p-5 bg-white">
-              <h3 className="font-display text-xl mb-4">
-                Memorial details{" "}
-                <span className="text-sm text-muted-foreground">(if applicable)</span>
-              </h3>
+              </div>
+            </details>
+            <details key={hasMemorial ? "memorial" : "optional-memorial"} open={hasMemorial} className="studio-panel">
+              <summary className="cursor-pointer text-lg font-semibold">Memorial details</summary>
+              <div className="mt-4">
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
                   {label("Gujarati name / title", "mem-name")}
@@ -365,8 +406,11 @@ export function StudioJobEditor({
                 Never guess a name, date or tithi. Keep unknowns editable and confirm them before
                 printing.
               </p>
-            </section>
-            <section className="grid md:grid-cols-3 gap-4">
+              </div>
+            </details>
+            <details open={!isNew} className="studio-panel">
+              <summary className="cursor-pointer text-lg font-semibold">Production and payment</summary>
+              <div className="mt-4 grid gap-4 md:grid-cols-3">
               <div>
                 {label("Priority", "job-priority")}
                 <select
@@ -419,7 +463,8 @@ export function StudioJobEditor({
                 <select
                   id="job-payment"
                   className={FIELD}
-                  value={draft.payment_status}
+                  value={payment}
+                  disabled={draft.total_amount !== null}
                   onChange={(e) =>
                     change("payment_status", e.target.value as StudioJob["payment_status"])
                   }
@@ -457,8 +502,9 @@ export function StudioJobEditor({
                   onChange={(e) => change("amount_received", Number(e.target.value))}
                 />
               </div>
-            </section>
-            <section className="grid md:grid-cols-2 gap-5">
+              </div>
+              {draft.total_amount !== null && <p className="mt-3 text-sm text-muted-foreground">Balance ₹{Math.max(0, draft.total_amount - draft.amount_received).toLocaleString("en-IN")}</p>}
+              <div className="mt-4 grid gap-5 md:grid-cols-2">
               <div>
                 {label("Production notes", "job-notes")}
                 <textarea
@@ -484,10 +530,11 @@ export function StudioJobEditor({
                   Never silently fill unknown client details.
                 </p>
               </div>
-            </section>
-            <section>
-              <div className="flex items-center flex-wrap justify-between gap-4 mb-4">
-                <h3 className="font-display text-xl">Original vs edited — visual review</h3>
+              </div>
+            </details>
+            <details open={!isNew}>
+              <summary className="cursor-pointer text-lg font-semibold">Private photos and proof review</summary>
+              <div className="mb-4 mt-3 flex flex-wrap items-center justify-between gap-4">
                 <p className="text-xs text-muted-foreground">
                   {liveBackend
                     ? "Private owner storage · originals are never overwritten"
@@ -586,7 +633,7 @@ export function StudioJobEditor({
                   ))}
                 </div>
               </div>
-            </section>
+            </details>
             {error && (
               <p
                 role="alert"
@@ -608,7 +655,7 @@ export function StudioJobEditor({
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={dismiss}
                 className="border border-onyx/20 text-xs px-4 py-3"
               >
                 Cancel
@@ -616,7 +663,7 @@ export function StudioJobEditor({
               <button
                 type="submit"
                 disabled={busy || uploading !== null}
-                className="bg-onyx text-cream text-xs px-5 py-3 font-semibold disabled:opacity-40"
+                className="studio-primary"
               >
                 {busy ? "Saving…" : "Save job"}
               </button>

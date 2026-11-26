@@ -1,5 +1,5 @@
 import { GalleryPhotoPicker } from "@/components/admin/gallery-photo-picker";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { publishedCategory } from "@/lib/hybrid-portfolio";
 import { adminCategoriesQuery, adminSubcategoriesQuery, taxonomyCountsQuery } from "@/lib/queries";
 
 export const Route = createFileRoute("/admin/categories")({
@@ -31,7 +32,7 @@ type Row = Record<string, any>;
 
 function AdminCategories() {
   const qc = useQueryClient();
-  const { data: categories = [] } = useQuery(adminCategoriesQuery);
+  const { data: categories = [], isError, isPending, refetch } = useQuery(adminCategoriesQuery);
   const { data: subcategories = [] } = useQuery(adminSubcategoriesQuery);
   const { data: counts } = useQuery(taxonomyCountsQuery);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -105,7 +106,7 @@ function AdminCategories() {
           <p className="eyebrow text-gold mb-2">Categories</p>
           <h1 className="font-display text-4xl">Organize the portfolio</h1>
           <p className="text-sm text-muted-foreground mt-2">
-            Drag to reorder — the public portfolio and navigation follow this order.
+            Manage gallery groups, portfolio covers and subcategories.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -124,10 +125,14 @@ function AdminCategories() {
         </div>
       </header>
 
+      {isError && <p role="alert" className="mb-4 text-sm text-destructive">Categories couldn’t load. <button className="underline" onClick={() => void refetch()}>Try again</button></p>}
+      {isPending && <p role="status" className="mb-4 text-sm">Loading categories…</p>}
       <ul className="space-y-3">
         {visible.map((c: Row, idx: number) => {
           const subs = subcategories.filter((s: Row) => s.category_id === c.id && !s.archived_at);
-          const photos = counts?.byCategory[c.id] ?? 0;
+          const published = publishedCategory(c.slug);
+          const photos = counts?.byCategory[published?.id ?? c.id] ?? 0;
+          const cover = c.cover_image_url || published?.cover_image_url;
           return (
             <li
               key={c.id}
@@ -135,7 +140,7 @@ function AdminCategories() {
               onDragStart={() => setDragId(c.id)}
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => onDropOn(c.id)}
-              className={`bg-white border ${dragId === c.id ? "border-gold" : "border-onyx/10"} flex items-center gap-4 p-4`}
+              className={`rounded-xl bg-white border ${dragId === c.id ? "border-gold" : "border-onyx/10"} flex flex-wrap items-center gap-3 p-4`}
             >
               <GripVertical className="size-4 text-onyx/30 cursor-grab shrink-0" aria-hidden />
               <div className="flex flex-col shrink-0">
@@ -146,8 +151,8 @@ function AdminCategories() {
                   <ArrowDown className="size-3.5" />
                 </button>
               </div>
-              {c.cover_image_url ? (
-                <img src={c.cover_image_url} alt="" width={56} height={56} className="size-14 object-cover shrink-0" />
+              {cover ? (
+                <img src={cover} alt="" width={56} height={56} className="size-14 object-cover shrink-0" />
               ) : (
                 <div aria-hidden className="size-14 bg-cream border border-onyx/10 shrink-0" />
               )}
@@ -157,7 +162,7 @@ function AdminCategories() {
                   {c.featured && <Star className="inline size-3.5 ml-2 text-gold" aria-label="Featured" />}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {subs.length} subcategor{subs.length === 1 ? "y" : "ies"} · {photos} photograph{photos === 1 ? "" : "s"} · /{c.slug}
+                  {subs.length} subcategor{subs.length === 1 ? "y" : "ies"} · {photos} public photo{photos === 1 ? "" : "s"} · /{c.slug}
                 </p>
                 <p className="text-xs mt-1 inline-flex items-center gap-1.5">
                   <span className={`size-1.5 rounded-full ${c.hidden ? "bg-muted-foreground" : "bg-gold"}`} aria-hidden />
@@ -315,6 +320,10 @@ function CategoryEditor({
     if (photos > 0 || active.length > 0) {
       return toast.error("Move or archive the content first — this category is not empty");
     }
+    if (publishedCategory(category.slug)) return toast.error("This category contains website archive photos.");
+    const { data: assigned, error: checkError } = await supabase.from("images").select("id").eq("category_id", category.id).limit(1);
+    if (checkError) return toast.error("Couldn’t verify which photos are assigned to this category.");
+    if (assigned?.length) return toast.error("Move the assigned photos before deleting this category.");
     if (!confirm(`Permanently delete "${category.name}"? This cannot be undone.`)) return;
     const { error } = await supabase.from("categories").delete().eq("id", category.id);
     if (error) return toast.error(error.message);

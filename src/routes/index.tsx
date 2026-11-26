@@ -24,6 +24,19 @@ function Home() {
   const { data: content = {} } = useQuery(siteContentQuery);
   const contact = (content.contact ?? {}) as { address?: string; hours?: string };
   const address = contact.address?.trim() || SITE.location;
+  const hero = content.hero?.published_from_admin === true ? content.hero as Record<string, unknown> : undefined;
+  const heroText = (field: string) => {
+    const value = hero?.[field];
+    return typeof value === "string" ? value.trim() : "";
+  };
+  function heroLink(field: string, fallback: string) {
+    const value = heroText(field);
+    if (!value || /[\x00-\x20\\]/.test(value)) return fallback;
+    const base = "https://rajmotistudio.in";
+    if (value.startsWith("/") && URL.canParse(value, base) && new URL(value, base).origin === base) return value;
+    if (/^https:\/\//i.test(value) && URL.canParse(value)) return value;
+    return fallback;
+  }
   const [styles, setStyles] = useStyles();
   const saved = styles.some((s) => s.id === "demo-family-story");
   return (
@@ -31,23 +44,22 @@ function Home() {
       <SiteNav />
       <main>
         <HomePhotoCarousel content={content.hero}>
-          <p className="ed-kicker">Jetpur, Gujarat · Since 1982</p>
+          <p className="ed-kicker">{heroText("eyebrow") || "Jetpur, Gujarat · Since 1982"}</p>
           <h1>
-            Little moments.
+            {heroText("heading") || "Little moments."}
             <br />
-            <em>Lasting stories.</em>
+            <em>{heroText("heading_italic") || "Lasting stories."}</em>
           </h1>
           <p className="ed-copy">
-            Baby, maternity, family and wedding photography. Thoughtfully made, for the people who
-            mean everything.
+            {heroText("description") || "Baby, maternity, family and wedding photography. Thoughtfully made, for the people who mean everything."}
           </p>
           <div className="ed-actions">
-            <Link to="/portfolios" className="ed-button">
-              View photography <ArrowRight size={17} />
-            </Link>
-            <Link to="/gifts" className="ed-text-button">
-              Shop photo gifts <ArrowUpRight size={16} />
-            </Link>
+            <a href={heroLink("cta_primary_href", "/portfolios")} className="ed-button">
+              {heroText("cta_primary_label") || "View photography"} <ArrowRight size={17} />
+            </a>
+            <a href={heroLink("cta_secondary_href", "/gifts")} className="ed-text-button">
+              {heroText("cta_secondary_label") || "Shop photo gifts"} <ArrowUpRight size={16} />
+            </a>
           </div>
         </HomePhotoCarousel>
         <div className="ed-wrap heritage-line">

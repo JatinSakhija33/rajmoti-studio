@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, ArrowRight, CalendarDays, CheckCircle2, ChevronRight, CircleDollarSign, ClipboardList, Clock3, CloudOff, Gift, LayoutGrid, ListFilter, MessageCircle, Plus, RefreshCw, Search, ShieldCheck, Wifi, WifiOff } from "lucide-react";
 import { toast } from "sonner";
@@ -14,6 +15,10 @@ import {
 
 export const Route = createFileRoute("/admin/workflow")({
   head: () => ({ meta: [{ title: "Studio Workflow — Rajmoti Studio" }] }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    create: search.create === "job" ? "job" as const : undefined,
+    job: typeof search.job === "string" && /^[a-f0-9-]{36}$/i.test(search.job) ? search.job : undefined,
+  }),
   component: StudioWorkflow,
 });
 
@@ -25,6 +30,7 @@ const formatDate = (s?: string | null) => s ? new Date(`${s}T12:00:00`).toLocale
 
 function StudioWorkflow() {
   const { user, isAdmin } = useAuth();
+  const queryClient = useQueryClient();
   const userId = user?.id || "";
   const [jobs, setJobs] = useState<StudioJob[]>([]);
   const [pending, setPending] = useState<StudioJob[]>([]);
@@ -41,6 +47,22 @@ function StudioWorkflow() {
   const [editor, setEditor] = useState<StudioJob | null>(null);
   const [day, setDay] = useState(today());
   const [priorityFilter, setPriorityFilter] = useState("");
+
+  const { create, job: jobId } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  useEffect(() => {
+    if (create !== "job") return;
+    setEditor(emptyJob());
+    void navigate({ search: {}, replace: true });
+  }, [create, navigate]);
+  useEffect(() => {
+    if (!jobId) return;
+    const match = jobs.find((job) => job.id === jobId);
+    if (!match && loading) return;
+    if (match) setEditor(match);
+    else toast.error("This job couldn’t be opened.");
+    void navigate({ search: {}, replace: true });
+  }, [jobId, jobs, loading, navigate]);
 
   const load = useCallback(async (id: string) => {
     if (typeof navigator !== "undefined" && !navigator.onLine) { setBackendReady(false); setLoading(false); return; }
@@ -76,13 +98,16 @@ function StudioWorkflow() {
         }
         completed++;
       }
-      if (completed) toast.success(`${completed} job change(s) saved`);
+      if (completed) {
+        toast.success(`${completed} job change(s) saved`);
+        void queryClient.invalidateQueries({ queryKey: ["studio-jobs", "today"] });
+      }
       setBackendReady(true);
     } catch (e) {
       setBackendReady(false);
       setError(`Changes are safe on this browser, but syncing failed: ${e instanceof Error ? e.message : "unknown error"}`);
     } finally { syncingRef.current = false; setSyncing(false); await load(id); }
-  }, [load]);
+  }, [load, queryClient]);
 
   useEffect(() => {
     if (!userId || !isAdmin) return;

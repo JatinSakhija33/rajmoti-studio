@@ -24,6 +24,9 @@ import { ContactDrawer, type WaKind } from "@/components/admin/contact-drawer";
 
 export const Route = createFileRoute("/admin/contacts")({
   head: () => ({ meta: [{ title: "Contacts — Rajmoti Studio" }] }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    create: search.create === "contact" ? "contact" as const : undefined,
+  }),
   component: AdminContacts,
 });
 
@@ -52,6 +55,14 @@ function AdminContacts() {
   const [unclassifiedOnly, setUnclassifiedOnly] = useState(false);
   const [page, setPage] = useState(0);
   const [adding, setAdding] = useState(false);
+
+  const { create } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  useEffect(() => {
+    if (create !== "contact") return;
+    setAdding(true);
+    void navigate({ search: {}, replace: true });
+  }, [create, navigate]);
   const [detail, setDetail] = useState<Contact | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [classify, setClassify] = useState(false);

@@ -1,13 +1,12 @@
 import { ReplacePhoto } from "@/features/media/replace-photo";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Trash2,
   Eye,
   EyeOff,
   Star,
-  Upload,
   X,
   Pencil,
   Search,
@@ -18,7 +17,9 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { adminCategoriesQuery, allImagesQuery } from "@/lib/queries";
-import { optimizeAndUpload, variantUrl, removeStoragePaths } from "@/lib/images";
+import { variantUrl } from "@/lib/images";
+import { PhotoUploadPanel } from "@/components/admin/photo-upload-queue";
+import { publishedPhotoLibraryQuery } from "@/lib/published-portfolio";
 
 export const Route = createFileRoute("/admin/images")({
   component: AdminImages,
@@ -41,126 +42,53 @@ async function copyPublicLink(shortId: string) {
 
 function AdminImages() {
   const qc = useQueryClient();
-  const { data: images = [] } = useQuery(allImagesQuery);
+  const managed = useQuery(allImagesQuery);
+  const bundled = useQuery(publishedPhotoLibraryQuery);
   const { data: categories = [] } = useQuery(adminCategoriesQuery);
-  const [filterCat, setFilterCat] = useState<string>("");
+  const [filterCat, setFilterCat] = useState("");
   const [search, setSearch] = useState("");
-  const [defaultCat, setDefaultCat] = useState<string>("");
-  const [defaultSub, setDefaultSub] = useState<string>("");
-  const [defaultTheme, setDefaultTheme] = useState<string>("");
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
-  const [dragOver, setDragOver] = useState(false);
+  const [source, setSource] = useState<"all" | "managed" | "bundled">("all");
   const [viewing, setViewing] = useState<any | null>(null);
   const [editing, setEditing] = useState<any | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  const { data: subRows = [] } = useQuery({
-    queryKey: ["subs-for-upload", defaultCat],
-    queryFn: async () => {
-      if (!defaultCat) return [];
-      const { data } = await supabase
-        .from("subcategories")
-        .select("*")
-        .eq("category_id", defaultCat)
-        .order("display_order");
-      return data ?? [];
-    },
-    enabled: !!defaultCat,
-  });
+  const [limit, setLimit] = useState(48);
 
   const filtered = useMemo(() => {
-    const s = search.trim().toLowerCase();
-    return images.filter((img: any) => {
-      if (filterCat && img.category_id !== filterCat) return false;
-      if (!s) return true;
-      const hay = [img.title, img.caption, img.alt_text, ...(img.tags ?? [])]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      return hay.includes(s);
+    const term = search.trim().toLowerCase();
+    const managedPhotos = (managed.data ?? []).map((photo) => ({ ...photo, bundled: false as const }));
+    const ids = new Set(managedPhotos.filter((photo) => !photo.hidden).map((photo) => photo.short_id));
+    const bundledPhotos = (bundled.data ?? [])
+      .filter((photo) => source === "bundled" || !ids.has(photo.short_id))
+      .map((photo) => ({ ...photo, bundled: true as const }));
+    const photos = source === "managed" ? managedPhotos : source === "bundled" ? bundledPhotos : [...managedPhotos, ...bundledPhotos];
+    return photos.filter((img) => {
+      if (filterCat && img.categories?.slug !== filterCat) return false;
+      const tags = "tags" in img ? img.tags : undefined;
+      const caption = "caption" in img ? img.caption : undefined;
+      return !term || [img.title, caption, img.alt_text, img.categories?.name, img.subcategories?.name, ...(tags ?? [])]
+        .filter(Boolean).join(" ").toLowerCase().includes(term);
     });
-  }, [images, filterCat, search]);
+  }, [managed.data, bundled.data, filterCat, search, source]);
 
-  const allSelectedOnPage = filtered.length > 0 && filtered.every((i: any) => selected.has(i.id));
+  const shown = filtered.slice(0, limit);
+  const selectable = shown.filter((photo) => !photo.bundled);
+  const allSelectedOnPage = selectable.length > 0 && selectable.every((photo) => selected.has(photo.id));
   function toggleSelectAll() {
-    if (allSelectedOnPage) setSelected(new Set());
-    else setSelected(new Set(filtered.map((i: any) => i.id)));
+    setSelected((previous) => {
+      const next = new Set(previous);
+      selectable.forEach((photo) => allSelectedOnPage ? next.delete(photo.id) : next.add(photo.id));
+      return next;
+    });
   }
+
   function toggleOne(id: string) {
     const next = new Set(selected);
     next.has(id) ? next.delete(id) : next.add(id);
     setSelected(next);
   }
 
-  async function uploadFiles(files: FileList | File[] | null) {
-    if (!files || uploading) return;
-    const list = Array.from(files);
-    if (list.length === 0) return;
-    if (!defaultCat) {
-      toast.error("Pick a category first");
-      return;
-    }
-    setUploading(true);
-    setProgress({ done: 0, total: list.length });
-    let okCount = 0;
-    try {
-      for (const file of list) {
-        const imageId = crypto.randomUUID();
-        let newPaths: string[] = [];
-        let committed = false;
-        let databaseWriteStarted = false;
-        try {
-          const optimized = await optimizeAndUpload(file, defaultCat, imageId);
-          newPaths = Object.values(optimized.variants).map((v) => v.path);
-          if (!optimized.image_url) throw new Error("optimised image is missing");
-          // short_id (the permanent public photo id) is generated by the database.
-          databaseWriteStarted = true;
-          const { data: inserted, error: insErr } = await supabase
-            .from("images")
-            .insert({
-              id: imageId,
-              title: null,
-              alt_text: null,
-              image_url: optimized.image_url,
-              thumbnail_url: optimized.thumbnail_url,
-              category_id: defaultCat,
-              subcategory_id: defaultSub || null,
-              theme: defaultTheme.trim() || null,
-              bytes: optimized.bytes,
-              width: optimized.width,
-              height: optimized.height,
-              dominant_color: optimized.dominant_color,
-              storage_path: optimized.storage_path,
-              variants: JSON.parse(JSON.stringify(optimized.variants)),
-              optimized_at: new Date().toISOString(),
-              hidden: false,
-            } as any)
-            .select("short_id")
-            .single();
-          if (insErr) throw new Error(insErr.message);
-          committed = true;
-          if (!inserted?.short_id) throw new Error("public photo id was not created");
-          okCount++;
-        } catch (err) {
-          if (!committed && !databaseWriteStarted) await removeStoragePaths(newPaths).catch(() => {});
-          toast.error(`${file.name}: ${err instanceof Error ? err.message : "upload failed"}`);
-        }
-        setProgress((p) => p && { ...p, done: p.done + 1 });
-      }
-      if (okCount > 0) toast.success(`Uploaded ${okCount} of ${list.length} photograph(s)`);
-      qc.invalidateQueries({ queryKey: ["images"] });
-      qc.invalidateQueries({ queryKey: ["photo"] });
-      qc.invalidateQueries({ queryKey: ["taxonomy"] });
-    } finally {
-      setUploading(false);
-      setProgress(null);
-      if (fileRef.current) fileRef.current.value = "";
-    }
-  }
-
   async function updateImage(id: string, patch: any) {
+    if (patch.hidden === false && managed.data?.find((photo) => photo.id === id)?.hidden && !confirm("Publish this photo to the website? Confirm it is approved for public use.")) return false;
     const { error } = await supabase.from("images").update(patch).eq("id", id);
     if (error) {
       toast.error(error.message);
@@ -184,6 +112,7 @@ function AdminImages() {
 
   async function bulkUpdate(patch: any) {
     if (selected.size === 0) return;
+    if (patch.hidden === false && !confirm("Publish the selected photos? Confirm they are approved for public use.")) return;
     const ids = Array.from(selected);
     const { error } = await supabase.from("images").update(patch).in("id", ids);
     if (error) return toast.error(error.message);
@@ -207,144 +136,57 @@ function AdminImages() {
     qc.invalidateQueries({ queryKey: ["taxonomy"] });
   }
 
-  function onDrop(e: React.DragEvent) {
-    e.preventDefault();
-    setDragOver(false);
-    const files = e.dataTransfer.files;
-    if (files && files.length > 0) uploadFiles(files);
+  const categoriesForFilter = new Map<string, string>();
+  for (const photo of bundled.data ?? []) {
+    if (photo.categories.slug && photo.categories.name) categoriesForFilter.set(photo.categories.slug, photo.categories.name);
   }
+  for (const category of categories) categoriesForFilter.set(category.slug, category.name);
 
   return (
     <div data-owner-uploads="enabled">
-      <header className="mb-8">
-        <p className="eyebrow text-gold mb-2">Gallery</p>
-        <h1 className="font-display text-4xl">Photographs</h1>
+      <header className="mb-6">
+        <h1 className="font-display text-4xl">Media Library</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Website photos and gallery drafts. Find customer originals under Jobs.</p>
       </header>
+      <PhotoUploadPanel />
 
-      <section className="bg-white border border-onyx/10 p-6 mb-8">
-        <h2 className="eyebrow text-muted-foreground mb-4">Upload new photographs</h2>
-        <p className="text-xs text-muted-foreground mb-4">
-          JPG, PNG or WebP up to 25 MB. New gallery previews are converted to WebP up to
-          50 KB for thumbnails and 100 KB for browsing. Larger WebP versions are kept for full-screen viewing.
-          Add only photographs approved for your public portfolio.
-        </p>
-        <div className="grid sm:grid-cols-4 gap-4 mb-4">
-          <select
-            aria-label="Upload category"
-            value={defaultCat}
-            onChange={(e) => {
-              setDefaultCat(e.target.value);
-              setDefaultSub("");
-            }}
-            className="border border-onyx/15 px-3 py-2 text-sm bg-cream"
-          >
-            <option value="">Category…</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-          <select
-            value={defaultSub}
-            onChange={(e) => setDefaultSub(e.target.value)}
-            disabled={!defaultCat}
-            className="border border-onyx/15 px-3 py-2 text-sm bg-cream"
-          >
-            <option value="">Subcategory (optional)…</option>
-            {subRows.map((s: any) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-          <input
-            value={defaultTheme}
-            onChange={(e) => setDefaultTheme(e.target.value)}
-            placeholder="Theme (optional)…"
-            className="border border-onyx/15 px-3 py-2 text-sm bg-cream"
-          />
-          <button
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading || !defaultCat}
-            className="bg-onyx text-cream px-4 py-2 text-xs uppercase tracking-widest font-semibold hover:bg-gold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            <Upload className="size-4" /> {uploading ? "Uploading…" : "Choose files"}
-          </button>
-        </div>
-
-        <div
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragOver(true);
-          }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={onDrop}
-          onClick={() => !uploading && defaultCat && fileRef.current?.click()}
-          className={`border-2 border-dashed py-12 text-center cursor-pointer transition-colors ${dragOver ? "border-gold bg-gold/5" : "border-onyx/20 hover:border-gold/60"} ${!defaultCat ? "opacity-50 cursor-not-allowed" : ""}`}
-        >
-          <Upload className="size-8 mx-auto mb-3 text-onyx/40" />
-          <p className="font-display text-xl mb-1">
-            {dragOver ? "Drop to upload" : "Drag & drop photographs here"}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {defaultCat
-              ? "Bulk multi-file supported · JPG / PNG / WEBP"
-              : "Choose a category above to enable uploads"}
-          </p>
-          {progress && (
-            <div className="mt-4 max-w-xs mx-auto">
-              <div className="h-1 bg-onyx/10 overflow-hidden">
-                <div
-                  className="h-full bg-gold transition-all"
-                  style={{ width: `${(progress.done / progress.total) * 100}%` }}
-                />
-              </div>
-              <p className="text-xs mt-2 text-muted-foreground">
-                {progress.done} / {progress.total} uploaded
-              </p>
-            </div>
-          )}
-        </div>
-        <input
-          ref={fileRef}
-          type="file"
-          multiple
-          accept="image/jpeg,image/png,image/webp"
-          onChange={(e) => uploadFiles(e.target.files)}
-          className="hidden"
-        />
-      </section>
-
+      <div className="mb-4 flex flex-wrap gap-2" aria-label="Photo source">
+        {([["all", "All photos"], ["managed", "Managed uploads"], ["bundled", "Website archive"]] as const).map(([id, label]) => (
+          <button key={id} type="button" aria-pressed={source === id}
+            onClick={() => { setSource(id); setSelected(new Set()); setLimit(48); }}
+            className={source === id ? "studio-primary" : "studio-secondary"}>{label}</button>
+        ))}
+      </div>
+      {source !== "bundled" && managed.isError && <p role="alert" className="mb-4 text-sm text-destructive">Managed uploads couldn’t load. <button className="underline" onClick={() => void managed.refetch()}>Try again</button></p>}
+      {source !== "managed" && bundled.isError && <p role="alert" className="mb-4 text-sm text-destructive">The website archive couldn’t load. <button className="underline" onClick={() => void bundled.refetch()}>Try again</button></p>}
       {/* Filter + search bar */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <select
           value={filterCat}
-          onChange={(e) => setFilterCat(e.target.value)}
+          aria-label="Filter by gallery category"
+          onChange={(e) => { setFilterCat(e.target.value); setSelected(new Set()); setLimit(48); }}
           className="border border-onyx/15 px-3 py-2 text-sm bg-cream"
         >
           <option value="">All categories</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
+          {[...categoriesForFilter].map(([slug, name]) => <option key={slug} value={slug}>{name}</option>)}
         </select>
         <div className="relative flex-1 min-w-[220px]">
           <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Search photos"
+            onChange={(e) => { setSearch(e.target.value); setSelected(new Set()); setLimit(48); }}
             placeholder="Search title, caption, tag…"
             className="w-full border border-onyx/15 pl-9 pr-3 py-2 text-sm bg-cream"
           />
         </div>
         <button
           onClick={toggleSelectAll}
+          disabled={!selectable.length}
           className="text-xs inline-flex items-center gap-2 border border-onyx/15 px-3 py-2 hover:border-gold"
         >
           {allSelectedOnPage ? <CheckSquare className="size-4" /> : <Square className="size-4" />}
-          {allSelectedOnPage ? "Unselect all" : "Select all shown"}
+          {allSelectedOnPage ? "Unselect shown" : "Select managed photos shown"}
         </button>
         <p className="text-xs text-muted-foreground ml-auto">{filtered.length} photograph(s)</p>
       </div>
@@ -395,12 +237,12 @@ function AdminImages() {
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        {filtered.map((img: any) => {
+        {shown.map((img: any) => {
           const isSelected = selected.has(img.id);
           return (
             <div
-              key={img.id}
-              className={`relative group bg-white border ${isSelected ? "border-gold ring-2 ring-gold" : "border-onyx/10"}`}
+              key={`${img.bundled ? "archive" : "managed"}-${img.id}`}
+              className={`relative group overflow-hidden rounded-xl bg-white border ${isSelected ? "border-gold ring-2 ring-gold" : "border-onyx/10"}`}
             >
               <button
                 aria-label={`Preview ${img.title || "photograph"}`}
@@ -418,13 +260,13 @@ function AdminImages() {
                   style={{ backgroundColor: img.dominant_color ?? "#e8e2d4" }}
                 />
               </button>
-              <button
+              {!img.bundled && <button
                 onClick={() => toggleOne(img.id)}
                 aria-label={isSelected ? "Unselect" : "Select"}
                 className={`absolute top-2 left-2 size-6 flex items-center justify-center rounded-sm border ${isSelected ? "bg-gold border-gold text-cream" : "bg-cream/90 border-onyx/20 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"} transition-opacity`}
               >
                 {isSelected && <CheckSquare className="size-3.5" />}
-              </button>
+              </button>}
               <div className="p-3 text-xs">
                 <p className="truncate font-medium">{img.title || "Untitled"}</p>
                 <p className="text-muted-foreground truncate text-[10px]">
@@ -433,13 +275,15 @@ function AdminImages() {
                   {img.theme ? ` · ${img.theme}` : ""}
                 </p>
                 <div className="mt-2 flex items-center gap-2">
+                  {img.hidden ? <span className="text-muted-foreground">Draft or hidden</span> : <>
+                  {img.bundled && <span className="text-muted-foreground">Website archive</span>}
                   <a
                     href={publicPhotoPath(img.short_id)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-mono text-[10px] text-muted-foreground truncate hover:text-gold"
                   >
-                    /photo/{img.short_id}
+                    {img.bundled ? "Open" : `/photo/${img.short_id}`}
                   </a>
                   <button
                     title="Copy public link"
@@ -448,9 +292,10 @@ function AdminImages() {
                   >
                     <Link2 className="size-3" /> Copy link
                   </button>
+                  </>}
                 </div>
               </div>
-              <div className="absolute top-2 right-2 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity">
+              {!img.bundled && <div className="absolute top-2 right-2 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity">
                 <button
                   title="Edit"
                   onClick={() => setEditing(img)}
@@ -466,7 +311,7 @@ function AdminImages() {
                   <Star className="size-3" />
                 </button>
                 <button
-                  title="Hide"
+                  title={img.hidden ? "Publish photo" : "Hide photo"}
                   onClick={() => updateImage(img.id, { hidden: !img.hidden })}
                   className="p-1.5 rounded bg-cream/90 text-onyx hover:bg-onyx hover:text-cream"
                 >
@@ -479,7 +324,7 @@ function AdminImages() {
                 >
                   <Trash2 className="size-3" />
                 </button>
-              </div>
+              </div>}
               {img.featured && !img.hidden && (
                 <span className="absolute top-2 right-2 group-hover:hidden eyebrow bg-gold text-cream px-2 py-1">
                   Featured
@@ -490,10 +335,11 @@ function AdminImages() {
         })}
       </div>
 
+      {filtered.length > limit && <button type="button" className="studio-secondary mt-4" onClick={() => setLimit(limit + 48)}>Show more photos</button>}
       {filtered.length === 0 && (
         <div className="text-center py-24 text-muted-foreground border border-dashed border-onyx/20">
-          <p className="font-display text-2xl italic mb-2">No photographs match</p>
-          <p className="text-sm">Try clearing the search or category filter, or upload above.</p>
+          <p className="font-display text-2xl mb-2">{managed.isLoading || bundled.isLoading ? "Loading photos…" : "No photographs match"}</p>
+          <p className="text-sm">{search || filterCat ? "Try clearing the search or category filter." : "Choose photos above to start a new batch."}</p>
         </div>
       )}
 
