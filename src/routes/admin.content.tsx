@@ -1,12 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2, ArrowUpRight, Images } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { GalleryPhotoPicker } from "@/components/admin/gallery-photo-picker";
 import { adminCategoriesQuery, siteContentQuery } from "@/lib/queries";
 import { InstagramFeed, lightwidgetUrl, type InstagramCms } from "@/components/instagram-feed";
+import { homeHeroSlides } from "@/lib/homepage-gallery";
 import { instagramHandle } from "@/lib/site";
 
 export const Route = createFileRoute("/admin/content")({
@@ -39,23 +40,32 @@ type Footer = { blurb?: string; copyright?: string };
 
 function AdminContent() {
   const qc = useQueryClient();
-  const { data: content = {}, isLoading } = useQuery(siteContentQuery);
+  const { data: content = {}, isLoading, isError, refetch } = useQuery(siteContentQuery);
 
   async function save(section: string, data: any): Promise<void> {
-    const { error } = await supabase.from("site_content").upsert({ section_key: section, data, updated_at: new Date().toISOString() });
+    const published = section === "hero" || section === "footer" ? { ...data, published_from_admin: true } : data;
+    const { error } = await supabase.from("site_content").upsert({ section_key: section, data: published, updated_at: new Date().toISOString() });
     if (error) { toast.error(error.message); return; }
     toast.success(`${section[0].toUpperCase() + section.slice(1)} saved`);
-    qc.invalidateQueries({ queryKey: ["site_content"] });
+    qc.setQueryData(siteContentQuery.queryKey, (previous) => ({ ...previous, [section]: published }));
   }
 
-  if (isLoading) return <div className="text-muted-foreground">Loading…</div>;
+  if (isLoading) return <p role="status" className="text-muted-foreground">Loading website content…</p>;
+  if (isError && !Object.keys(content).length) return <p role="alert" className="text-destructive">Website content couldn’t load. <button className="underline" onClick={() => void refetch()}>Try again</button></p>;
 
   return (
     <div data-owner-uploads="enabled" className="max-w-4xl space-y-10">
       <header>
-        <p className="eyebrow text-gold mb-2">Site Content</p>
-        <h1 className="font-display text-4xl">Edit every section</h1>
-        <p className="text-sm text-muted-foreground mt-2">Choose existing library photographs for the homepage and category covers. Add a new original through the gallery manager once.</p>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div><h1 className="font-display text-4xl">Website content</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Reuse approved photos for the homepage and portfolio covers.</p></div>
+          <Link to="/admin/images" hash="photo-upload" className="studio-secondary"><Images className="size-4" /> Add photos</Link>
+        </div>
+        <nav aria-label="Content sections" className="mt-5 flex flex-wrap gap-2">
+          {[["homepage-hero", "Homepage hero"], ["portfolio-covers", "Portfolio covers"], ["about-content", "About"], ["contact-content", "Contact"], ["instagram-content", "Instagram"], ["seo-content", "SEO"], ["footer-content", "Footer"]].map(([id, text]) => (
+            <a key={id} href={`#${id}`} className="studio-secondary">{text}</a>
+          ))}
+        </nav>
       </header>
 
       <HeroEditor initial={content.hero ?? {}} onSave={(v) => save("hero", v)} />
@@ -76,8 +86,14 @@ function HeroEditor({ initial, onSave }: { initial: Hero; onSave: (v: Hero) => P
   const update = (patch: Partial<Hero>) => setV((x) => ({ ...x, ...patch }));
 
   return (
-    <Section title="Hero (top of homepage)">
+    <Section title="Homepage hero" id="homepage-hero">
       <HeroImageManager images={v.images ?? []} onChange={(images) => update({ images })} />
+      <details className="mt-5 rounded-xl border border-onyx/10 p-3">
+        <summary className="cursor-pointer text-sm font-semibold">Check desktop and phone framing</summary>
+        <div className="mt-3">
+          <HeroCropPreview url={v.images?.[0] || v.fallback_image || homeHeroSlides[0].src} />
+        </div>
+      </details>
 
       <div className="mt-6">
         <SingleImage label="Fallback hero image (shown if no slideshow images above)" url={v.fallback_image ?? ""} onChange={(x) => update({ fallback_image: x })} size="large" />
@@ -137,8 +153,16 @@ function HeroEditor({ initial, onSave }: { initial: Hero; onSave: (v: Hero) => P
       />
 
       <SaveBar onSave={() => onSave(v)} />
+      <a href="/" target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-sm underline">Open published homepage <ArrowUpRight className="size-4" /></a>
     </Section>
   );
+}
+
+function HeroCropPreview({ url }: { url: string }) {
+  return <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
+    <figure><img className="aspect-[16/7] w-full rounded-lg bg-onyx/5 object-contain" src={url} alt="Wide frame around the first hero image" /><figcaption className="mt-1 text-xs text-muted-foreground">Desktop framing</figcaption></figure>
+    <figure><img className="mx-auto aspect-[4/5] max-h-48 w-full rounded-lg bg-onyx/5 object-contain" src={url} alt="Vertical frame around the first hero image" /><figcaption className="mt-1 text-xs text-muted-foreground">Phone framing</figcaption></figure>
+  </div>;
 }
 
 function HeroImageManager({ images, onChange }: { images: string[]; onChange: (v: string[]) => void }) {
@@ -152,11 +176,17 @@ function HeroImageManager({ images, onChange }: { images: string[]; onChange: (v
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
-        <p className="eyebrow text-muted-foreground">Hero photographs</p>
-        <GalleryPhotoPicker size="large" onSelect={(url) => {
-          if (!images.includes(url)) onChange([...images, url]);
-        }} />
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+        <p className="text-sm font-semibold">Hero photographs</p>
+        <div className="flex flex-wrap items-start gap-2">
+          <button type="button" className="studio-secondary" onClick={() => {
+            if (images.length && !confirm("Replace the current selection with Rajmoti’s eight studio picks?")) return;
+            onChange(homeHeroSlides.map((slide) => slide.src));
+          }}>Use 8 studio picks</button>
+          <GalleryPhotoPicker size="large" onSelect={(url) => {
+            if (!images.includes(url)) onChange([...images, url]);
+          }} />
+        </div>
       </div>
       {images.length === 0 ? (
         <p className="text-xs text-muted-foreground border border-dashed border-onyx/15 py-6 text-center">The homepage uses studio-selected photographs until you select your own.</p>
@@ -165,11 +195,11 @@ function HeroImageManager({ images, onChange }: { images: string[]; onChange: (v
           {images.map((url, i) => (
             <div key={url + i} className="relative group border border-onyx/10">
               <img src={url} alt="" className="w-full aspect-[4/3] object-cover" />
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-onyx/50 flex items-center justify-center gap-1">
-                <button onClick={() => move(i, i - 1)} className="text-cream text-xs px-2 py-1 bg-onyx/70 hover:bg-gold">←</button>
-                <button onClick={() => move(i, i + 1)} className="text-cream text-xs px-2 py-1 bg-onyx/70 hover:bg-gold">→</button>
-                <button onClick={() => onChange(images.filter((_, j) => j !== i))} className="text-cream text-xs px-2 py-1 bg-destructive/80 hover:bg-destructive">
-                  <Trash2 className="size-3" />
+              <div className="flex flex-wrap items-center justify-center gap-1 p-1">
+                <button aria-label={`Move photo ${i + 1} earlier`} disabled={i === 0} onClick={() => move(i, i - 1)} className="studio-icon">←</button>
+                <button aria-label={`Move photo ${i + 1} later`} disabled={i === images.length - 1} onClick={() => move(i, i + 1)} className="studio-icon">→</button>
+                <button aria-label={`Remove photo ${i + 1}`} onClick={() => onChange(images.filter((_, j) => j !== i))} className="studio-icon">
+                  <Trash2 className="size-4" />
                 </button>
               </div>
             </div>
@@ -188,7 +218,7 @@ function CategoryDefaultsEditor({ initial, onSave }: { initial: Record<string, s
   const { data: categories = [] } = useQuery(adminCategoriesQuery);
 
   return (
-    <Section title="Category default covers">
+    <Section title="Category default covers" id="portfolio-covers">
       <p className="text-xs text-muted-foreground mb-6">
         Shown on the homepage and portfolios page when a category doesn't have its own cover set in <span className="font-mono">Admin → Categories</span>. Uploading here replaces the built-in default images that shipped with the site.
       </p>
@@ -218,7 +248,7 @@ function AboutEditor({ initial, onSave }: { initial: About; onSave: (v: About) =
   const [v, setV] = useState<About>(initial);
   useEffect(() => setV(initial), [initial]);
   return (
-    <Section title="About section">
+    <Section title="About section" id="about-content">
       <div className="grid sm:grid-cols-2 gap-4">
         <F label="Eyebrow" value={v.eyebrow ?? ""} onChange={(x) => setV({ ...v, eyebrow: x })} placeholder="Our story" />
         <F label="Heading" value={v.heading ?? ""} onChange={(x) => setV({ ...v, heading: x })} placeholder="Quiet craft, since…" />
@@ -239,7 +269,7 @@ function ContactEditor({ initial, onSave }: { initial: Contact; onSave: (v: Cont
   const [v, setV] = useState<Contact>(initial);
   useEffect(() => setV(initial), [initial]);
   return (
-    <Section title="Contact details">
+    <Section title="Contact details" id="contact-content">
       <div className="grid sm:grid-cols-2 gap-4">
         <F label="Address" value={v.address ?? ""} onChange={(x) => setV({ ...v, address: x })} className="sm:col-span-2" />
         <F label="Phone" value={v.phone ?? ""} onChange={(x) => setV({ ...v, phone: x })} />
@@ -255,7 +285,7 @@ function SeoEditor({ initial, onSave }: { initial: Seo; onSave: (v: Seo) => Prom
   const [v, setV] = useState<Seo>(initial);
   useEffect(() => setV(initial), [initial]);
   return (
-    <Section title="SEO defaults">
+    <Section title="SEO defaults" id="seo-content">
       <div className="grid sm:grid-cols-2 gap-4">
         <F label="Default page title" value={v.title ?? ""} onChange={(x) => setV({ ...v, title: x })} />
         <F label="Meta description" value={v.description ?? ""} onChange={(x) => setV({ ...v, description: x })} />
@@ -272,7 +302,7 @@ function FooterEditor({ initial, onSave }: { initial: Footer; onSave: (v: Footer
   const [v, setV] = useState<Footer>(initial);
   useEffect(() => setV(initial), [initial]);
   return (
-    <Section title="Footer">
+    <Section title="Footer" id="footer-content">
       <F label="Blurb / short about" value={v.blurb ?? ""} onChange={(x) => setV({ ...v, blurb: x })} />
       <div className="mt-4"><F label="Copyright line" value={v.copyright ?? ""} onChange={(x) => setV({ ...v, copyright: x })} placeholder="© Rajmoti Studio" /></div>
       <SaveBar onSave={() => onSave(v)} />
@@ -287,7 +317,7 @@ function InstagramEditor({ initial, onSave }: { initial: InstagramCms; onSave: (
   const update = (patch: Partial<InstagramCms>) => setV((x) => ({ ...x, ...patch }));
 
   return (
-    <Section title="Instagram section (homepage)">
+    <Section title="Instagram section (homepage)" id="instagram-content">
       <p className="text-xs text-muted-foreground mb-4">
         The feed is served by LightWidget. Create a widget for {instagramHandle()} at lightwidget.com, copy the widget
         link (or the whole embed code) and paste it below — new Instagram posts then appear automatically.
@@ -341,9 +371,9 @@ function InstagramEditor({ initial, onSave }: { initial: InstagramCms; onSave: (
 }
 
 /* ============================== reusable UI ============================== */
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, id, children }: { title: string; id: string; children: React.ReactNode }) {
   return (
-    <section className="bg-white border border-onyx/10 p-6">
+    <section id={id} className="studio-panel scroll-mt-24">
       <h2 className="font-display text-2xl mb-6">{title}</h2>
       {children}
     </section>
@@ -366,9 +396,9 @@ function SaveBar({ onSave }: { onSave: () => Promise<void> }) {
       <button
         onClick={async () => { setSaving(true); try { await onSave(); } finally { setSaving(false); } }}
         disabled={saving}
-        className="bg-onyx text-cream px-5 py-2.5 text-xs uppercase tracking-widest font-semibold hover:bg-gold disabled:opacity-50 inline-flex items-center gap-2"
+        className="studio-primary"
       >
-        {saving && <Loader2 className="size-3.5 animate-spin" />} Save
+        {saving && <Loader2 className="size-3.5 animate-spin" />} {saving ? "Publishing…" : "Save to website"}
       </button>
     </div>
   );

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Check, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { settingsQuery, categoriesQuery } from "@/lib/queries";
+import { ConnectionStatus } from "@/components/admin/connection-status";
 import { SlotManager } from "@/components/admin/slot-manager";
 import { useMotionPrefs } from "@/lib/motion";
 import { googleMapsEmbedUrl } from "@/lib/site";
@@ -17,6 +18,7 @@ import {
 
 export const Route = createFileRoute("/admin/settings")({
   head: () => ({ meta: [{ title: "Settings — Rajmoti Studio" }] }),
+  validateSearch: (search: Record<string, unknown>) => ({ tab: search.tab === "connections" ? "connections" as const : undefined }),
   component: AdminSettings,
 });
 
@@ -26,11 +28,14 @@ const TABS = [
   { id: "website", label: "Website" },
   { id: "messages", label: "Messages" },
   { id: "studio", label: "Studio day" },
+  { id: "connections", label: "Connections" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
 function AdminSettings() {
-  const [tab, setTab] = useState<TabId>("general");
+  const search = Route.useSearch();
+  const [tab, setTab] = useState<TabId>(search.tab ?? "general");
+  useEffect(() => { if (search.tab) setTab(search.tab); }, [search.tab]);
   const m = useMotionPrefs();
 
   return (
@@ -67,6 +72,7 @@ function AdminSettings() {
         {tab === "website" && <WebsiteSection />}
         {tab === "messages" && <MessagesSection />}
         {tab === "studio" && <SlotManager />}
+        {tab === "connections" && <ConnectionStatus />}
       </div>
     </div>
   );

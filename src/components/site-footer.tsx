@@ -1,7 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, MessageCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { siteContentQuery } from "@/lib/queries";
 import { whatsappLink } from "@/lib/site";
 export function SiteFooter() {
+  const { data } = useQuery(siteContentQuery);
+  const footer = data?.footer?.published_from_admin === true ? data.footer as { blurb?: string; copyright?: string } : undefined;
   return (
     <footer className="studio-footer">
       <div className="ed-wrap">
@@ -14,9 +18,7 @@ export function SiteFooter() {
               <em>you'll come back to.</em>
             </h2>
             <p>
-              Photography, personal gifts and printed memories.
-              <br />
-              Made with care in Jetpur, Gujarat.
+              {footer?.blurb?.trim() || <>Photography, personal gifts and printed memories.<br />Made with care in Jetpur, Gujarat.</>}
             </p>
           </div>
           <div>
@@ -39,7 +41,7 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="footer-bottom">
-          <span>© {new Date().getFullYear()} Rajmoti Studio</span>
+          <span>{footer?.copyright?.trim() || `© ${new Date().getFullYear()} Rajmoti Studio`}</span>
           <Link to="/contact">ગુજરાતીમાં મદદ ઉપલબ્ધ છે</Link>
         </div>
       </div>

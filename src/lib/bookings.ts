@@ -166,10 +166,18 @@ export type BookingInput = Partial<Omit<Booking, "id" | "balance_amount" | "crea
   session_date: string;
 };
 
-export async function createBooking(input: BookingInput) {
-  const { data, error } = await table().insert(input as never).select("id").single();
+export async function createBooking(input: BookingInput, id?: string) {
+  const row = id ? { ...input, id } : input;
+  const { data, error } = await table().insert(row as never).select("id").single();
   if (error) throw error;
   return data as unknown as { id: string };
+}
+
+export async function bookingForEnquiry(inquiryId: string) {
+  const { data, error } = await table().select("id").eq("inquiry_id", inquiryId)
+    .is("deleted_at", null).order("created_at").limit(1).maybeSingle();
+  if (error) throw error;
+  return data as { id: string } | null;
 }
 
 export async function updateBooking(id: string, patch: Partial<BookingInput>) {

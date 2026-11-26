@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { HardDrive, ImageIcon, TrendingUp, AlertTriangle, ExternalLink, Sparkles, Loader2, CheckCircle2 } from "lucide-react";
@@ -28,14 +28,14 @@ function AdminStorage() {
   const [progress, setProgress] = useState<{ done: number; total: number; label: string } | null>(null);
   const [report, setReport] = useState<MigrationReport | null>(null);
 
-  const { data: rows, isLoading } = useQuery({
+  const { data: rows, isLoading, refetch } = useQuery({
     queryKey: ["admin", "storage"],
     queryFn: fetchMigratableImages,
     retry: false,
   });
 
   if (isLoading) return <div role="status" className="text-muted-foreground">Loading Supabase gallery records…</div>;
-  if (!rows) return <div role="alert" className="text-amber-800">Cannot load Supabase gallery records. Cloudflare published photos are unaffected. Check the database schema.</div>;
+  if (!rows) return <div className="studio-panel"><h1 className="font-display">Studio storage overview</h1><p role="alert" className="my-3 text-sm text-destructive">Supabase gallery records couldn’t load.</p><button className="studio-secondary" onClick={() => void refetch()}>Try again</button></div>;
 
   const summary = storageSummary(rows);
   const pending = pendingImages(rows);
@@ -78,6 +78,7 @@ function AdminStorage() {
       <header className="mb-8">
         <p className="eyebrow text-gold mb-2">Storage</p>
         <h1 className="font-display text-4xl">Studio storage overview</h1>
+        <Link to="/admin/settings" search={{ tab: "connections" }} className="studio-secondary mt-3">Check connections</Link>
         <p className="text-sm text-muted-foreground mt-2">Cloudflare Pages keeps the published portfolio. Supabase holds studio records; optional R2 stores new private workflow files. The figures below include only Supabase image metadata.</p>
       </header>
 

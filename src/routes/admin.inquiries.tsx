@@ -1,14 +1,15 @@
 import { DemoEnquiryInbox } from '@/features/editorial/demo-enquiry-inbox';
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { CalendarPlus, Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { CalendarPlus, MessageCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { inquiriesQuery } from "@/lib/queries";
+import { customerWhatsAppLink } from "@/lib/customer-directory";
 import { SERVICES } from "@/lib/booking-questions";
 import { FamilyProfileDrawer } from "@/components/admin/family-profile-drawer";
-import { createBooking, linkOrCreateCustomer, todayKey } from "@/lib/bookings";
+import { bookingForEnquiry, createBooking, linkOrCreateCustomer, todayKey } from "@/lib/bookings";
 
 
 const STATUSES = ["new", "contacted", "follow_up", "confirmed", "booked", "completed", "closed", "cancelled"] as const;
@@ -22,39 +23,59 @@ function AdminInquiries() {
   const qc = useQueryClient();
   const navigate = useNavigate();
 
-  /** Turn an enquiry into a real booking (customer → booking → money). */
-  async function convertToBooking(i: any) {
+  const inProgress = useRef(new Set<string>());
+  const [converting, setConverting] = useState<Set<string>>(new Set());
+
+  async function convertToBooking(inquiry: any) {
+    if (inProgress.current.has(inquiry.id)) return;
+    inProgress.current.add(inquiry.id);
+    setConverting(new Set(inProgress.current));
     try {
-      const svc = SERVICES.find((s: any) => s.key === i.service_type);
-      const customerId = await linkOrCreateCustomer({
-        name: i.family_name || i.name,
-        phone: i.phone || i.whatsapp,
-        serviceSlug: i.service_type ?? null,
-      });
-      await createBooking({
-        customer_id: customerId,
-        inquiry_id: i.id,
-        contact_name: i.family_name || i.name || null,
-        phone: i.phone || i.whatsapp || null,
-        service_slug: i.service_type ?? null,
-        service_label: svc?.title ?? i.category_label ?? null,
-        session_date: i.session_date || todayKey(),
-        total_amount: Number(i.total_amount ?? 0),
-        paid_amount: 0,
-        status: "confirmed",
-        notes: i.message ?? null,
-      });
-      await supabase.from("inquiries").update({ status: "booked" }).eq("id", i.id);
-      qc.invalidateQueries({ queryKey: ["inquiries"] });
-      qc.invalidateQueries({ queryKey: ["bookings"] });
-      toast.success("Booking created");
-      navigate({ to: "/admin/bookings" });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Could not create booking");
+      let booking = await bookingForEnquiry(inquiry.id);
+      if (!booking) {
+        const service = SERVICES.find((entry) => entry.key === inquiry.service_type);
+        const customerId = await linkOrCreateCustomer({
+          name: inquiry.family_name || inquiry.name,
+          phone: inquiry.phone || inquiry.whatsapp,
+          serviceSlug: inquiry.service_type ?? null,
+        });
+        try {
+          booking = await createBooking({
+            customer_id: customerId,
+            inquiry_id: inquiry.id,
+            contact_name: inquiry.family_name || inquiry.name || null,
+            phone: inquiry.phone || inquiry.whatsapp || null,
+            service_slug: inquiry.service_type ?? null,
+            service_label: service?.title ?? inquiry.category_label ?? null,
+            session_date: inquiry.session_date || todayKey(),
+            total_amount: Number(inquiry.total_amount ?? 0),
+            paid_amount: 0,
+            status: "confirmed",
+            notes: inquiry.message ?? null,
+          }, inquiry.id);
+        } catch (error) {
+          booking = await bookingForEnquiry(inquiry.id);
+          if (!booking) throw error;
+        }
+      }
+      if (inquiry.status !== "booked") {
+        const { error } = await supabase.from("inquiries").update({ status: "booked" }).eq("id", inquiry.id);
+        if (error) throw new Error("The booking exists. Try again to update the enquiry status.");
+      }
+      for (const key of ["inquiries", "new-inquiries", "bookings", "today-sessions", "pending-payments"]) {
+        void qc.invalidateQueries({ queryKey: [key] });
+      }
+      toast.success("Booking linked to this enquiry");
+      void navigate({ to: "/admin/bookings", search: { booking: booking.id } });
+    } catch (error) {
+      toast.error(error && typeof error === "object" && "message" in error ? String(error.message) : "Could not create booking");
+    } finally {
+      inProgress.current.delete(inquiry.id);
+      setConverting(new Set(inProgress.current));
     }
   }
 
-  const { data: inquiries = [] } = useQuery(inquiriesQuery);
+  const { data: inquiries = [], isError, isPending, refetch } = useQuery(inquiriesQuery);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<Status | "">("");
   const [type, setType] = useState<"" | "bookings" | "messages">("");
@@ -76,6 +97,7 @@ function AdminInquiries() {
     const { error } = await supabase.from("inquiries").delete().eq("id", id);
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["inquiries"] });
+    qc.invalidateQueries({ queryKey: ["new-inquiries"] });
   }
 
   const openRow = openId ? (inquiries as any[]).find((i) => i.id === openId) : null;
@@ -101,9 +123,13 @@ function AdminInquiries() {
         </select>
       </div>
 
+      {isError && <p role="alert" className="mb-3 text-sm text-destructive">Enquiries couldn’t load. <button className="underline" onClick={() => void refetch()}>Try again</button></p>}
+      {isPending && <p role="status" className="mb-3 text-sm text-muted-foreground">Loading enquiries…</p>}
       <div className="space-y-2">
         {filtered.map((i: any) => {
           const svc = SERVICES.find((s) => s.key === i.service_type);
+          const whatsapp = customerWhatsAppLink(i.phone || i.whatsapp,
+            `Hello ${i.family_name || i.name || "there"}, this is Rajmoti Studio following up on your enquiry.`);
           return (
             <div key={i.id} className="bg-white border border-onyx/10 p-4 flex items-center gap-4 hover:border-gold transition-colors">
               <button onClick={() => setOpenId(i.id)} className="flex-1 min-w-0 text-left">
@@ -121,7 +147,8 @@ function AdminInquiries() {
                   {" · "}{new Date(i.created_at).toLocaleDateString()}
                 </p>
               </button>
-              <button onClick={() => convertToBooking(i)} title="Create booking" className="p-2 hover:text-gold"><CalendarPlus className="size-4" /></button>
+              {whatsapp && <a href={whatsapp} target="_blank" rel="noreferrer" aria-label="Open WhatsApp draft" className="studio-icon"><MessageCircle className="size-4" /></a>}
+              <button disabled={converting.has(i.id)} onClick={() => void convertToBooking(i)} aria-label={i.status === "booked" ? "Open linked booking" : "Create booking"} className="studio-icon"><CalendarPlus className="size-4" /></button>
               <button onClick={() => del(i.id)} className="text-destructive"><Trash2 className="size-4" /></button>
 
             </div>
@@ -129,7 +156,7 @@ function AdminInquiries() {
         })}
       </div>
 
-      {filtered.length === 0 && (
+      {!isError && !isPending && filtered.length === 0 && (
         <div className="text-center py-24 text-muted-foreground border border-dashed border-onyx/20">
           <p className="font-display text-2xl italic">No inquiries match.</p>
         </div>
