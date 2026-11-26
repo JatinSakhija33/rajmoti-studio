@@ -40,9 +40,11 @@ import { Route as AdminReelsRouteImport } from './routes/admin.reels'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminStorageRouteImport } from './routes/admin.storage'
 import { Route as AdminWorkflowRouteImport } from './routes/admin.workflow'
+import { Route as GiftsProductSlugRouteImport } from './routes/gifts_.$productSlug'
 import { Route as PhotoShortIdRouteImport } from './routes/photo.$shortId'
 import { Route as PortfoliosIndexRouteImport } from './routes/portfolios.index'
 import { Route as ReelShortIdRouteImport } from './routes/reel.$shortId'
+import { Route as StudioServicesServiceRouteImport } from './routes/studio-services.$service'
 import { Route as TrackIdRouteImport } from './routes/track.$id'
 import { Route as PortfoliosCategoryIndexRouteImport } from './routes/portfolios.$category.index'
 import { Route as PortfoliosCategorySubcategoryRouteImport } from './routes/portfolios.$category.$subcategory'
@@ -202,6 +204,11 @@ const AdminWorkflowRoute = AdminWorkflowRouteImport.update({
   path: '/workflow',
   getParentRoute: () => AdminRoute,
 } as any)
+const GiftsProductSlugRoute = GiftsProductSlugRouteImport.update({
+  id: '/gifts_/$productSlug',
+  path: '/gifts/$productSlug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PhotoShortIdRoute = PhotoShortIdRouteImport.update({
   id: '/photo/$shortId',
   path: '/photo/$shortId',
@@ -215,6 +222,11 @@ const PortfoliosIndexRoute = PortfoliosIndexRouteImport.update({
 const ReelShortIdRoute = ReelShortIdRouteImport.update({
   id: '/reel/$shortId',
   path: '/reel/$shortId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StudioServicesServiceRoute = StudioServicesServiceRouteImport.update({
+  id: '/studio-services/$service',
+  path: '/studio-services/$service',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TrackIdRoute = TrackIdRouteImport.update({
@@ -265,8 +277,10 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/storage': typeof AdminStorageRoute
   '/admin/workflow': typeof AdminWorkflowRoute
+  '/gifts/$productSlug': typeof GiftsProductSlugRoute
   '/photo/$shortId': typeof PhotoShortIdRoute
   '/reel/$shortId': typeof ReelShortIdRoute
+  '/studio-services/$service': typeof StudioServicesServiceRoute
   '/track/$id': typeof TrackIdRoute
   '/admin/': typeof AdminIndexRoute
   '/portfolios/': typeof PortfoliosIndexRoute
@@ -302,8 +316,10 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/storage': typeof AdminStorageRoute
   '/admin/workflow': typeof AdminWorkflowRoute
+  '/gifts/$productSlug': typeof GiftsProductSlugRoute
   '/photo/$shortId': typeof PhotoShortIdRoute
   '/reel/$shortId': typeof ReelShortIdRoute
+  '/studio-services/$service': typeof StudioServicesServiceRoute
   '/track/$id': typeof TrackIdRoute
   '/admin': typeof AdminIndexRoute
   '/portfolios': typeof PortfoliosIndexRoute
@@ -342,8 +358,10 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/storage': typeof AdminStorageRoute
   '/admin/workflow': typeof AdminWorkflowRoute
+  '/gifts_/$productSlug': typeof GiftsProductSlugRoute
   '/photo/$shortId': typeof PhotoShortIdRoute
   '/reel/$shortId': typeof ReelShortIdRoute
+  '/studio-services/$service': typeof StudioServicesServiceRoute
   '/track/$id': typeof TrackIdRoute
   '/admin/': typeof AdminIndexRoute
   '/portfolios/': typeof PortfoliosIndexRoute
@@ -383,8 +401,10 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/storage'
     | '/admin/workflow'
+    | '/gifts/$productSlug'
     | '/photo/$shortId'
     | '/reel/$shortId'
+    | '/studio-services/$service'
     | '/track/$id'
     | '/admin/'
     | '/portfolios/'
@@ -420,8 +440,10 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/storage'
     | '/admin/workflow'
+    | '/gifts/$productSlug'
     | '/photo/$shortId'
     | '/reel/$shortId'
+    | '/studio-services/$service'
     | '/track/$id'
     | '/admin'
     | '/portfolios'
@@ -459,8 +481,10 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/storage'
     | '/admin/workflow'
+    | '/gifts_/$productSlug'
     | '/photo/$shortId'
     | '/reel/$shortId'
+    | '/studio-services/$service'
     | '/track/$id'
     | '/admin/'
     | '/portfolios/'
@@ -482,8 +506,10 @@ export interface RootRouteChildren {
   ProductsRoute: typeof ProductsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   StoriesRoute: typeof StoriesRoute
+  GiftsProductSlugRoute: typeof GiftsProductSlugRoute
   PhotoShortIdRoute: typeof PhotoShortIdRoute
   ReelShortIdRoute: typeof ReelShortIdRoute
+  StudioServicesServiceRoute: typeof StudioServicesServiceRoute
   TrackIdRoute: typeof TrackIdRoute
 }
 
@@ -706,6 +732,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminWorkflowRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/gifts_/$productSlug': {
+      id: '/gifts_/$productSlug'
+      path: '/gifts/$productSlug'
+      fullPath: '/gifts/$productSlug'
+      preLoaderRoute: typeof GiftsProductSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/photo/$shortId': {
       id: '/photo/$shortId'
       path: '/photo/$shortId'
@@ -725,6 +758,13 @@ declare module '@tanstack/react-router' {
       path: '/reel/$shortId'
       fullPath: '/reel/$shortId'
       preLoaderRoute: typeof ReelShortIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/studio-services/$service': {
+      id: '/studio-services/$service'
+      path: '/studio-services/$service'
+      fullPath: '/studio-services/$service'
+      preLoaderRoute: typeof StudioServicesServiceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/track/$id': {
@@ -825,8 +865,10 @@ const rootRouteChildren: RootRouteChildren = {
   ProductsRoute: ProductsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   StoriesRoute: StoriesRoute,
+  GiftsProductSlugRoute: GiftsProductSlugRoute,
   PhotoShortIdRoute: PhotoShortIdRoute,
   ReelShortIdRoute: ReelShortIdRoute,
+  StudioServicesServiceRoute: StudioServicesServiceRoute,
   TrackIdRoute: TrackIdRoute,
 }
 export const routeTree = rootRouteImport

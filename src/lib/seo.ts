@@ -1,3 +1,4 @@
+import searchPages from "@/lib/search-pages.json";
 import { SITE } from "@/lib/site";
 
 /** Production origin used for canonical + Open Graph URLs. */
@@ -28,16 +29,32 @@ export function canonicalFor(path: string) {
   };
 }
 
+export function searchPageHead(page: { path: string; title: string; description: string; image?: string }) {
+  const canonical = canonicalFor(page.path);
+  return {
+    links: canonical.links,
+    meta: [
+      { title: page.title },
+      { name: "description", content: page.description },
+      { property: "og:title", content: page.title },
+      { property: "og:description", content: page.description },
+      canonical.ogUrl,
+      { property: "og:image", content: absUrl(page.image || searchPages.home.image) },
+    ],
+  };
+}
+
 export function localBusinessJsonLd(googleProfileUrl?: string | null) {
   const sameAs = [STUDIO.instagram, googleProfileUrl].filter(Boolean);
   return {
     "@context": "https://schema.org",
-    "@type": "PhotographyBusiness",
+    "@type": "LocalBusiness",
+    "@id": absUrl("/#studio"),
     name: STUDIO.name,
-    url: SITE_URL,
+    url: absUrl("/"),
     telephone: STUDIO.phone,
     email: STUDIO.email,
-    image: absUrl("/favicon.ico"),
+    image: absUrl(searchPages.home.image),
     address: {
       "@type": "PostalAddress",
       addressLocality: STUDIO.city,
@@ -72,7 +89,7 @@ export function serviceJsonLd(o: { name: string; description: string; path: stri
     url: absUrl(o.path),
     areaServed: STUDIO.serviceAreas.map((a) => ({ "@type": "Place", name: a })),
     provider: {
-      "@type": "PhotographyBusiness",
+      "@type": "LocalBusiness",
       name: STUDIO.name,
       address: {
         "@type": "PostalAddress",

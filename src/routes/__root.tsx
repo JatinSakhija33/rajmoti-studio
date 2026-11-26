@@ -109,6 +109,7 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
+    document.querySelectorAll("[data-search-shell]").forEach((tag) => tag.remove());
     if (!liveBackend || !backendConfigured) return;
     const sub = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
