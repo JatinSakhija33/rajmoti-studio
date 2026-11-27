@@ -219,6 +219,33 @@ export function Catalogue({ productId, preferredVariantId }: { productId?: strin
           </ul>
         </section>
         <GiftDiscovery onCategory={value => { update("category", value); document.getElementById("directory")?.scrollIntoView({ behavior: "smooth" }); }} onOccasion={value => update("occasion", value)} onRecipient={value => update("recipient", value)} onBudget={value => { setBudget(value); setShown(12); }} onProduct={id => open(id)} />
+        <nav aria-label="Shop by gift category" className="ed-wrap my-8">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <div>
+              <p className="ed-kicker">Shop by collection</p>
+              <h2 className="text-2xl font-display">Find your perfect photo gift</h2>
+            </div>
+            {(filters.category || budget != null || q) && <button type="button" onClick={reset} className="ed-text-button">Clear filters</button>}
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-3" role="group" aria-label="Gift categories">
+            <button type="button" aria-pressed={!filters.category} onClick={() => { update("category", ""); document.getElementById("directory")?.scrollIntoView({ behavior: "smooth" }); }}
+              className={`shrink-0 rounded-full border px-4 py-2.5 text-sm transition-colors ${!filters.category ? "bg-onyx text-white border-onyx" : "border-onyx/20 hover:bg-onyx/5"}`}>
+              All gifts
+            </button>
+            {categories.filter(c => products.some(p => p.category === c.id)).map(c => (
+              <button type="button" key={c.id} aria-pressed={filters.category === c.id}
+                onClick={() => { update("category", c.id); document.getElementById("directory")?.scrollIntoView({ behavior: "smooth" }); }}
+                className={`shrink-0 rounded-full border px-4 py-2.5 text-sm transition-colors ${filters.category === c.id ? "bg-onyx text-white border-onyx" : "border-onyx/20 hover:bg-onyx/5"}`}>
+                {c.name}
+              </button>
+            ))}
+          </div>
+        </nav>
+        <section aria-label="How Rajmoti gifting works" className="ed-wrap mb-8 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-onyx/10 p-4"><strong className="block text-sm">Made personal</strong><p className="mt-1 text-xs text-muted-foreground">Choose a product, size and finish to suit your photograph.</p></div>
+          <div className="rounded-xl border border-onyx/10 p-4"><strong className="block text-sm">Studio-reviewed</strong><p className="mt-1 text-xs text-muted-foreground">We confirm the print details and final price before production.</p></div>
+          <div className="rounded-xl border border-onyx/10 p-4"><strong className="block text-sm">Clear fulfilment</strong><p className="mt-1 text-xs text-muted-foreground">Collect from our studio, or arrange prepaid delivery when available. No cash on delivery.</p></div>
+        </section>
         <section id="directory" className="ed-wrap directory-section">
           <div className="ed-section-heading">
             <div>

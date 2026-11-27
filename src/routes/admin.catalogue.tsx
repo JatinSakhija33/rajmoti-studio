@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { publishGiftProduct } from "@/features/catalogue/shared-catalogue";
 import { CataloguePriceEditor } from "@/components/admin/catalogue-price-editor";
 import { Plus, Save, Download, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -19,11 +20,12 @@ function Manager() {
   const [search, setSearch] = useState("");
   const [draft, setDraft] = useState<Product | null>(null);
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
   const priceProduct = seedProducts.find((product) => product.id === draft?.id);
   const matches = products.filter((p) =>
     `${p.id} ${p.name}`.toLowerCase().includes(search.toLowerCase()),
   );
-  function save() {
+  async function save() {
     if (!draft) return;
     if (
       !draft.name.trim() ||
@@ -42,13 +44,19 @@ function Manager() {
       setError("Variant codes must be unique.");
       return;
     }
+    setSaving(true);
     try {
+      // Publish to the shared Supabase catalogue first; do not claim success
+      // or write a misleading local-only update if the remote mutation fails.
+      await publishGiftProduct(draft);
       setProducts([...products.filter((p) => p.id !== draft.id), draft]);
       setDraft(null);
       setError("");
-      toast.success("Product draft saved in this browser");
-    } catch {
-      setError("Could not save. Check browser storage.");
+      toast.success("Product published to the shared gift store");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not publish this product.");
+    } finally {
+      setSaving(false);
     }
   }
   function add() {
@@ -273,9 +281,9 @@ function Manager() {
             </p>
           )}
           <div className="ed-actions">
-            <button className="ed-button" onClick={save}>
+            <button className="ed-button" disabled={saving} onClick={() => void save()}>
               <Save size={16} />
-              Save local product draft
+              {saving ? "Publishing…" : "Publish product details"}
             </button>
             <button className="ed-button outline" onClick={() => setDraft(null)}>
               Cancel
