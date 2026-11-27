@@ -1,6 +1,7 @@
 import seed from "./seed.json";
 import extras from "./gift-extras.json";
 import { useCataloguePrices } from "./catalogue-prices";
+import { useSharedCatalogue } from "./shared-catalogue";
 import type { GiftDesign } from "./gift-design";
 import { useSyncExternalStore } from "react";
 type SeedProduct = (typeof seed.products)[number];
@@ -59,8 +60,11 @@ export const seedProducts: Product[] = [...seed.products, ...extras.products];
 export function useProducts(): [Product[], (products: Product[]) => void] {
   const [local, setLocal] = useLocal<Product[]>(keys.catalogue, seedProducts);
   const { data } = useCataloguePrices();
+  const publishedProducts = useSharedCatalogue();
   const products = new Map(seedProducts.map((product) => [product.id, product]));
   local.forEach((product) => products.set(product.id, product));
+  // Server-published changes override browser-local drafts across devices.
+  publishedProducts.forEach((product) => products.set(product.id, product));
   const prices = data?.prices;
   return [[...products.values()].map((product) => prices ? {
     ...product,
