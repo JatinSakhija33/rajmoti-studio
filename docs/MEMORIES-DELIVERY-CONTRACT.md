@@ -1,0 +1,8 @@
+# Memories delivery contract
+Status: specification, not live implementation.
+Provider registry: independent original and preview storage, messaging, identity, local processing. Each provider exposes configuration schema, capabilities, health check, activation and disconnect; secrets server-only. Fail closed if unconfigured. No mock success in production.
+Delivery: stable asset UUID; authorize every request against event, grant, asset and expiry. GET /api/memories/assets/:id/download streams original with Content-Disposition attachment and private no-store. Google Drive uses authenticated alt=media; R2 may use short-lived presigned URLs after authorization. Never accept arbitrary provider IDs or URLs from clients. ZIP jobs bounded by file count/size, asynchronous local worker with persistent progress, expiry and checksum; recheck grants before retrieval.
+Phone: browser download or Web Share API where supported; iOS Files/Share Save Image, Android Downloads. No silent writes to camera roll.
+WhatsApp: opt-in verified recipient, manual click-to-chat fallback; official Cloud API adapter with approved templates where required, signed webhooks, idempotent outbox and retries. Send private gallery link rather than unsolicited bulk media. No unofficial WhatsApp automation. Cost cap and delivery status.
+Photo intelligence: SHA256 duplicate detection, perceptual similarity, blur/exposure, EXIF and optional licensed semantic scene classifier. No identity matching enabled; separate governance and evaluation required. Manual studio-approved guest selections work independently.
+Testing: verify cross-event denial, revoked grants, range handling, zip path safety, provider switching, webhook replay and failed delivery. No production deploy until validated.
