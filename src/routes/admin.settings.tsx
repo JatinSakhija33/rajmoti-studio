@@ -7,6 +7,7 @@ import { Check, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { settingsQuery, categoriesQuery } from "@/lib/queries";
 import { ConnectionStatus } from "@/components/admin/connection-status";
+import { RajmotiOsSync } from "@/components/admin/rajmoti-os-sync";
 import { SlotManager } from "@/components/admin/slot-manager";
 import { useMotionPrefs } from "@/lib/motion";
 import { googleMapsEmbedUrl } from "@/lib/site";
@@ -72,7 +73,7 @@ function AdminSettings() {
         {tab === "website" && <WebsiteSection />}
         {tab === "messages" && <MessagesSection />}
         {tab === "studio" && <SlotManager />}
-        {tab === "connections" && <ConnectionStatus />}
+        {tab === "connections" && <><RajmotiOsSync /><ConnectionStatus /></>}
       </div>
     </div>
   );
