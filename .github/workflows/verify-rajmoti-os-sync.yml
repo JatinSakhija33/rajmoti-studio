@@ -1,0 +1,32 @@
+name: Verify Rajmoti OS web sync
+on:
+  push:
+    branches: [feat/rajmoti-os-workflow-sync-20261128]
+  pull_request:
+    paths:
+      - 'src/lib/rajmoti-firebase-browser.mjs'
+      - 'src/lib/rajmoti-firebase-browser.d.mts'
+      - 'src/lib/rajmoti-firebase-web-config.mjs'
+      - 'src/lib/rajmoti-os-firestore-contract.mjs'
+      - 'src/lib/rajmoti-os-firestore-contract.d.mts'
+      - 'src/components/admin/rajmoti-os-sync.tsx'
+      - 'src/routes/admin.workflow.tsx'
+      - 'src/routes/admin.settings.tsx'
+      - 'tests/rajmoti-*.test.mjs'
+      - '.github/workflows/verify-rajmoti-os-sync.yml'
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
