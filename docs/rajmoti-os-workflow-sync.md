@@ -34,3 +34,21 @@ Date: 2026-11-28. Status: **read-only mapping foundation implemented; live Fires
 
 ## Preview gate
 No production Firestore data has been modified. Until Firebase web credentials and auth can be verified, the new adapter remains disconnected; existing Supabase workflow stays intact.
+
+
+## Registered Firebase Web app (2026-11-28)
+
+User supplied the Web SDK configuration for Firebase project `rajmoti-os`, Web app ID `1:350182272734:web:93629d267be9b686f8dc4f`. Browser API key is intentionally not duplicated in source control.
+
+Committed config guard: `src/lib/rajmoti-firebase-web-config.mjs`. It reads `VITE_FIREBASE_API_KEY` and refuses a mismatched `VITE_FIREBASE_PROJECT_ID`. The fixed named database ID remains in that file and the Android contract.
+
+**Operator setup**
+1. Add `VITE_FIREBASE_API_KEY` to Cloudflare's Preview environment using the Firebase Web config shown in the console. Optionally set `VITE_FIREBASE_PROJECT_ID=rajmoti-os`.
+2. Enable Google sign-in in Firebase Auth and add exactly the authorized preview domain used for testing. Production domains can be added separately when ready.
+3. Review the named database's Firestore Rules before using any browser data listener.
+4. Add Firebase JS SDK with a properly regenerated lockfile, then wire `getAuth(app)` and `getFirestore(app, FIREBASE_DATABASE_ID)` on the client, guarded against server-side rendering.
+5. On Google sign-in, read `studios/rajmoti_studio/members/{auth.currentUser.uid}`; require an already-provisioned `active: true`, `role: "ADMIN"` membership. Never auto-provision privilege via browser.
+6. Wire read-only `onSnapshot` for `sessions` and `families`, first displaying an isolated 'Android live data' panel, without changing the current Supabase workflow.
+7. Run a test using an authorized account to verify IDs, field types, query limits, and cleanup. Then expand to production tasks and ledger with a staged migration.
+
+**State:** Configuration prepared and regression tests committed. SDK dependency, Firestore listeners, cross-provider authentication, live verification and deployment are still pending. No customer data modified.
